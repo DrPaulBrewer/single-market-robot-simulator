@@ -3,5 +3,6 @@ coverage
 *.csv
 example*.csv
 example*.js
+config.json
 *~
 
