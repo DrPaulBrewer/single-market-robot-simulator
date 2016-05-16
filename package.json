@@ -1,0 +1,20 @@
+{
+  "name": "single-market-zi-simulator",
+  "version": "0.1.0",
+  "description": "market-contingent-example populated by Gode/Sunder Zero Intelligence robots with configurable supply/demand",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --reporter spec --slow 50 --timeout 2000",
+    "cover": "node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- -R spec test/*"
+  },
+  "author": "drpaulbrewer@eaftc.com",
+  "license": "Proprietary",
+  "dependencies": {
+    "market-agents": "^0.6.0",
+    "market-example-contingent": "^0.3.0"
+  },
+  "devDependencies": {},
+  "directories": {
+    "test": "test"
+  }
+}
