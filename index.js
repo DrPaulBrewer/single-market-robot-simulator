@@ -55,7 +55,30 @@ var simpleSellOrder = function(t,uid,sellprice){
     return o;
 }; 
 
+var Log = function(fname){
+    this.useFS = false;
+    try { 
+	this.useFS = (fs) && (typeof(fname)==='string');
+    } catch(e){};
+    if (this.useFS)
+	this.fd = fs.openSync(fname, 'w');
+    else
+	this.data = [];
+};
 
+Log.prototype.write = function(x){
+    if (this.useFS){
+	if (Array.isArray(x)){
+	    fs.writeSync(this.fd, x.join(",")+"\n");
+	} else if ((typeof(x)==='number') || (typeof(x)==='string')){
+	    fs.writeSync(this.fd, x+"\n");
+	} else {
+	    fs.writeSync(this.fd, JSON.stringify(x)+"\n");
+	}
+    } else {
+	this.data.push(x);
+    }
+};
 
 var Simulation = function(options){
     this.options = options;
@@ -70,10 +93,10 @@ var Simulation = function(options){
     this.numberOfSellers = options.sellerCosts.length;
     this.numberOfAgents = this.numberOfBuyers+this.numberOfSellers;
     this.logs = {};
-    this.logs.trade  = fs.openSync('./trades.csv','w');
-    fs.writeSync(this.logs.trade, "period,t,price,buyerAgentId,buyerValue,buyerProfit,sellerAgentId,sellerCost,sellerProfit\n");
-    this.logs.order  = fs.openSync('./orders.csv','w');
-    this.logs.period = fs.openSync('./periods.csv','w');
+    this.logs.trade  = new Log("./trades.csv");
+    this.logs.order  = new Log('./orders.csv','w');
+    this.logs.period = new Log('./periods.csv','w');
+    this.logs.trade.write(['period','t','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit']);
     var i,l;
     var a;
     this.pool = new Pool();
@@ -108,8 +131,8 @@ var Simulation = function(options){
 	console.log(" ");
 	console.log("minPrice = "+common.minPrice);
 	console.log("maxPrice = "+common.maxPrice);
-    }
-};
+    }}
+;
 
 Simulation.prototype.runPeriod = function(){
     var sim = this;
@@ -153,11 +176,11 @@ Simulation.prototype.runPeriod = function(){
 };    	       
 
 Simulation.prototype.logOrder = function(details){ 
-    fs.writeSync(this.logs.order, details.join(",")+"\n");
+    this.logs.order.write(details);
 };
 
 Simulation.prototype.logPeriod = function(details){ 
-    fs.writeSync(this.logs.period, details.join(",")+"\n");
+    this.logs.period.write(details);
 };
 
 Simulation.prototype.logTrade = function(tradespec){
@@ -187,7 +210,7 @@ Simulation.prototype.logTrade = function(tradespec){
 	tradeSellerCost,
 	tradeSellerProfit
     ];
-    fs.writeSync(sim.logs.trade, tradeOutput.join(",")+"\n");
+    sim.logs.trade.write(tradeOutput);
 };
 
 var main = function(){
