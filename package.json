@@ -1,19 +1,34 @@
 {
-  "name": "single-market-zi-simulator",
+  "name": "single-market-robot-simulator",
   "version": "0.1.0",
-  "description": "market-contingent-example populated by Gode/Sunder Zero Intelligence robots with configurable supply/demand",
+  "description": "market-contingent-example populated by Robot, initially Gode/Sunder ZI Robots, with configurable supply/demand",
   "main": "index.js",
   "scripts": {
     "test": "mocha --reporter spec --slow 50 --timeout 2000",
     "cover": "node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- -R spec test/*"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drpaulbrewer/single-market-robot-simulator"
+  },
+  "keywords": [
+    "robot-trading",
+    "hft",
+    "market-simulation",
+    "financial-simulation"
+  ],
   "author": "drpaulbrewer@eaftc.com",
-  "license": "Proprietary",
+  "license": "MIT",
   "dependencies": {
     "market-agents": "^0.6.0",
     "market-example-contingent": "^0.3.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "coveralls": "^2.11.9",
+    "istanbul": "^0.4.3",
+    "mocha": "^2.4.5",
+    "should": "^8.3.1"
+  },
   "directories": {
     "test": "test"
   }

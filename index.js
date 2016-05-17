@@ -241,4 +241,6 @@ if (require && (require.main===module)){
 	Simulation: Simulation,
 	runSimulation: runSimulation,
 	Log: Log
+    }
 }
+
