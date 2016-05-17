@@ -99,6 +99,16 @@ var Simulation = function(options){
     this.sellersPool.distribute('costs','X',options.sellerCosts);
     this.period = 0;
     this.periodDuration = options.periodDuration || 600;
+    if (!this.silent){
+	console.log("duration of each period = "+this.periodDuration);
+	console.log(" ");
+	console.log("Number of Buyers  = "+this.numberOfBuyers);
+	console.log("Number of Sellers = "+this.numberOfSellers);
+	console.log("Total Number of Agents  = "+this.numberOfAgents);
+	console.log(" ");
+	console.log("minPrice = "+common.minPrice);
+	console.log("maxPrice = "+common.maxPrice);
+    }
 };
 
 Simulation.prototype.runPeriod = function(){
@@ -137,6 +147,7 @@ Simulation.prototype.runPeriod = function(){
 	}
     };
     sim.pool.syncRun(sim.periodDuration);
+    sim.pool.endPeriod();
     var finalMoney = sim.pool.agents.map(function(A){ return A.inventory.money; });
     sim.logPeriod(finalMoney);
 };    	       
@@ -166,7 +177,7 @@ Simulation.prototype.logTrade = function(tradespec){
     var tradeSellerCost = sim.pool.agentsById[sellerid].unitCostFunction('X', sim.pool.agentsById[sellerid].inventory);
     var tradeSellerProfit = tradePrice-tradeSellerCost;
     var tradeOutput = [
-	sim.periodNumber,
+	sim.period,
 	tradespec.t,
 	tradePrice,
 	buyerid,
@@ -184,9 +195,15 @@ var main = function(){
     var mySim = new Simulation(config);
     var periodNumber = 1;
     var profits;
+    if (!config.silent)
+	console.log("Periods = "+config.periods);
     for(periodNumber=1;periodNumber<=config.periods;periodNumber++){
+	if (!config.silent)
+	    console.log("period: "+periodNumber);
 	mySim.runPeriod();
     }
+    if (!config.silent)
+	console.log("done");
 };
 
 if (require && (require.main===module))
