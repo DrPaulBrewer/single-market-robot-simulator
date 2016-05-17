@@ -1,7 +1,7 @@
 single-market-robot-simulator
 ========
 
-configurable supply and demand (config.js)
+configurable supply and demand (config.json)
 
 by default uses Gode and Sunde Zero Intelligence Robot algorithm, but you can also write your own robots.
 
