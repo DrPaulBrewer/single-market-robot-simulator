@@ -25,7 +25,7 @@
 // 18     trigssp: // limit price if triggered sell stop is activated
 // ]
 
-const fs = require('fs');
+// const fs = require('fs');
 const MEC = require('market-example-contingent');
 var Market = MEC.Market;
 const MarketAgents = require('market-agents');
@@ -213,8 +213,7 @@ Simulation.prototype.logTrade = function(tradespec){
     sim.logs.trade.write(tradeOutput);
 };
 
-var main = function(){
-    var config = require('./config.json');
+var runSimulation = function(config){
     var mySim = new Simulation(config);
     var periodNumber = 1;
     var profits;
@@ -227,7 +226,19 @@ var main = function(){
     }
     if (!config.silent)
 	console.log("done");
+    return mySim.logs;
 };
 
-if (require && (require.main===module))
+var main = function(){
+    var config = require('./config.json');
+    runSimulation(config);
+};
+
+if (require && (require.main===module)){
     main();
+} else if (typeof(module)==='object') {
+    module.exports = {
+	Simulation: Simulation,
+	runSimulation: runSimulation,
+	Log: Log
+}
