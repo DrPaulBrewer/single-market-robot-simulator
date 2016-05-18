@@ -25,7 +25,9 @@
 // 18     trigssp: // limit price if triggered sell stop is activated
 // ]
 
-// const fs = require('fs');
+const fs = require('fs');
+const async = require('async');
+
 const MEC = require('market-example-contingent');
 var Market = MEC.Market;
 const MarketAgents = require('market-agents');
@@ -122,7 +124,7 @@ var Simulation = function(options){
     this.sellersPool.distribute('costs','X',options.sellerCosts);
     this.period = 0;
     this.periodDuration = options.periodDuration || 600;
-    if (!this.silent){
+    if (!this.options.silent){
 	console.log("duration of each period = "+this.periodDuration);
 	console.log(" ");
 	console.log("Number of Buyers  = "+this.numberOfBuyers);
@@ -134,9 +136,11 @@ var Simulation = function(options){
     }}
 ;
 
-Simulation.prototype.runPeriod = function(){
+Simulation.prototype.runPeriod = function(cb){
     var sim = this;
     sim.period++;
+    if (!sim.options.silent)
+	console.log("period: "+sim.period);
     sim.pool.initPeriod(sim.period);
     sim.xMarket = new Market();
     sim.xMarket.on('trade', function(tradeSpec){ 
@@ -169,10 +173,25 @@ Simulation.prototype.runPeriod = function(){
 		sim.xMarket.push(sim.xMarket.inbox.shift());
 	}
     };
-    sim.pool.syncRun(sim.periodDuration);
-    sim.pool.endPeriod();
-    var finalMoney = sim.pool.agents.map(function(A){ return A.inventory.money; });
-    sim.logPeriod(finalMoney);
+    if (typeof(cb)==='function'){
+	/* run asynchrnously, call cb function at end */
+	var poolCallback = function(exhausted){
+	    this.endPeriod();
+	    var final_money = this.agents.map(function(A){
+		return A.inventory.money;
+	    });
+	    sim.logPeriod(final_money);
+	    cb(false, sim);
+	};
+	sim.pool.run(sim.periodDuration, poolCallback);
+    } else {
+	/* no callback; run synchronously */
+	sim.pool.syncRun(sim.periodDuration);
+	sim.pool.endPeriod();
+	var finalMoney = sim.pool.agents.map(function(A){ return A.inventory.money; });
+	sim.logPeriod(finalMoney);
+	return(sim);
+    }
 };    	       
 
 Simulation.prototype.logOrder = function(details){ 
@@ -213,25 +232,45 @@ Simulation.prototype.logTrade = function(tradespec){
     sim.logs.trade.write(tradeOutput);
 };
 
-var runSimulation = function(config){
+var runSimulation = function(config, done, update){
     var mySim = new Simulation(config);
     var periodNumber = 1;
-    var profits;
     if (!config.silent)
 	console.log("Periods = "+config.periods);
-    for(periodNumber=1;periodNumber<=config.periods;periodNumber++){
+    if(typeof(done)==='function'){
+	return async.whilst(
+	    function(){ 
+		return (mySim.period<config.periods); 
+	    },
+	    function(callback){ 
+		mySim.runPeriod(function(e,d){
+		    if (typeof(update)==='function') update(e,d);
+		    callback(e,d);
+		});
+	    },
+	    function(e,d){ 
+		if (!config.silent)
+		    console.log("done");
+		done(false, mySim);
+	    }
+	);
+    } else {
+	/* no done callback, run synchronously */
+	while(mySim.period<config.periods){
+	    mySim.runPeriod();
+	}
 	if (!config.silent)
-	    console.log("period: "+periodNumber);
-	mySim.runPeriod();
+	    console.log("done");
+	return mySim;
     }
-    if (!config.silent)
-	console.log("done");
-    return mySim.logs;
 };
 
 var main = function(){
+
     var config = require('./config.json');
+
     runSimulation(config);
+
 };
 
 if (require && (require.main===module)){
