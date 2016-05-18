@@ -25,7 +25,8 @@
 // 18     trigssp: // limit price if triggered sell stop is activated
 // ]
 
-const fs = require('fs');
+try { fs = require('fs'); } catch(e) {};
+
 const async = require('async');
 
 const MEC = require('market-example-contingent');
@@ -107,8 +108,8 @@ var Simulation = function(options){
     var common = {
 	markets: {X:{}},
 	period: {number:0, startTime:0, init: {inventory:{X:0, money:0}}},
-	minPrice: 0,
-	maxPrice: 2*Math.max(options.buyerValues[0], options.sellerCosts[options.sellerCosts.length-1])
+	minPrice: options.L || 0,
+	maxPrice: options.H || (2*Math.max(options.buyerValues[0], options.sellerCosts[options.sellerCosts.length-1]))
     };
     for(i=0;i<this.numberOfBuyers;++i){
 	a = new ziAgent(common);
@@ -133,8 +134,8 @@ var Simulation = function(options){
 	console.log(" ");
 	console.log("minPrice = "+common.minPrice);
 	console.log("maxPrice = "+common.maxPrice);
-    }}
-;
+    }
+};
 
 Simulation.prototype.runPeriod = function(cb){
     var sim = this;
@@ -279,7 +280,7 @@ if (require && (require.main===module)){
     module.exports = {
 	Simulation: Simulation,
 	runSimulation: runSimulation,
-	Log: Log
+	Log: Log,
     }
 }
 
