@@ -61,7 +61,10 @@ var simpleSellOrder = function(t,uid,sellprice){
 var Log = function(fname){
     this.useFS = false;
     try { 
-	this.useFS = (fs) && (typeof(fname)==='string');
+	this.useFS = ( (typeof(fname)==='string') 
+		       && (fs) 
+		       && (fs.openSync) 
+		       && (fs.writeSync) );
     } catch(e){};
     if (this.useFS)
 	this.fd = fs.openSync(fname, 'w');
