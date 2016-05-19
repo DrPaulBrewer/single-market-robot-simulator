@@ -179,7 +179,7 @@ Simulation.prototype.runPeriod = function(cb){
     };
     if (typeof(cb)==='function'){
 	/* run asynchrnously, call cb function at end */
-	var poolCallback = function(exhausted){
+	var poolCallback = function(e){
 	    this.endPeriod();
 	    var final_money = this.agents.map(function(A){
 		return A.inventory.money;
@@ -187,7 +187,7 @@ Simulation.prototype.runPeriod = function(cb){
 	    sim.logPeriod(final_money);
 	    cb(false, sim);
 	};
-	sim.pool.run(sim.periodDuration, poolCallback);
+	sim.pool.run(sim.periodDuration, poolCallback, 10);
     } else {
 	/* no callback; run synchronously */
 	sim.pool.syncRun(sim.periodDuration);
