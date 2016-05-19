@@ -265,8 +265,8 @@ var runSimulation = function(config, done, update){
 	}
 	if (!config.silent)
 	    console.log("done");
-	return mySim;
     }
+    return mySim;
 };
 
 var main = function(){
