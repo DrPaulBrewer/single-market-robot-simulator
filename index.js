@@ -242,7 +242,7 @@ var runSimulation = function(config, done, update){
     if (!config.silent)
 	console.log("Periods = "+config.periods);
     if(typeof(done)==='function'){
-	return async.whilst(
+	async.whilst(
 	    function(){ 
 		return (mySim.period<config.periods); 
 	    },
