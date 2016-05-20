@@ -114,13 +114,19 @@ var Simulation = function(options){
 	minPrice: options.L || 0,
 	maxPrice: options.H || (2*Math.max(options.buyerValues[0], options.sellerCosts[options.sellerCosts.length-1]))
     };
+    var newBuyerAgent = function(){
+	return new ziAgent(Object.assign({}, common, {rate: (options.buyerRate || 1)}));
+    };
+    var newSellerAgent = function(){
+	return new ziAgent(Object.assign({}, common, {rate: (options.sellerRate || 1)}));
+    };
     for(i=0;i<this.numberOfBuyers;++i){
-	a = new ziAgent(common);
+	a = newBuyerAgent();
 	this.buyersPool.push(a);
 	this.pool.push(a);
     }
     for(i=0;i<this.numberOfSellers;++i){
-	a = new ziAgent(common);
+	a = newSellerAgent();
 	this.sellersPool.push(a);
 	this.pool.push(a);
     }
