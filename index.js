@@ -95,8 +95,8 @@ var Simulation = function(options){
     // L is the lowest possible random bid price
     // H is the highest possible random ask price
     // maxTries -- maximum number of tries to generate order
-    this.numberOfBuyers = options.buyerValues.length;
-    this.numberOfSellers = options.sellerCosts.length;
+    this.numberOfBuyers = options.numberOfBuyers   || options.buyerValues.length;
+    this.numberOfSellers = options.numberOfSellers || options.sellerCosts.length;
     this.numberOfAgents = this.numberOfBuyers+this.numberOfSellers;
     this.logs = {};
     this.logs.trade  = new Log("./trades.csv");
