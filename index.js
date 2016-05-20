@@ -242,7 +242,7 @@ Simulation.prototype.logTrade = function(tradespec){
     sim.logs.trade.write(tradeOutput);
 };
 
-var runSimulation = function(config, done, update){
+var runSimulation = function(config, done, update, delay){
     var mySim = new Simulation(config);
     var periodNumber = 1;
     if (!config.silent)
@@ -253,10 +253,12 @@ var runSimulation = function(config, done, update){
 		return (mySim.period<config.periods); 
 	    },
 	    function(callback){ 
-		mySim.runPeriod(function(e,d){
-		    if (typeof(update)==='function') update(e,d);
-		    callback(e,d);
-		});
+		setTimeout(function(){
+		    mySim.runPeriod(function(e,d){
+			if (typeof(update)==='function') update(e,d);
+			callback(e,d);
+		    });
+		}, (delay || 100) );
 	    },
 	    function(e,d){ 
 		if (!config.silent)
