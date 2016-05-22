@@ -152,7 +152,7 @@ Simulation.prototype.runPeriod = function(cb){
     if (!sim.options.silent)
 	console.log("period: "+sim.period);
     sim.pool.initPeriod(sim.period);
-    sim.xMarket = new Market();
+    sim.xMarket = new Market(this.options.xMarket);
     sim.xMarket.on('trade', function(tradeSpec){ 
 	tradeSpec.money = 'money';
 	tradeSpec.goods = 'X';
