@@ -215,36 +215,66 @@ describe('Simulation', function(){
 		S.periodDuration.should.equal(600);
 	    });
 	});
-	describe('runPeriod()', function(){
-	    var S = new Simulation(config_costs_exceed_values);
-	    var sim = S.runPeriod();
-	    it('should modify in place and return the original simulation object', function(){
-		assert.ok(sim===S);
-	    });
+
+	var tests_for_config_costs_exceed_values = function(state){
 	    it('should increment .period', function(){
-		S.period.should.equal(1);
+		state.S.period.should.equal(1);
 	    });
 	    it('should have property xMarket -- an instance of Market', function(){
-		S.should.have.property('xMarket');
+		state.S.should.have.property('xMarket');
 		/* unlike above test with .pool where Pool was in scope, Market is not in scope here. */
-		S.xMarket.should.be.instanceOf(MEC.Market);
+		state.S.xMarket.should.be.instanceOf(MEC.Market);
 	    });
 	    it('should set ziAgent.prototype.bid and ziAgent.prototype.ask', function(){
 		assert.ok(typeof(ziAgent.prototype.bid)==='function');
 		assert.ok(typeof(ziAgent.prototype.ask)==='function');
 	    });
 	    it('the order log should have between 2700 and 3300 orders (5 sigma, poisson 5*600)', function(){
-		S.logs.order.data.length.should.be.within(2700,3300);
+		state.S.logs.order.data.length.should.be.within(2700,3300);
 	    });
 	    it('the trade log should have one entry, the header row', function(){
-		S.logs.trade.data.length.should.be.equal(1);
-		S.logs.trade.data[0].should.deepEqual(tradeLogHeader);		
+		state.S.logs.trade.data.length.should.be.equal(1);
+		state.S.logs.trade.data[0].should.deepEqual(tradeLogHeader);		
 	    }); 
 	    it('the period log should have one entry equal to [0,0,0,0,0]', function(){
-		S.logs.period.data.length.should.be.equal(1);
-		S.logs.period.data.should.deepEqual([[0,0,0,0,0]]);
+		state.S.logs.period.data.length.should.be.equal(1);
+		state.S.logs.period.data.should.deepEqual([[0,0,0,0,0]]);
 	    }); 
+	};
+
+	describe('runPeriod()', function(){
+	    /* runPeriod() is synchronous */
+	    var mySim = new Simulation(config_costs_exceed_values);
+	    var sim = mySim.runPeriod();
+	    it('should modify in place and return the original simulation object', function(){
+		assert.ok(mySim===sim);
+	    });
+	    tests_for_config_costs_exceed_values({S:mySim});
 	});
+	describe('runPeriod(function(e,sim){...}) runs asynchronously', function(done){
+	    describe('because async runPeriod returns immediately, order log should be empty', function(){
+		it('order log should have length 0', function(done){
+		    var mySim = new Simulation(config_costs_exceed_values);
+		    var callback = function(e,S){
+			done();
+		    };
+		    mySim.runPeriod(callback);
+		    mySim.logs.order.data.length.should.equal(0);
+		});
+	    });
+	    describe('when done should pass same tests as runPeriod()', function(){
+		var state = {};
+		beforeEach(function(done){
+		    mySim = new Simulation(config_costs_exceed_values);
+		    var callback = function(e,S){
+			state.S = S;
+			done();
+		    };
+		    mySim.runPeriod(callback);
+		});
+		tests_for_config_costs_exceed_values(state);
+	    });
+	});	    
     });
 });
 
