@@ -6,6 +6,17 @@ const singleMarketRobotSimulator = require("../index.js");
 const Log = singleMarketRobotSimulator.Log;
 const Simulation = singleMarketRobotSimulator.Simulation;
 const runSimulation = singleMarketRobotSimulator.runSimulation;
+const MEC = require('market-example-contingent');
+
+var tradeLogHeader = ['period',
+		      't',
+		      'price',
+		      'buyerAgentId',
+		      'buyerValue',
+		      'buyerProfit',
+		      'sellerAgentId',
+		      'sellerCost',
+		      'sellerProfit'];
 
 function fakeFS(fsinfo){
     global.fs = {
@@ -131,6 +142,7 @@ describe('Log.write({a:23}) to fake fs ', function(){
 });
 
 describe('Simulation', function(){
+    delete global.fs;
     it('new Simulation({}) with empty options {} should throw error', function(){
 	var simulation_with_omitted_options = function(){
 	    var S = new Simulation({});
@@ -138,7 +150,102 @@ describe('Simulation', function(){
 	simulation_with_omitted_options.should.throw();
     });
 
-
+    describe('simulation with values [10,9,8] all below costs [20,40]', function(){
+	var config_costs_exceed_values = {
+	    L:1,
+	    H:100,
+	    buyerValues: [10,9,8],
+	    sellerCosts: [20,40],
+	    silent: 1
+	};
+	describe('on new Simulation', function(){
+	    var S = new Simulation(config_costs_exceed_values);
+	    var props = ['options', 
+			 'numberOfBuyers',
+			 'numberOfSellers',
+			 'numberOfAgents',
+			 'logs',
+			 'pool',
+			 'buyersPool',
+			 'sellersPool',
+			 'period',
+			 'periodDuration'
+			];
+	    it('should have properties '+props.join(","), function(){
+		S.should.have.properties(props);
+	    });
+	    it('should set .options properly', function(){
+		assert.ok(S.options===config_costs_exceed_values);
+	    });
+	    it('should set .numberOfBuyers to 3', function(){
+		S.numberOfBuyers.should.equal(3);
+	    });
+	    it('should set .numberOfSellers to 2', function(){
+		S.numberOfSellers.should.equal(2);
+	    });
+	    it('should set .numberOfAgents to 5', function(){
+		S.numberOfAgents.should.equal(5);
+	    });
+	    it('.logs should have properties trade, order, period -- all instances of Log', function(){
+		S.logs.should.have.properties('trade','order','period');
+		S.logs.trade.should.be.an.instanceOf(Log);
+		S.logs.order.should.be.an.instanceOf(Log);
+		S.logs.period.should.be.an.instanceOf(Log);
+	    });
+	    it('.pool should be an instance of Pool containing 5 (ZI) agents with .bidPrice and .askPrice functions',function(){
+		/* why are Pool, ziAgent, etc. in scope here? Is this a feature of should? */
+		S.pool.should.be.an.instanceOf(Pool);
+		S.pool.agents.length.should.equal(5);
+		S.pool.agents.forEach(function(A){ 
+		    A.should.be.an.instanceOf(ziAgent).and.have.properties('bidPrice','askPrice'); 
+		});
+	    });
+	    it('.buyersPool should be an instance of Pool containing 3 agents', function(){
+		S.buyersPool.should.be.an.instanceOf(Pool);
+		S.buyersPool.agents.length.should.equal(3);
+	    });
+	    it('.sellersPool should be an instance of Pool containing 2 agents', function(){
+		S.sellersPool.should.be.an.instanceOf(Pool);
+		S.sellersPool.agents.length.should.equal(2);
+	    });
+	    it('.period should be zero', function(){
+		S.period.should.equal(0);
+	    });
+	    it('.periodDuration should be 600 (default, 10 min = 600 sec virtual duration)', function(){
+		S.periodDuration.should.equal(600);
+	    });
+	});
+	describe('runPeriod()', function(){
+	    var S = new Simulation(config_costs_exceed_values);
+	    var sim = S.runPeriod();
+	    it('should modify in place and return the original simulation object', function(){
+		assert.ok(sim===S);
+	    });
+	    it('should increment .period', function(){
+		S.period.should.equal(1);
+	    });
+	    it('should have property xMarket -- an instance of Market', function(){
+		S.should.have.property('xMarket');
+		/* unlike above test with .pool where Pool was in scope, Market is not in scope here. */
+		S.xMarket.should.be.instanceOf(MEC.Market);
+	    });
+	    it('should set ziAgent.prototype.bid and ziAgent.prototype.ask', function(){
+		assert.ok(typeof(ziAgent.prototype.bid)==='function');
+		assert.ok(typeof(ziAgent.prototype.ask)==='function');
+	    });
+	    it('the order log should have between 2700 and 3300 orders (5 sigma, poisson 5*600)', function(){
+		S.logs.order.data.length.should.be.within(2700,3300);
+	    });
+	    it('the trade log should have one entry, the header row', function(){
+		S.logs.trade.data.length.should.be.equal(1);
+		S.logs.trade.data[0].should.deepEqual(tradeLogHeader);		
+	    }); 
+	    it('the period log should have one entry equal to [0,0,0,0,0]', function(){
+		S.logs.period.data.length.should.be.equal(1);
+		S.logs.period.data.should.deepEqual([[0,0,0,0,0]]);
+	    }); 
+	});
+    });
 });
 
 
