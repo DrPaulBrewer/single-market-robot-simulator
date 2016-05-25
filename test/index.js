@@ -215,10 +215,6 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	it('.periodDuration should be 600 (default, 10 min = 600 sec virtual duration)', function(){
 	    S.periodDuration.should.equal(600);
 	});
-	it('.logTrade({totalQ:2}) should throw because of single unit trade requirement', function(){
-	    var logTwoUnitTrade = function(){ S.logTrade({totalQ:2}) };
-	    logTwoUnitTrade.should.throw();
-	});
     });
 
     var tests_for_config_costs_exceed_values = function(state){
@@ -248,6 +244,11 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	    state.S.logs.period.data.length.should.be.equal(1);
 	    state.S.logs.period.data.should.deepEqual([[0,0,0,0,0]]);
 	}); 
+	it('.logTrade({totalQ:2}) should throw because of single unit trade requirement', function(){
+	    var logTwoUnitTrade = function(){ state.S.logTrade({totalQ:2}); };
+	    logTwoUnitTrade.should.throw();
+	});
+
     };
 
     describe('runPeriod()', function(){
