@@ -141,7 +141,7 @@ describe('Log.write({a:23}) to fake fs ', function(){
     });
 });
 
-describe('Simulation', function(){
+describe('blank Simulation not allowed', function(){
     delete global.fs;
     it('new Simulation({}) with empty options {} should throw error', function(){
 	var simulation_with_omitted_options = function(){
@@ -149,293 +149,296 @@ describe('Simulation', function(){
 	};
 	simulation_with_omitted_options.should.throw();
     });
+});
 
-
-    describe('simulation with values [10,9,8] all below costs [20,40]', function(){
-	var config_costs_exceed_values = {
-	    L:1,
-	    H:100,
-	    buyerValues: [10,9,8],
-	    sellerCosts: [20,40],
-	    silent: 1
-	};
-	describe('on new Simulation', function(){
-	    var S = new Simulation(config_costs_exceed_values);
-	    var props = ['options', 
-			 'numberOfBuyers',
-			 'numberOfSellers',
-			 'numberOfAgents',
-			 'logs',
-			 'pool',
-			 'buyersPool',
-			 'sellersPool',
-			 'period',
-			 'periodDuration'
-			];
-	    it('should have properties '+props.join(","), function(){
-		S.should.have.properties(props);
-	    });
-	    it('should set .options properly', function(){
-		assert.ok(S.options===config_costs_exceed_values);
-	    });
-	    it('should set .numberOfBuyers to 3', function(){
-		S.numberOfBuyers.should.equal(3);
-	    });
-	    it('should set .numberOfSellers to 2', function(){
-		S.numberOfSellers.should.equal(2);
-	    });
-	    it('should set .numberOfAgents to 5', function(){
-		S.numberOfAgents.should.equal(5);
-	    });
-	    it('.logs should have properties trade, order, period -- all instances of Log', function(){
-		S.logs.should.have.properties('trade','order','period');
-		S.logs.trade.should.be.an.instanceOf(Log);
-		S.logs.order.should.be.an.instanceOf(Log);
-		S.logs.period.should.be.an.instanceOf(Log);
-	    });
-	    it('.pool should be an instance of Pool containing 5 (ZI) agents with .bidPrice and .askPrice functions',function(){
-		/* why are Pool, ziAgent, etc. in scope here? Is this a feature of should? */
-		S.pool.should.be.an.instanceOf(Pool);
-		S.pool.agents.length.should.equal(5);
-		S.pool.agents.forEach(function(A){ 
-		    A.should.be.an.instanceOf(ziAgent).and.have.properties('bidPrice','askPrice'); 
-		});
-	    });
-	    it('.buyersPool should be an instance of Pool containing 3 agents', function(){
-		S.buyersPool.should.be.an.instanceOf(Pool);
-		S.buyersPool.agents.length.should.equal(3);
-	    });
-	    it('.sellersPool should be an instance of Pool containing 2 agents', function(){
-		S.sellersPool.should.be.an.instanceOf(Pool);
-		S.sellersPool.agents.length.should.equal(2);
-	    });
-	    it('.period should be zero', function(){
-		S.period.should.equal(0);
-	    });
-	    it('.periodDuration should be 600 (default, 10 min = 600 sec virtual duration)', function(){
-		S.periodDuration.should.equal(600);
+describe('simulation with values [10,9,8] all below costs [20,40]', function(){
+    var config_costs_exceed_values = {
+	L:1,
+	H:100,
+	buyerValues: [10,9,8],
+	sellerCosts: [20,40],
+	silent: 1
+    };
+    describe('on new Simulation', function(){
+	var S = new Simulation(config_costs_exceed_values);
+	var props = ['options', 
+		     'numberOfBuyers',
+		     'numberOfSellers',
+		     'numberOfAgents',
+		     'logs',
+		     'pool',
+		     'buyersPool',
+		     'sellersPool',
+		     'period',
+		     'periodDuration'
+		    ];
+	it('should have properties '+props.join(","), function(){
+	    S.should.have.properties(props);
+	});
+	it('should set .options properly', function(){
+	    assert.ok(S.options===config_costs_exceed_values);
+	});
+	it('should set .numberOfBuyers to 3', function(){
+	    S.numberOfBuyers.should.equal(3);
+	});
+	it('should set .numberOfSellers to 2', function(){
+	    S.numberOfSellers.should.equal(2);
+	});
+	it('should set .numberOfAgents to 5', function(){
+	    S.numberOfAgents.should.equal(5);
+	});
+	it('.logs should have properties trade, order, period -- all instances of Log', function(){
+	    S.logs.should.have.properties('trade','order','period');
+	    S.logs.trade.should.be.an.instanceOf(Log);
+	    S.logs.order.should.be.an.instanceOf(Log);
+	    S.logs.period.should.be.an.instanceOf(Log);
+	});
+	it('.pool should be an instance of Pool containing 5 (ZI) agents with .bidPrice and .askPrice functions',function(){
+	    /* why are Pool, ziAgent, etc. in scope here? Is this a feature of should? */
+	    S.pool.should.be.an.instanceOf(Pool);
+	    S.pool.agents.length.should.equal(5);
+	    S.pool.agents.forEach(function(A){ 
+		A.should.be.an.instanceOf(ziAgent).and.have.properties('bidPrice','askPrice'); 
 	    });
 	});
-
-	var tests_for_config_costs_exceed_values = function(state){
-	    it('should increment .period', function(){
-		state.S.period.should.equal(1);
-	    });
-	    it('should have property xMarket -- an instance of Market', function(){
-		state.S.should.have.property('xMarket');
-		/* unlike above test with .pool where Pool was in scope, Market is not in scope here. */
-		state.S.xMarket.should.be.instanceOf(MEC.Market);
-	    });
-	    it('should set ziAgent.prototype.bid and ziAgent.prototype.ask', function(){
-		assert.ok(typeof(ziAgent.prototype.bid)==='function');
-		assert.ok(typeof(ziAgent.prototype.ask)==='function');
-	    });
-	    it('the order log should have between 2700 and 3300 orders (5 sigma, poisson 5*600)', function(){
-		state.S.logs.order.data.length.should.be.within(2700,3300);
-	    });
-	    it('the trade log should have one entry, the header row', function(){
-		state.S.logs.trade.data.length.should.be.equal(1);
-		state.S.logs.trade.data[0].should.deepEqual(tradeLogHeader);		
-	    }); 
-	    it('the period log should have one entry equal to [0,0,0,0,0]', function(){
-		state.S.logs.period.data.length.should.be.equal(1);
-		state.S.logs.period.data.should.deepEqual([[0,0,0,0,0]]);
-	    }); 
-	};
-
-	describe('runPeriod()', function(){
-	    /* runPeriod() is synchronous */
-	    var mySim = new Simulation(config_costs_exceed_values);
-	    var sim = mySim.runPeriod();
-	    it('should modify in place and return the original simulation object', function(){
-		assert.ok(mySim===sim);
-	    });
-	    tests_for_config_costs_exceed_values({S:mySim});
+	it('.buyersPool should be an instance of Pool containing 3 agents', function(){
+	    S.buyersPool.should.be.an.instanceOf(Pool);
+	    S.buyersPool.agents.length.should.equal(3);
 	});
-	describe('runPeriod(function(e,sim){...}) runs asynchronously', function(done){
-	    describe('because async runPeriod returns immediately, order log should be empty', function(){
-		it('order log should have length 0', function(done){
-		    var mySim = new Simulation(config_costs_exceed_values);
-		    var callback = function(e,S){
-			done();
-		    };
-		    mySim.runPeriod(callback);
-		    mySim.logs.order.data.length.should.equal(0);
-		});
+	it('.sellersPool should be an instance of Pool containing 2 agents', function(){
+	    S.sellersPool.should.be.an.instanceOf(Pool);
+	    S.sellersPool.agents.length.should.equal(2);
+	});
+	it('.period should be zero', function(){
+	    S.period.should.equal(0);
+	});
+	it('.periodDuration should be 600 (default, 10 min = 600 sec virtual duration)', function(){
+	    S.periodDuration.should.equal(600);
+	});
+    });
+
+    var tests_for_config_costs_exceed_values = function(state){
+	it('should increment .period', function(){
+	    state.S.period.should.equal(1);
+	});
+	it('should have property xMarket -- an instance of Market', function(){
+	    state.S.should.have.property('xMarket');
+	    /* unlike above test with .pool where Pool was in scope, Market is not in scope here. wonder why? */
+	    state.S.xMarket.should.be.instanceOf(MEC.Market);
+	});
+	it('should set ziAgent.prototype.bid and ziAgent.prototype.ask', function(){
+	    assert.ok(typeof(ziAgent.prototype.bid)==='function');
+	    assert.ok(typeof(ziAgent.prototype.ask)==='function');
+	    /* these functions should throw if not supplied proper parameters */
+	    ziAgent.prototype.bid.should.throw();
+	    ziAgent.prototype.ask.should.throw();
+	});	
+	it('the order log should have between 2700 and 3300 orders (5 sigma, poisson 5*600)', function(){
+	    state.S.logs.order.data.length.should.be.within(2700,3300);
+	});
+	it('the trade log should have one entry, the header row', function(){
+	    state.S.logs.trade.data.length.should.be.equal(1);
+	    state.S.logs.trade.data[0].should.deepEqual(tradeLogHeader);		
+	}); 
+	it('the period log should have one entry equal to [0,0,0,0,0]', function(){
+	    state.S.logs.period.data.length.should.be.equal(1);
+	    state.S.logs.period.data.should.deepEqual([[0,0,0,0,0]]);
+	}); 
+    };
+
+    describe('runPeriod()', function(){
+	/* runPeriod() is synchronous */
+	var mySim = new Simulation(config_costs_exceed_values);
+	var sim = mySim.runPeriod();
+	it('should modify in place and return the original simulation object', function(){
+	    assert.ok(mySim===sim);
+	});
+	tests_for_config_costs_exceed_values({S:mySim});
+    });
+    describe('runPeriod(function(e,sim){...}) runs asynchronously', function(done){
+	describe('because async runPeriod returns immediately, order log should be empty', function(){
+	    it('order log should have length 0', function(done){
+		var mySim = new Simulation(config_costs_exceed_values);
+		var callback = function(e,S){
+		    done();
+		};
+		mySim.runPeriod(callback);
+		mySim.logs.order.data.length.should.equal(0);
 	    });
-	    describe('when done should pass same tests as runPeriod()', function(){
-		var state = {};
-		beforeEach(function(done){
-		    mySim = new Simulation(config_costs_exceed_values);
-		    var callback = function(e,S){
-			state.S = S;
-			done();
-		    };
-		    mySim.runPeriod(callback);
-		});
-		tests_for_config_costs_exceed_values(state);
+	});
+	describe('when done should pass same tests as runPeriod()', function(){
+	    var state = {};
+	    beforeEach(function(done){
+		mySim = new Simulation(config_costs_exceed_values);
+		var callback = function(e,S){
+		    state.S = S;
+		    done();
+		};
+		mySim.runPeriod(callback);
 	    });
+	    tests_for_config_costs_exceed_values(state);
+	});
+    });
+});	    
+
+describe('simulation with single unit trade, value [1000], costs [1]', function(){
+    var config_single_unit_trade = {
+	L:1,
+	H:1000,
+	buyerValues: [1000],
+	sellerCosts: [1],
+	silent: 1
+    };
+
+    describe('on new Simulation', function(){
+	var S = new Simulation(config_single_unit_trade);
+	var props = ['options', 
+		     'numberOfBuyers',
+		     'numberOfSellers',
+		     'numberOfAgents',
+		     'logs',
+		     'pool',
+		     'buyersPool',
+		     'sellersPool',
+		     'period',
+		     'periodDuration'
+		    ];
+	it('should have properties '+props.join(","), function(){
+	    S.should.have.properties(props);
+	});
+	it('should set .options properly', function(){
+	    assert.ok(S.options===config_single_unit_trade);
+	});
+	it('should set .numberOfBuyers to 3', function(){
+	    S.numberOfBuyers.should.equal(1);
+	});
+	it('should set .numberOfSellers to 2', function(){
+	    S.numberOfSellers.should.equal(1);
+	});
+	it('should set .numberOfAgents to 5', function(){
+	    S.numberOfAgents.should.equal(2);
+	});
+	it('.logs should have properties trade, order, period -- all instances of Log', function(){
+	    S.logs.should.have.properties('trade','order','period');
+	    S.logs.trade.should.be.an.instanceOf(Log);
+	    S.logs.order.should.be.an.instanceOf(Log);
+	    S.logs.period.should.be.an.instanceOf(Log);
+	});
+	it('.pool should be an instance of Pool containing 2 (ZI) agents with .bidPrice and .askPrice functions',function(){
+	    /* why are Pool, ziAgent, etc. in scope here? Is this a feature of should? */
+	    S.pool.should.be.an.instanceOf(Pool);
+	    S.pool.agents.length.should.equal(2);
+	    S.pool.agents.forEach(function(A){ 
+		A.should.be.an.instanceOf(ziAgent).and.have.properties('bidPrice','askPrice'); 
+	    });
+	});
+	it('.buyersPool should be an instance of Pool containing 1 agents', function(){
+	    S.buyersPool.should.be.an.instanceOf(Pool);
+	    S.buyersPool.agents.length.should.equal(1);
+	});
+	it('.sellersPool should be an instance of Pool containing 1 agents', function(){
+	    S.sellersPool.should.be.an.instanceOf(Pool);
+	    S.sellersPool.agents.length.should.equal(1);
+	});
+	it('.period should be zero', function(){
+	    S.period.should.equal(0);
+	});
+	it('.periodDuration should be 600 (default, 10 min = 600 sec virtual duration)', function(){
+	    S.periodDuration.should.equal(600);
+	});
+    });
+
+    var tests_for_config_single_unit_trade = function(state){
+	it('should increment .period', function(){
+	    state.S.period.should.equal(1);
+	});
+	it('should have property xMarket -- an instance of Market', function(){
+	    state.S.should.have.property('xMarket');
+	    /* unlike above test with .pool where Pool was in scope, Market is not in scope here. */
+	    state.S.xMarket.should.be.instanceOf(MEC.Market);
+	});
+	it('should set ziAgent.prototype.bid and ziAgent.prototype.ask', function(){
+	    assert.ok(typeof(ziAgent.prototype.bid)==='function');
+	    assert.ok(typeof(ziAgent.prototype.ask)==='function');
+	});
+	it('the order log should have at most 1375 orders (5 sigma, poisson 1200, but will exhaust sooner by trade)', function(){
+	    state.S.logs.order.data.length.should.be.below(1375);
+	});
+	it('the trade log should have two entrys, the header row plus a trade', function(){
+	    state.S.logs.trade.data.length.should.equal(2);
+	    state.S.logs.trade.data[0].should.deepEqual(tradeLogHeader);
+	    state.S.logs.trade.data[1].should.not.deepEqual(tradeLogHeader);
+	    state.S.logs.trade.data[1].length.should.equal(state.S.logs.trade.data[0].length);
+	}); 
+	it('the tradelog should report period 1', function(){
+	    state.S.logs.trade.data[1][0].should.equal(1);
+	});
+	it('the tradelog should report a trade price between 1 and 1000', function(){
+	    state.S.logs.trade.data[1][2].should.be.within(1,1000);
+	});
+	it('the tradelog should report the correct buyerAgentId', function(){
+	    var buyerId = state.S.buyersPool.agents[0].id;
+	    var tradeLogBuyerId = state.S.logs.trade.data[1][3];
+	    assert.ok(tradeLogBuyerId===buyerId);
+	});
+	it('the tradelog should report the correct buyerValue', function(){
+	    state.S.logs.trade.data[1][4].should.equal(1000);
+	});
+	it('the tradelog should report the correct buyerProfit', function(){
+	    state.S.logs.trade.data[1][5].should.equal(1000-state.S.logs.trade.data[1][2]);
+	});
+	it('the tradelog should report the correct sellerAgentId', function(){
+	    var sellerId = state.S.sellersPool.agents[0].id;
+	    var tradeLogSellerId = state.S.logs.trade.data[1][6];
+	    assert.ok(tradeLogSellerId===sellerId);
+	});
+	it('the tradelog should report the correct seller cost', function(){
+	    state.S.logs.trade.data[1][7].should.equal(1);
+	});
+	it('the tradelog should report the correct seller profit', function(){
+	    state.S.logs.trade.data[1][8].should.equal(state.S.logs.trade.data[1][2]-1);
+	});
+	it('the period log should have one entry equal to [1000-p,p-1]', function(){
+	    var p = state.S.logs.trade.data[1][2];
+	    var correctProfits = [1000-p,p-1];
+	    state.S.logs.period.data.length.should.be.equal(1);
+	    state.S.logs.period.data.should.deepEqual([correctProfits]);
+	}); 
+    };
+
+    describe('runPeriod()', function(){
+	/* runPeriod() is synchronous */
+	var mySim = new Simulation(config_single_unit_trade);
+	var sim = mySim.runPeriod();
+	it('should modify in place and return the original simulation object', function(){
+	    assert.ok(mySim===sim);
+	});
+	tests_for_config_single_unit_trade({S:mySim});
+    });
+    describe('runPeriod(function(e,sim){...}) runs asynchronously', function(done){
+	describe('because async runPeriod returns immediately, order log should be empty', function(){
+	    it('order log should have length 0', function(done){
+		var mySim = new Simulation(config_single_unit_trade);
+		var callback = function(e,S){
+		    done();
+		};
+		mySim.runPeriod(callback);
+		mySim.logs.order.data.length.should.equal(0);
+	    });
+	});
+	describe('when done should pass same tests as runPeriod()', function(){
+	    var state = {};
+	    beforeEach(function(done){
+		mySim = new Simulation(config_single_unit_trade);
+		var callback = function(e,S){
+		    state.S = S;
+		    done();
+		};
+		mySim.runPeriod(callback);
+	    });
+	    tests_for_config_single_unit_trade(state);
 	});
     });	    
-	
-    describe('simulation with single unit trade, value [1000], costs [1]', function(){
-	var config_single_unit_trade = {
-	    L:1,
-	    H:1000,
-	    buyerValues: [1000],
-	    sellerCosts: [1],
-	    silent: 1
-	};
-
-	describe('on new Simulation', function(){
-	    var S = new Simulation(config_single_unit_trade);
-	    var props = ['options', 
-			 'numberOfBuyers',
-			 'numberOfSellers',
-			 'numberOfAgents',
-			 'logs',
-			 'pool',
-			 'buyersPool',
-			 'sellersPool',
-			 'period',
-			 'periodDuration'
-			];
-	    it('should have properties '+props.join(","), function(){
-		S.should.have.properties(props);
-	    });
-	    it('should set .options properly', function(){
-		assert.ok(S.options===config_single_unit_trade);
-	    });
-	    it('should set .numberOfBuyers to 3', function(){
-		S.numberOfBuyers.should.equal(1);
-	    });
-	    it('should set .numberOfSellers to 2', function(){
-		S.numberOfSellers.should.equal(1);
-	    });
-	    it('should set .numberOfAgents to 5', function(){
-		S.numberOfAgents.should.equal(2);
-	    });
-	    it('.logs should have properties trade, order, period -- all instances of Log', function(){
-		S.logs.should.have.properties('trade','order','period');
-		S.logs.trade.should.be.an.instanceOf(Log);
-		S.logs.order.should.be.an.instanceOf(Log);
-		S.logs.period.should.be.an.instanceOf(Log);
-	    });
-	    it('.pool should be an instance of Pool containing 2 (ZI) agents with .bidPrice and .askPrice functions',function(){
-		/* why are Pool, ziAgent, etc. in scope here? Is this a feature of should? */
-		S.pool.should.be.an.instanceOf(Pool);
-		S.pool.agents.length.should.equal(2);
-		S.pool.agents.forEach(function(A){ 
-		    A.should.be.an.instanceOf(ziAgent).and.have.properties('bidPrice','askPrice'); 
-		});
-	    });
-	    it('.buyersPool should be an instance of Pool containing 1 agents', function(){
-		S.buyersPool.should.be.an.instanceOf(Pool);
-		S.buyersPool.agents.length.should.equal(1);
-	    });
-	    it('.sellersPool should be an instance of Pool containing 1 agents', function(){
-		S.sellersPool.should.be.an.instanceOf(Pool);
-		S.sellersPool.agents.length.should.equal(1);
-	    });
-	    it('.period should be zero', function(){
-		S.period.should.equal(0);
-	    });
-	    it('.periodDuration should be 600 (default, 10 min = 600 sec virtual duration)', function(){
-		S.periodDuration.should.equal(600);
-	    });
-	});
-
-	var tests_for_config_single_unit_trade = function(state){
-	    it('should increment .period', function(){
-		state.S.period.should.equal(1);
-	    });
-	    it('should have property xMarket -- an instance of Market', function(){
-		state.S.should.have.property('xMarket');
-		/* unlike above test with .pool where Pool was in scope, Market is not in scope here. */
-		state.S.xMarket.should.be.instanceOf(MEC.Market);
-	    });
-	    it('should set ziAgent.prototype.bid and ziAgent.prototype.ask', function(){
-		assert.ok(typeof(ziAgent.prototype.bid)==='function');
-		assert.ok(typeof(ziAgent.prototype.ask)==='function');
-	    });
-	    it('the order log should have at most 1375 orders (5 sigma, poisson 1200, but will exhaust sooner by trade)', function(){
-		state.S.logs.order.data.length.should.be.below(1375);
-	    });
-	    it('the trade log should have two entrys, the header row plus a trade', function(){
-		state.S.logs.trade.data.length.should.equal(2);
-		state.S.logs.trade.data[0].should.deepEqual(tradeLogHeader);
-		state.S.logs.trade.data[1].should.not.deepEqual(tradeLogHeader);
-		state.S.logs.trade.data[1].length.should.equal(state.S.logs.trade.data[0].length);
-	    }); 
-	    it('the tradelog should report period 1', function(){
-		state.S.logs.trade.data[1][0].should.equal(1);
-	    });
-	    it('the tradelog should report a trade price between 1 and 1000', function(){
-		state.S.logs.trade.data[1][2].should.be.within(1,1000);
-	    });
-	    it('the tradelog should report the correct buyerAgentId', function(){
-		var buyerId = state.S.buyersPool.agents[0].id;
-		var tradeLogBuyerId = state.S.logs.trade.data[1][3];
-		assert.ok(tradeLogBuyerId===buyerId);
-	    });
-	    it('the tradelog should report the correct buyerValue', function(){
-		state.S.logs.trade.data[1][4].should.equal(1000);
-	    });
-	    it('the tradelog should report the correct buyerProfit', function(){
-		state.S.logs.trade.data[1][5].should.equal(1000-state.S.logs.trade.data[1][2]);
-	    });
-	    it('the tradelog should report the correct sellerAgentId', function(){
-		var sellerId = state.S.sellersPool.agents[0].id;
-		var tradeLogSellerId = state.S.logs.trade.data[1][6];
-		assert.ok(tradeLogSellerId===sellerId);
-	    });
-	    it('the tradelog should report the correct seller cost', function(){
-		state.S.logs.trade.data[1][7].should.equal(1);
-	    });
-	    it('the tradelog should report the correct seller profit', function(){
-		state.S.logs.trade.data[1][8].should.equal(state.S.logs.trade.data[1][2]-1);
-	    });
-	    it('the period log should have one entry equal to [1000-p,p-1]', function(){
-		var p = state.S.logs.trade.data[1][2];
-		var correctProfits = [1000-p,p-1];
-		state.S.logs.period.data.length.should.be.equal(1);
-		state.S.logs.period.data.should.deepEqual([correctProfits]);
-	    }); 
-	};
-
-	describe('runPeriod()', function(){
-	    /* runPeriod() is synchronous */
-	    var mySim = new Simulation(config_single_unit_trade);
-	    var sim = mySim.runPeriod();
-	    it('should modify in place and return the original simulation object', function(){
-		assert.ok(mySim===sim);
-	    });
-	    tests_for_config_single_unit_trade({S:mySim});
-	});
-	describe('runPeriod(function(e,sim){...}) runs asynchronously', function(done){
-	    describe('because async runPeriod returns immediately, order log should be empty', function(){
-		it('order log should have length 0', function(done){
-		    var mySim = new Simulation(config_single_unit_trade);
-		    var callback = function(e,S){
-			done();
-		    };
-		    mySim.runPeriod(callback);
-		    mySim.logs.order.data.length.should.equal(0);
-		});
-	    });
-	    describe('when done should pass same tests as runPeriod()', function(){
-		var state = {};
-		beforeEach(function(done){
-		    mySim = new Simulation(config_single_unit_trade);
-		    var callback = function(e,S){
-			state.S = S;
-			done();
-		    };
-		    mySim.runPeriod(callback);
-		});
-		tests_for_config_single_unit_trade(state);
-	    });
-	});	    
-    });
 });
+
     
