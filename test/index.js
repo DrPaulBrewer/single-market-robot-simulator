@@ -434,7 +434,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	describe('when done should pass same tests as runPeriod()', function(){
 	    var state = {};
 	    beforeEach(function(done){
-		mySim = new Simulation(config_single_unit_trade);
+		var mySim = new Simulation(config_single_unit_trade);
 		var callback = function(e,S){
 		    state.S = S;
 		    done();
@@ -443,7 +443,62 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	    });
 	    tests_for_config_single_unit_trade(state);
 	});
-    });	    
+    });
+    var tests_for_runSimulation_single_trade_ten_periods = function(state){
+	it('.period should be 10', function(){
+	    state.S.period.should.equal(10);
+	});
+	it('should have property xMarket -- an instance of Market', function(){
+	    state.S.should.have.property('xMarket');
+	    state.S.xMarket.should.be.instanceOf(MEC.Market);
+	});
+	it('the order log should have between 20 orders and 2000 orders', function(){
+	    /* 20 because we need 20 orders for 10 trades, 2000 tops is ad hoc but unlikely to be exceeded */ 
+	    state.S.logs.order.data.length.should.be.within(20,2000);
+	});
+	it('the trade log should have 11 entries, the header row plus 10 trades, exactly 1 trade per period', function(){
+	    state.S.logs.trade.data.length.should.equal(11);
+	    state.S.logs.trade.data[0].should.deepEqual(tradeLogHeader);
+	    state.S.logs.trade.data.forEach(function(row,i){ if(i>0) row[0].should.equal(i); });
+	}); 
+	it('the period profit log should have 10 entries, each with two positive numbers that sum to 999', function(){
+	    state.S.logs.period.data.forEach(function(row){
+		row[0].should.be.above(0);
+		row[1].should.be.above(0);
+		assert.equal(row[0]+row[1],999);
+	    });
+	});
+    };
+
+    describe('runSimulation with 10 periods of single unit trade scenario, synchronous', function(){
+	var config = Object.assign({}, config_single_unit_trade, {periods:10});
+	var S = runSimulation(config);
+	tests_for_runSimulation_single_trade_ten_periods({S:S});
+    }); 
+
+    describe('runSimulation with 10 periods of single unit trade scenario, asyncrhonous', function(){
+	var config = Object.assign({}, config_single_unit_trade, {periods:10});
+	describe(' -- because runSimulation(config,callback) returns immediately, order log should be empty', function(){
+	    it('order log should have length 0', function(done){
+		var callback = function(e,sim){
+		    done();
+		};
+		var S = runSimulation(config, callback);
+		S.logs.order.data.length.should.equal(0);
+	    });
+	});
+	describe('when done should pass same tests as above ', function(){
+	    var state = {};
+	    beforeEach(function(done){
+		var callback = function(e,S){
+		    state.S = S;
+		    done();
+		};
+		var mySim = runSimulation(config,callback);
+	    });
+	    tests_for_runSimulation_single_trade_ten_periods(state);
+	});
+    });
 });
 
     
