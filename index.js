@@ -134,6 +134,8 @@ var Simulation = function(options){
     this.sellersPool.distribute('costs','X',options.sellerCosts);
     this.period = 0;
     this.periodDuration = options.periodDuration || 600;
+    /* ignore console.log messages in coverage testing */
+    /* istanbul ignore if */
     if (!this.options.silent){
 	console.log("duration of each period = "+this.periodDuration);
 	console.log(" ");
@@ -149,6 +151,7 @@ var Simulation = function(options){
 Simulation.prototype.runPeriod = function(cb){
     var sim = this;
     sim.period++;
+    /* istanbul ignore if */
     if (!sim.options.silent)
 	console.log("period: "+sim.period);
     sim.pool.initPeriod(sim.period);
@@ -245,6 +248,7 @@ Simulation.prototype.logTrade = function(tradespec){
 var runSimulation = function(config, done, update, delay){
     var mySim = new Simulation(config);
     var periodNumber = 1;
+    /* istanbul ignore if */
     if (!config.silent)
 	console.log("Periods = "+config.periods);
     if(typeof(done)==='function'){
@@ -261,6 +265,7 @@ var runSimulation = function(config, done, update, delay){
 		}, (delay || 100) );
 	    },
 	    function(e,d){ 
+		/* istanbul ignore if */
 		if (!config.silent)
 		    console.log("done");
 		done(false, mySim);
@@ -271,6 +276,7 @@ var runSimulation = function(config, done, update, delay){
 	while(mySim.period<config.periods){
 	    mySim.runPeriod();
 	}
+	/* istanbul ignore if */
 	if (!config.silent)
 	    console.log("done");
     }
