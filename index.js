@@ -46,14 +46,14 @@ var simpleOrder = function(t,uid,cancelreplace){
     return o;
 };
 
-var simpleBuyOrder = function(t,uid,buyprice){
-    var o = simpleOrder(t,uid,1);
+var simpleBuyOrder = function(t,uid,buyprice,keepOldOrders){
+    var o = simpleOrder(t,uid,((keepOldOrders)?0:1));
     o[5]=buyprice;
     return o;
 };
 
-var simpleSellOrder = function(t,uid,sellprice){
-    var o = simpleOrder(t,uid,1);
+var simpleSellOrder = function(t,uid,sellprice,keepOldOrders){
+    var o = simpleOrder(t,uid,((keepOldOrders)?0:1));
     o[6]=sellprice;
     return o;
 }; 
@@ -100,8 +100,8 @@ var Simulation = function(options){
     this.numberOfAgents = this.numberOfBuyers+this.numberOfSellers;
     this.logs = {};
     this.logs.trade  = new Log("./trades.csv");
-    this.logs.order  = new Log('./orders.csv','w');
-    this.logs.period = new Log('./periods.csv','w');
+    this.logs.order  = new Log('./orders.csv');
+    this.logs.period = new Log('./periods.csv');
     this.logs.trade.write(['period','t','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit']);
     var i,l;
     var a;
@@ -109,6 +109,8 @@ var Simulation = function(options){
     this.buyersPool = new Pool();
     this.sellersPool = new Pool();
     var common = {
+	integer: options.integer,
+	ignoreBudgetConstraint: options.ignoreBudgetConstraint,
 	markets: {X:{}},
 	period: {number:0, startTime:0, init: {inventory:{X:0, money:0}}},
 	minPrice: options.L || 0,
@@ -166,7 +168,7 @@ Simulation.prototype.runPeriod = function(cb){
 	if ((typeof(good)!=='string') ||
 	    (typeof(price)!=='number'))
 	    throw new Error("bid function received invalid parameters: "+typeof(good)+" "+typeof(price));
-	var order = simpleBuyOrder(this.wakeTime, this.id, price);
+	var order = simpleBuyOrder(this.wakeTime, this.id, price, sim.options.keepPreviousOrders);
 	if (good === 'X'){
 	    sim.logOrder([this.period.number, this.wakeTime, this.id, 1, price, this.unitValueFunction('X',this.inventory), this.inventory.X]);
 	    sim.xMarket.inbox.push(order);
@@ -178,7 +180,7 @@ Simulation.prototype.runPeriod = function(cb){
 	if ((typeof(good)!=='string') ||
 	    (typeof(price)!=='number'))
 	    throw new Error("ask function received invalid parameters: "+typeof(good)+" "+typeof(price));
-	var order = simpleSellOrder(this.wakeTime, this.id, price);
+	var order = simpleSellOrder(this.wakeTime, this.id, price, sim.options.keepPreviousOrders);
 	if (good === 'X'){
 	    sim.logOrder([this.period.number, this.wakeTime, this.id, -1, price, this.unitCostFunction('X',this.inventory), this.inventory.X]);
 	    sim.xMarket.inbox.push(simpleSellOrder(this.wakeTime,this.id,price));
