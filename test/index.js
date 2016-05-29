@@ -212,8 +212,8 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	it('.period should be zero', function(){
 	    S.period.should.equal(0);
 	});
-	it('.periodDuration should be 600 (default, 10 min = 600 sec virtual duration)', function(){
-	    S.periodDuration.should.equal(600);
+	it('.periodDuration should be 1000 (default)', function(){
+	    S.periodDuration.should.equal(1000);
 	});
     });
 
@@ -233,8 +233,8 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	    ziAgent.prototype.bid.should.throw();
 	    ziAgent.prototype.ask.should.throw();
 	});	
-	it('the order log should have between 2700 and 3300 orders (5 sigma, poisson 5*600)', function(){
-	    state.S.logs.order.data.length.should.be.within(2700,3300);
+	it('the order log should have between ~4650 and ~5350 orders (5 sigma, poisson 5*1000)', function(){
+	    state.S.logs.order.data.length.should.be.within(4650,5350);
 	});
 	it('the trade log should have one entry, the header row', function(){
 	    state.S.logs.trade.data.length.should.be.equal(1);
@@ -348,8 +348,8 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	it('.period should be zero', function(){
 	    S.period.should.equal(0);
 	});
-	it('.periodDuration should be 600 (default, 10 min = 600 sec virtual duration)', function(){
-	    S.periodDuration.should.equal(600);
+	it('.periodDuration should be 1000 (default)', function(){
+	    S.periodDuration.should.equal(1000);
 	});
     });
 
@@ -366,8 +366,8 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	    assert.ok(typeof(ziAgent.prototype.bid)==='function');
 	    assert.ok(typeof(ziAgent.prototype.ask)==='function');
 	});
-	it('the order log should have at most 1375 orders (5 sigma, poisson 1200, but will exhaust sooner by trade)', function(){
-	    state.S.logs.order.data.length.should.be.below(1375);
+	it('the order log should have at most ~2225 orders (5 sigma, poisson 2000, but will exhaust sooner by trade)', function(){
+	    state.S.logs.order.data.length.should.be.below(2225);
 	});
 	it('the trade log should have two entrys, the header row plus a trade', function(){
 	    state.S.logs.trade.data.length.should.equal(2);

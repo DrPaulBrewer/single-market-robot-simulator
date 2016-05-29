@@ -95,8 +95,18 @@ var Simulation = function(options){
     // L is the lowest possible random bid price
     // H is the highest possible random ask price
     // maxTries -- maximum number of tries to generate order
-    this.numberOfBuyers = options.numberOfBuyers   || options.buyerValues.length;
-    this.numberOfSellers = options.numberOfSellers || options.sellerCosts.length;
+    this.numberOfBuyers = options.numberOfBuyers;
+    if (!this.numberOfBuyers){
+	if (Array.isArray(options.buyerValues))
+	    this.numberOfBuyers = options.buyerValues.length;
+    }
+    this.numberOfSellers = options.numberOfSellers;
+    if (!this.numberOfSellers){
+	if (Array.isArray(options.sellerCosts))
+	    this.numberOfSellers = options.sellerCosts.length;
+    }
+    if ( (!this.numberOfBuyers) || (!this.numberOfSellers) )
+	throw new Error("single-market-robot-simulation: can not determine numberOfBuyers and/or numberOfSellers ");
     this.numberOfAgents = this.numberOfBuyers+this.numberOfSellers;
     this.logs = {};
     this.logs.trade  = new Log("./trades.csv");
@@ -112,7 +122,7 @@ var Simulation = function(options){
 	integer: options.integer,
 	ignoreBudgetConstraint: options.ignoreBudgetConstraint,
 	markets: {X:{}},
-	period: {number:0, startTime:0, init: {inventory:{X:0, money:0}}},
+	period: {number:0, equalDuration:true, duration:(options.periodDuration || 1000), init: {inventory:{X:0, money:0}}},
 	minPrice: options.L || 0,
 	maxPrice: options.H || (2*Math.max(options.buyerValues[0], options.sellerCosts[options.sellerCosts.length-1]))
     };
@@ -135,7 +145,7 @@ var Simulation = function(options){
     this.buyersPool.distribute('values','X',options.buyerValues);
     this.sellersPool.distribute('costs','X',options.sellerCosts);
     this.period = 0;
-    this.periodDuration = options.periodDuration || 600;
+    this.periodDuration = common.period.duration;
     /* ignore console.log messages in coverage testing */
     /* istanbul ignore if */
     if (!this.options.silent){
@@ -198,10 +208,10 @@ Simulation.prototype.runPeriod = function(cb){
 	    sim.logPeriod(final_money);
 	    cb(false, sim);
 	};
-	return sim.pool.run(sim.periodDuration, poolCallback, 10);
+	return sim.pool.run(sim.pool.endTime(),poolCallback, 10);
     } else {
 	/* no callback; run synchronously */
-	sim.pool.syncRun(sim.periodDuration);
+	sim.pool.syncRun(sim.pool.endTime());
 	sim.pool.endPeriod();
 	var finalMoney = sim.pool.agents.map(function(A){ return A.inventory.money; });
 	sim.logPeriod(finalMoney);
