@@ -79,6 +79,16 @@ describe('Log.write({a:23}) to data array', function(){
     });
 });
 
+describe('Log.write(undefined) to data array', function(){
+    it('should leave the data array unchanged', function(){
+	var L = new Log();
+	L.data.length.should.equal(0);
+	L.write();
+	L.write(undefined);
+	L.data.length.should.equal(0);
+    });
+});
+
 describe('new Log(filename) to fake fs', function(){
     it('should call openSync and not have a data array', function(){
 	var fsinfo = {};
@@ -187,11 +197,10 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	it('should set .numberOfAgents to 5', function(){
 	    S.numberOfAgents.should.equal(5);
 	});
-	it('.logs should have properties trade, order, period -- all instances of Log', function(){
-	    S.logs.should.have.properties('trade','order','period');
-	    S.logs.trade.should.be.an.instanceOf(Log);
-	    S.logs.order.should.be.an.instanceOf(Log);
-	    S.logs.period.should.be.an.instanceOf(Log);
+	it('.logs should have properties trade, order, profit, ohlc, volume -- all instances of Log', function(){
+	    var props = ['trade','order','profit','ohlc','volume'];
+	    S.logs.should.have.properties(props);
+	    props.forEach(function(prop){ S.logs[prop].should.be.an.instanceOf(Log); });
 	});
 	it('.pool should be an instance of Pool containing 5 (ZI) agents with .bidPrice and .askPrice functions',function(){
 	    /* why are Pool, ziAgent, etc. in scope here? Is this a feature of should? */
@@ -240,10 +249,17 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	    state.S.logs.trade.data.length.should.be.equal(1);
 	    state.S.logs.trade.data[0].should.deepEqual(tradeLogHeader);		
 	}); 
-	it('the period log should have one entry equal to [0,0,0,0,0]', function(){
-	    state.S.logs.period.data.length.should.be.equal(1);
-	    state.S.logs.period.data.should.deepEqual([[0,0,0,0,0]]);
+	it('the profit log should have one entry equal to [0,0,0,0,0]', function(){
+	    state.S.logs.profit.data.length.should.be.equal(1);
+	    state.S.logs.profit.data.should.deepEqual([[0,0,0,0,0]]);
 	}); 
+	it('the ohlc log should be blank', function(){
+	    state.S.logs.ohlc.data.length.should.equal(0);
+	});
+	it('the volume log should have one entry equal to [1,0]', function(){
+	    state.S.logs.volume.data.length.should.equal(1);
+	    state.S.logs.volume.data.should.deepEqual([[1,0]]);
+	});
 	it('.logTrade({totalQ:2}) should throw because of single unit trade requirement', function(){
 	    var logTwoUnitTrade = function(){ state.S.logTrade({totalQ:2}); };
 	    logTwoUnitTrade.should.throw();
@@ -323,11 +339,10 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	it('should set .numberOfAgents to 5', function(){
 	    S.numberOfAgents.should.equal(2);
 	});
-	it('.logs should have properties trade, order, period -- all instances of Log', function(){
-	    S.logs.should.have.properties('trade','order','period');
-	    S.logs.trade.should.be.an.instanceOf(Log);
-	    S.logs.order.should.be.an.instanceOf(Log);
-	    S.logs.period.should.be.an.instanceOf(Log);
+	it('.logs should have properties trade, order, profit, ohlc, volume -- all instances of Log', function(){
+	    var props = ['trade','order','profit','ohlc','volume'];
+	    S.logs.should.have.properties(props);
+	    props.forEach(function(prop){ S.logs[prop].should.be.an.instanceOf(Log); });
 	});
 	it('.pool should be an instance of Pool containing 2 (ZI) agents with .bidPrice and .askPrice functions',function(){
 	    /* why are Pool, ziAgent, etc. in scope here? Is this a feature of should? */
@@ -403,12 +418,22 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	it('the tradelog should report the correct seller profit', function(){
 	    state.S.logs.trade.data[1][8].should.equal(state.S.logs.trade.data[1][2]-1);
 	});
-	it('the period log should have one entry equal to [1000-p,p-1]', function(){
+	it('the profit log should have one entry equal to [1000-p,p-1]', function(){
 	    var p = state.S.logs.trade.data[1][2];
 	    var correctProfits = [1000-p,p-1];
-	    state.S.logs.period.data.length.should.be.equal(1);
-	    state.S.logs.period.data.should.deepEqual([correctProfits]);
+	    state.S.logs.profit.data.length.should.be.equal(1);
+	    state.S.logs.profit.data.should.deepEqual([correctProfits]);
 	}); 
+	it('the ohlc log should have one entry, with all 4 o,h,l,c elements equal to the trade price', function(){
+	    var p = state.S.logs.trade.data[1][2];
+	    var correctOHLC = [state.S.period,p,p,p,p];
+	    state.S.logs.ohlc.data.length.should.equal(1);
+	    state.S.logs.ohlc.data.should.deepEqual([correctOHLC]);
+	});
+	it('the volume log should have one entry, [1,1]', function(){
+	    state.S.logs.volume.data.length.should.equal(1);
+	    state.S.logs.volume.data.should.deepEqual([[1,1]]);
+	});
     };
 
     describe('runPeriod()', function(){
@@ -462,11 +487,28 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	    state.S.logs.trade.data.forEach(function(row,i){ if(i>0) row[0].should.equal(i); });
 	}); 
 	it('the period profit log should have 10 entries, each with two positive numbers that sum to 999', function(){
-	    state.S.logs.period.data.forEach(function(row){
+	    state.S.logs.profit.data.forEach(function(row){
 		row[0].should.be.above(0);
 		row[1].should.be.above(0);
 		assert.equal(row[0]+row[1],999);
 	    });
+	});
+	it('the ohlc log should have 10 entries, 1 trade per period, matching trade log', function(){
+	    var priceCol = tradeLogHeader.indexOf('price'),periodCol = tradeLogHeader.indexOf('period');
+	    /* use .slice(1) to copy trade log with header row omitted */
+	    var altOHLC = state.S.logs.trade.data.slice(1).map(
+		function(row,i){ 
+		    var period = row[periodCol];
+		    var price  = row[priceCol];
+		    /* o,h,l,c equal because it is a single unit trade scenario */
+		    return [period,price,price,price,price];
+		});
+	    state.S.logs.ohlc.data.length.should.equal(10);
+	    state.S.logs.ohlc.data.should.deepEqual(altOHLC);		
+	});
+	it('the volume log should have 10 entries, 1 per period, showing 1 unit traded', function(){
+	    state.S.logs.volume.data.length.should.equal(10);
+	    state.S.logs.volume.data.should.deepEqual([[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[8,1],[9,1],[10,1]]);
 	});
     };
 

@@ -73,6 +73,7 @@ var Log = function(fname){
 };
 
 Log.prototype.write = function(x){
+    if (x===undefined) return;
     if (this.useFS){
 	if (Array.isArray(x)){
 	    fs.writeSync(this.fd, x.join(",")+"\n");
@@ -111,7 +112,9 @@ var Simulation = function(options){
     this.logs = {};
     this.logs.trade  = new Log("./trades.csv");
     this.logs.order  = new Log('./orders.csv');
-    this.logs.period = new Log('./periods.csv');
+    this.logs.profit = new Log('./profit.csv');
+    this.logs.ohlc   = new Log('./ohlc.csv');
+    this.logs.volume = new Log('./volume.csv');
     this.logs.trade.write(['period','t','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit']);
     var i,l;
     var a;
@@ -146,6 +149,7 @@ var Simulation = function(options){
     this.sellersPool.distribute('costs','X',options.sellerCosts);
     this.period = 0;
     this.periodDuration = common.period.duration;
+    this.periodTradePrices = [];
     /* ignore console.log messages in coverage testing */
     /* istanbul ignore if */
     if (!this.options.silent){
@@ -202,10 +206,7 @@ Simulation.prototype.runPeriod = function(cb){
 	/* run asynchronously, call cb function at end */
 	var poolCallback = function(e){
 	    this.endPeriod();
-	    var final_money = this.agents.map(function(A){
-		return A.inventory.money;
-	    });
-	    sim.logPeriod(final_money);
+	    sim.logPeriod();
 	    cb(false, sim);
 	};
 	return sim.pool.run(sim.pool.endTime(),poolCallback, 10);
@@ -213,8 +214,7 @@ Simulation.prototype.runPeriod = function(cb){
 	/* no callback; run synchronously */
 	sim.pool.syncRun(sim.pool.endTime());
 	sim.pool.endPeriod();
-	var finalMoney = sim.pool.agents.map(function(A){ return A.inventory.money; });
-	sim.logPeriod(finalMoney);
+	sim.logPeriod();
 	return(sim);
     }
 };    	       
@@ -223,8 +223,23 @@ Simulation.prototype.logOrder = function(details){
     this.logs.order.write(details);
 };
 
-Simulation.prototype.logPeriod = function(details){ 
-    this.logs.period.write(details);
+Simulation.prototype.logPeriod = function(){
+    var sim = this;
+    var finalMoney = sim.pool.agents.map(function(A){ return A.inventory.money; });
+    var ohlc = function(){
+	var o,h,l,c;
+	if (sim.periodTradePrices.length>0){
+	    o = sim.periodTradePrices[0];
+	    c = sim.periodTradePrices[sim.periodTradePrices.length-1];
+	    h = Math.max.apply(Math, sim.periodTradePrices);
+	    l = Math.min.apply(Math, sim.periodTradePrices);
+	    return [sim.period,o,h,l,c];
+	}
+    };
+    sim.logs.profit.write(finalMoney);
+    sim.logs.ohlc.write(ohlc());
+    sim.logs.volume.write([sim.period,sim.periodTradePrices.length]);
+    sim.periodTradePrices = [];
 };
 
 Simulation.prototype.logTrade = function(tradespec){
@@ -254,6 +269,7 @@ Simulation.prototype.logTrade = function(tradespec){
 	tradeSellerCost,
 	tradeSellerProfit
     ];
+    sim.periodTradePrices.push(tradePrice);
     sim.logs.trade.write(tradeOutput);
 };
 
