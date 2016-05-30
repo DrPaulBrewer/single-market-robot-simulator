@@ -245,13 +245,22 @@ Simulation.prototype.logPeriod = function(){
 Simulation.prototype.logTrade = function(tradespec){
     var sim = this;
     var idCol = sim.xMarket.o.idCol;
+    /* istanbul ignore if */
+    if (idCol === undefined )
+	throw new Error("Simulation.prototype.logTrade: sim.xMarket.o.idCol is undefined");
     // this is only sufficient for single unit trades
     if ( (tradespec.totalQ!==1) ||
 	 (tradespec.buyA.length!==1) ||
 	 (tradespec.sellA.length!==1) )
 	throw new Error("Simulation.prototype.logTrade: single unit trades required, got: "+tradespec.totalQ);
     var buyerid  = sim.xMarket.a[tradespec.buyA[0]][idCol];
+    /* istanbul ignore if */
+    if (buyerid===undefined)
+	throw new Error("Simulation.prototype.logTrade: buyerid is undefined, tradespec="+JSON.stringify(tradespec));
     var sellerid = sim.xMarket.a[tradespec.sellA[0]][idCol];
+    /* istanbul ignore if */
+    if (sellerid===undefined)
+	throw new Error("Simulation.prototype.logTrade: sellerid is undefined, tradespec="+JSON.stringify(tradespec));
     var tradePrice = tradespec.prices[0];
     if (!tradePrice) throw new Error("Simulation.prototype.logTrade: undefined price in trade ");
     var tradeBuyerValue = sim.pool.agentsById[buyerid].unitValueFunction('X', sim.pool.agentsById[buyerid].inventory);
