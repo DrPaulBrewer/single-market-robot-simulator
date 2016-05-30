@@ -541,6 +541,31 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	    tests_for_runSimulation_single_trade_ten_periods(state);
 	});
     });
+
+    describe('runSimulation with three simulations of 10 periods of single unit trade scenario, asynchronous', function(){
+	var configA = Object.assign({}, config_single_unit_trade, {periods:10});
+	var configB = Object.assign({}, config_single_unit_trade, {periods:10});
+	var configC = Object.assign({}, config_single_unit_trade, {periods:10});
+	describe('when done should pass same tests as above ', function(done){
+	    var states=[{},{},{}];
+	    beforeEach(function(done){
+		var count = 0;
+		var callback = function(e,S){
+		    states[count].S = S;
+		    count++;
+		    if (count===3){
+			done();
+		    }
+		};
+		runSimulation(configA, callback);
+		runSimulation(configB, callback);
+		runSimulation(configC, callback);
+	    });
+	    tests_for_runSimulation_single_trade_ten_periods(states[0]);
+	    tests_for_runSimulation_single_trade_ten_periods(states[1]);
+	    tests_for_runSimulation_single_trade_ten_periods(states[2]);
+	});
+    });
 });
 
     

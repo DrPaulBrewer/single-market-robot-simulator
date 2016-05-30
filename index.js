@@ -124,6 +124,7 @@ var Simulation = function(options){
     this.logs.trade.write(['period','t','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit']);
     var i,l;
     var a;
+    var sim = this;
     this.pool = new Pool();
     this.buyersPool = new Pool();
     this.sellersPool = new Pool();
@@ -136,10 +137,14 @@ var Simulation = function(options){
 	maxPrice: options.H || (2*Math.max(options.buyerValues[0], options.sellerCosts[options.sellerCosts.length-1]))
     };
     var newBuyerAgent = function(){
-	return new ziAgent(Object.assign({}, common, {rate: (options.buyerRate || 1)}));
+	var a = new ziAgent(Object.assign({}, common, {rate: (options.buyerRate || 1)}));
+	a.sim = sim; /* sim must be monkey patched in to avoid deep cloning in the constructor */
+	return a;
     };
     var newSellerAgent = function(){
-	return new ziAgent(Object.assign({}, common, {rate: (options.sellerRate || 1)}));
+	var a = new ziAgent(Object.assign({}, common, {rate: (options.sellerRate || 1)}));
+	a.sim = sim; /* sim must be monkey patched in to avoid deep cloaning in the constructor */
+	return a;
     };
     for(i=0,l=this.numberOfBuyers;i<l;++i){
 	a = newBuyerAgent();
@@ -170,6 +175,34 @@ var Simulation = function(options){
     }
 };
 
+ziAgent.prototype.bid = function(good, price){
+    'use strict';
+    if ((typeof(good)!=='string') ||
+	(typeof(price)!=='number'))
+	throw new Error("bid function received invalid parameters: "+typeof(good)+" "+typeof(price));
+    var order = simpleBuyOrder(this.wakeTime, this.id, price, this.sim.options.keepPreviousOrders);
+    if (good === 'X'){
+	this.sim.logOrder([this.period.number, this.wakeTime, this.id, 1, price, this.unitValueFunction('X',this.inventory), this.inventory.X]);
+	this.sim.xMarket.inbox.push(order);
+	while(this.sim.xMarket.inbox.length>0)
+	    this.sim.xMarket.push(this.sim.xMarket.inbox.shift());
+    }
+};
+
+ziAgent.prototype.ask = function(good, price){
+    'use strict';
+    if ((typeof(good)!=='string') ||
+	(typeof(price)!=='number'))
+	throw new Error("ask function received invalid parameters: "+typeof(good)+" "+typeof(price));
+    var order = simpleSellOrder(this.wakeTime, this.id, price, this.sim.options.keepPreviousOrders);
+    if (good === 'X'){
+	this.sim.logOrder([this.period.number, this.wakeTime, this.id, -1, price, this.unitCostFunction('X',this.inventory), this.inventory.X]);
+	this.sim.xMarket.inbox.push(order);
+	while(this.sim.xMarket.inbox.length>0)
+	    this.sim.xMarket.push(this.sim.xMarket.inbox.shift());
+    }
+};
+
 Simulation.prototype.runPeriod = function(cb){
     'use strict';
     var sim = this;
@@ -185,30 +218,6 @@ Simulation.prototype.runPeriod = function(cb){
 	sim.logTrade(tradeSpec);
 	sim.pool.trade(tradeSpec);
     });
-    ziAgent.prototype.bid = function(good, price){
-	if ((typeof(good)!=='string') ||
-	    (typeof(price)!=='number'))
-	    throw new Error("bid function received invalid parameters: "+typeof(good)+" "+typeof(price));
-	var order = simpleBuyOrder(this.wakeTime, this.id, price, sim.options.keepPreviousOrders);
-	if (good === 'X'){
-	    sim.logOrder([this.period.number, this.wakeTime, this.id, 1, price, this.unitValueFunction('X',this.inventory), this.inventory.X]);
-	    sim.xMarket.inbox.push(order);
-	    while(sim.xMarket.inbox.length>0)
-		sim.xMarket.push(sim.xMarket.inbox.shift());
-	}
-    };
-    ziAgent.prototype.ask = function(good, price){
-	if ((typeof(good)!=='string') ||
-	    (typeof(price)!=='number'))
-	    throw new Error("ask function received invalid parameters: "+typeof(good)+" "+typeof(price));
-	var order = simpleSellOrder(this.wakeTime, this.id, price, sim.options.keepPreviousOrders);
-	if (good === 'X'){
-	    sim.logOrder([this.period.number, this.wakeTime, this.id, -1, price, this.unitCostFunction('X',this.inventory), this.inventory.X]);
-	    sim.xMarket.inbox.push(order);
-	    while(sim.xMarket.inbox.length>0)
-		sim.xMarket.push(sim.xMarket.inbox.shift());
-	}
-    };
     if (typeof(cb)==='function'){
 	/* run asynchronously, call cb function at end */
 	var poolCallback = function(){
