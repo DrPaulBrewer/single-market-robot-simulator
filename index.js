@@ -1,6 +1,7 @@
 // Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC                             // This is open source software. The MIT License applies to this software.                                  // see https://opensource.org/licenses/MIT or included License.md file
 
-/* jshint node:true,esnext:true,eqeqeq:true,undef:true,lastsemic:true */
+/* jshint node:true,esnext:true,eqeqeq:true,undef:true,lastsemic:true,strict:true,unused:true */
+/* globals fs:true */
 
 // order format (subtract 2 from indexid as counter and tolocal are prepended on submission)
 // order = [
@@ -25,18 +26,18 @@
 // 18     trigssp: // limit price if triggered sell stop is activated
 // ]
 
-try { fs = require('fs'); } catch(e) {};
+try { fs = require('fs'); } catch(e) {}
 
 const async = require('async');
 
 const MEC = require('market-example-contingent');
 var Market = MEC.Market;
 const MarketAgents = require('market-agents');
-var Agent = MarketAgents.Agent;
 var ziAgent = MarketAgents.ziAgent;
 var Pool = MarketAgents.Pool;
 
 var simpleOrder = function(t,uid,cancelreplace){
+    'use strict';
     var i,l,o;
     for(i=0,l=17,o=[];i<l;++i) o[i]=0;
     o[0]=t;
@@ -47,25 +48,28 @@ var simpleOrder = function(t,uid,cancelreplace){
 };
 
 var simpleBuyOrder = function(t,uid,buyprice,keepOldOrders){
+    'use strict';
     var o = simpleOrder(t,uid,((keepOldOrders)?0:1));
     o[5]=buyprice;
     return o;
 };
 
 var simpleSellOrder = function(t,uid,sellprice,keepOldOrders){
+    'use strict';
     var o = simpleOrder(t,uid,((keepOldOrders)?0:1));
     o[6]=sellprice;
     return o;
 }; 
 
 var Log = function(fname){
+    'use strict';
     this.useFS = false;
     try { 
-	this.useFS = ( (typeof(fname)==='string') 
-		       && (fs) 
-		       && (fs.openSync) 
-		       && (fs.writeSync) );
-    } catch(e){};
+	this.useFS = ( (typeof(fname)==='string') &&
+		       (fs) &&
+		       (fs.openSync) &&
+		       (fs.writeSync) );
+    } catch(e){}
     if (this.useFS)
 	this.fd = fs.openSync(fname, 'w');
     else
@@ -73,6 +77,7 @@ var Log = function(fname){
 };
 
 Log.prototype.write = function(x){
+    'use strict';
     if (x===undefined) return;
     if (this.useFS){
 	if (Array.isArray(x)){
@@ -88,6 +93,7 @@ Log.prototype.write = function(x){
 };
 
 var Simulation = function(options){
+    'use strict';
     this.options = options;
     // expected options
     // periods:  number of periods to run
@@ -135,12 +141,12 @@ var Simulation = function(options){
     var newSellerAgent = function(){
 	return new ziAgent(Object.assign({}, common, {rate: (options.sellerRate || 1)}));
     };
-    for(i=0;i<this.numberOfBuyers;++i){
+    for(i=0,l=this.numberOfBuyers;i<l;++i){
 	a = newBuyerAgent();
 	this.buyersPool.push(a);
 	this.pool.push(a);
     }
-    for(i=0;i<this.numberOfSellers;++i){
+    for(i=0,l=this.numberOfSellers;i<l;++i){
 	a = newSellerAgent();
 	this.sellersPool.push(a);
 	this.pool.push(a);
@@ -165,6 +171,7 @@ var Simulation = function(options){
 };
 
 Simulation.prototype.runPeriod = function(cb){
+    'use strict';
     var sim = this;
     sim.period++;
     /* istanbul ignore if */
@@ -197,14 +204,14 @@ Simulation.prototype.runPeriod = function(cb){
 	var order = simpleSellOrder(this.wakeTime, this.id, price, sim.options.keepPreviousOrders);
 	if (good === 'X'){
 	    sim.logOrder([this.period.number, this.wakeTime, this.id, -1, price, this.unitCostFunction('X',this.inventory), this.inventory.X]);
-	    sim.xMarket.inbox.push(simpleSellOrder(this.wakeTime,this.id,price));
+	    sim.xMarket.inbox.push(order);
 	    while(sim.xMarket.inbox.length>0)
 		sim.xMarket.push(sim.xMarket.inbox.shift());
 	}
     };
     if (typeof(cb)==='function'){
 	/* run asynchronously, call cb function at end */
-	var poolCallback = function(e){
+	var poolCallback = function(){
 	    this.endPeriod();
 	    sim.logPeriod();
 	    cb(false, sim);
@@ -220,10 +227,12 @@ Simulation.prototype.runPeriod = function(cb){
 };    	       
 
 Simulation.prototype.logOrder = function(details){ 
+    'use strict';
     this.logs.order.write(details);
 };
 
 Simulation.prototype.logPeriod = function(){
+    'use strict';
     var sim = this;
     var finalMoney = sim.pool.agents.map(function(A){ return A.inventory.money; });
     var ohlc = function(){
@@ -243,6 +252,7 @@ Simulation.prototype.logPeriod = function(){
 };
 
 Simulation.prototype.logTrade = function(tradespec){
+    'use strict';
     var sim = this;
     var idCol = sim.xMarket.o.idCol;
     /* istanbul ignore if */
@@ -283,17 +293,17 @@ Simulation.prototype.logTrade = function(tradespec){
 };
 
 var runSimulation = function(config, done, update, delay){
+    'use strict';
     var mySim = new Simulation(config);
-    var periodNumber = 1;
     /* istanbul ignore if */
     if (!config.silent)
 	console.log("Periods = "+config.periods);
     if(typeof(done)==='function'){
 	async.whilst(
-	    function(){ 
+	    function(){
 		return (mySim.period<config.periods); 
 	    },
-	    function(callback){ 
+	    function(callback){
 		setTimeout(function(){
 		    mySim.runPeriod(function(e,d){
 			if (typeof(update)==='function') update(e,d);
@@ -301,7 +311,7 @@ var runSimulation = function(config, done, update, delay){
 		    });
 		}, (delay || 100) );
 	    },
-	    function(e,d){ 
+	    function(){ 
 		/* istanbul ignore if */
 		if (!config.silent)
 		    console.log("done");
@@ -321,6 +331,7 @@ var runSimulation = function(config, done, update, delay){
 };
 
 var main = function(){
+    'use strict';
 
     var config = require('./config.json');
 
@@ -335,6 +346,6 @@ if (require && (require.main===module)){
 	Simulation: Simulation,
 	runSimulation: runSimulation,
 	Log: Log,
-    }
+    };
 }
 
