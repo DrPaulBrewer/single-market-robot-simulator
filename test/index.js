@@ -546,9 +546,10 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	var configA = Object.assign({}, config_single_unit_trade, {periods:10});
 	var configB = Object.assign({}, config_single_unit_trade, {periods:10});
 	var configC = Object.assign({}, config_single_unit_trade, {periods:10});
-	describe('when done should pass same tests as above ', function(done){
+	describe('when done should pass same tests as above ', function(){
 	    var states=[{},{},{}];
-	    beforeEach(function(done){
+	    /* run the setup once before all the tests, not before each test */
+	    before(function(done){
 		var count = 0;
 		var callback = function(e,S){
 		    states[count].S = S;
