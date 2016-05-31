@@ -1,0 +1,105 @@
+{
+    "title": "Single Market Robot Simulation config.js JSON schema",
+    "type": "object",
+    "properties": {
+	"buyerValues": {
+	    "type": "string",
+	    "format": "textarea",
+	    "propertyOrder": 10,
+	    "description": "Aggregate Buyers Values",
+	    "default": "100 95 90 85 80 75 70 60 50 40 30 20 10"
+	},
+	"sellerCosts": {
+	    "type": "string",
+	    "format": "textarea",
+	    "propertyOrder": 20,
+	    "description": "Aggregate Sellers Costs",
+	    "default": "10 20 30 40 50 60 70 80 90 100"
+	},
+	"L": {
+	    "type": "number",
+	    "propertyOrder": 21,
+	    "description": "minimum price for zi Agent price generation",
+	    "default": 1
+	},
+	"H": {
+	    "type": "number",
+	    "propertyOrder": 22,
+	    "description": "maximum price for zi Agent price generation",
+	    "default": 200
+	},
+	"numberOfBuyers":{
+	    "type": "number",
+	    "propertyOrder": 30,
+	    "description": "Number of Buyers",
+	    "default": 13
+	},
+	"numberOfSellers":{
+	    "type": "number",
+	    "propertyOrder": 40,
+	    "description": "Number of Sellers",
+	    "default": 10
+	},
+	"periods":{
+	    "type": "number",
+	    "propertyOrder": 50,
+	    "description": "Number of Periods",
+	    "default": 10
+	},
+	"periodDuration":{
+	    "type": "number",
+	    "propertyOrder": 60,
+	    "description": "Period Duration (sec):",
+	    "default": 1000
+	},
+	"buyerRate":{
+	    "type": "number",
+	    "propertyOrder": 70,
+	    "description": "Individual Buyer Poisson Arrival Rate (bids/sec per agent)",
+	    "default": 0.20
+	},
+	"sellerRate":{
+	    "type": "number",
+	    "propertyOrder": 80,
+	    "description": "Individual Seller Poisson Arrival Rate (asks/sec per agent)",
+	    "default": 0.20
+	},
+	"integer":{
+	    "type": "boolean",
+	    "propertyOrder": 81,
+	    "description": "Use integer prices",
+	    "default": false
+	},
+	"keepPreviousOrders":{
+	    "type": "boolean",
+	    "propertyOrder": 82,
+	    "description": "true causes agents to not request cancellation/replacement of old orders with their new order, keeping the old orders.  Setting true will lead to setlement issues with zi traders; false submits 'cancel/replace' orders which first clear orders from the same agent",
+	    "default": false
+	},
+	"ignoreBudgetConstraint":{
+	    "type": "boolean",
+	    "propertyOrder": 83,
+	    "description": "false uses Marginal Cost / Marginal Value as limits for zi Agent random asks/bids; true ignores MC/MV and generates random asks/bids on [minPrice,maxPrice]",
+	    "default": false
+	},
+	"xMarket":{
+	    "type": "object",
+	    "propertyOrder": 90,
+	    "title": "advanced configuration options for X market",
+	    "properties": {
+		"buySellBookLimit": {
+		    "type": "number",
+		    "propertyOrder": 120,
+		    "description": "0 = unlimited; otherwise, truncates buy book and sell book after each trade to N orders each side",
+		    "default": 0
+		},
+		"resetAfterEachTrade":{
+		    "type": "boolean",
+		    "propertyOrder": 130,
+		    "description": "reset the market, eliminating old orders, after each trade. use this, not buySellBookLimit, to completely clear books after each trade",
+		    "default": true
+		}
+	    }
+	}
+    }
+}

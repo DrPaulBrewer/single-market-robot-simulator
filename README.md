@@ -9,6 +9,8 @@ isomorphic javascript
 
 Documentation will be written as the software stabilizes....
 
+Format for config.json is given in configSchema.json as a JSON Schema.  
+
 open source LICENSE: The MIT License
 
 This software is provided as-is.  Also, versions less than 1.0.0 represent software under development that is subject
