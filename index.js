@@ -342,7 +342,12 @@ var runSimulation = function(config, done, update, delay){
 var main = function(){
     'use strict';
 
-    var config = require('./config.json');
+    /* suggested by Krumia's http://stackoverflow.com/users/1461424/krumia */
+    /* posting at http://stackoverflow.com/a/25710749/103081 */
+
+    var config = JSON.parse(
+	fs.readFileSync('./config.json', 'utf8')
+    );
 
     runSimulation(config);
 
