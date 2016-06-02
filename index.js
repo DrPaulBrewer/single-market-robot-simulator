@@ -94,6 +94,9 @@ Log.prototype.write = function(x){
 
 var Simulation = function(options){
     'use strict';
+    var i,l,item;
+    var a;
+    var sim = this;
     this.options = options;
     // expected options
     // periods:  number of periods to run
@@ -116,15 +119,23 @@ var Simulation = function(options){
 	throw new Error("single-market-robot-simulation: can not determine numberOfBuyers and/or numberOfSellers ");
     this.numberOfAgents = this.numberOfBuyers+this.numberOfSellers;
     this.logs = {};
-    this.logs.trade  = new Log("./trades.csv");
-    this.logs.order  = new Log('./orders.csv');
-    this.logs.profit = new Log('./profit.csv');
-    this.logs.ohlc   = new Log('./ohlc.csv');
-    this.logs.volume = new Log('./volume.csv');
-    this.logs.trade.write(['period','t','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit']);
-    var i,l;
-    var a;
-    var sim = this;
+    /* we do not need test coverage of whether specific logs are enabled */
+    /* provided all uses of each log are guarded by an if statement testing existance */
+    /* istanbul ignore next */
+    if (typeof(sim.options.logs)==='object'){
+	for (item in sim.options.logs){
+	    if ((sim.options.logs.hasOwnProperty(item)) && (sim.options.logs[item]))
+		this.logs[item] = new Log("./"+item+".csv");
+	}
+    } else {
+	this.logs.trade  = new Log("./trades.csv");
+	this.logs.order  = new Log('./orders.csv');
+	this.logs.profit = new Log('./profit.csv');
+	this.logs.ohlc   = new Log('./ohlc.csv');
+	this.logs.volume = new Log('./volume.csv');
+    }
+    if (this.logs.trade)
+	this.logs.trade.write(['period','t','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit']);
     this.pool = new Pool();
     this.buyersPool = new Pool();
     this.sellersPool = new Pool();
@@ -237,7 +248,8 @@ Simulation.prototype.runPeriod = function(cb){
 
 Simulation.prototype.logOrder = function(details){ 
     'use strict';
-    this.logs.order.write(details);
+    if (this.logs.order)
+	this.logs.order.write(details);
 };
 
 Simulation.prototype.logPeriod = function(){
@@ -254,9 +266,12 @@ Simulation.prototype.logPeriod = function(){
 	    return [sim.period,o,h,l,c];
 	}
     };
-    sim.logs.profit.write(finalMoney);
-    sim.logs.ohlc.write(ohlc());
-    sim.logs.volume.write([sim.period,sim.periodTradePrices.length]);
+    if (sim.logs.profit)
+	sim.logs.profit.write(finalMoney);
+    if (sim.logs.ohlc)
+	sim.logs.ohlc.write(ohlc());
+    if (sim.logs.volume)
+	sim.logs.volume.write([sim.period,sim.periodTradePrices.length]);
     sim.periodTradePrices = [];
 };
 
@@ -298,7 +313,8 @@ Simulation.prototype.logTrade = function(tradespec){
 	tradeSellerProfit
     ];
     sim.periodTradePrices.push(tradePrice);
-    sim.logs.trade.write(tradeOutput);
+    if (sim.logs.trade)
+	sim.logs.trade.write(tradeOutput);
 };
 
 var runSimulation = function(config, done, update, delay){
