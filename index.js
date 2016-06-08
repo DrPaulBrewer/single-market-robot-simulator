@@ -92,12 +92,13 @@ Log.prototype.write = function(x){
     }
 };
 
-var Simulation = function(options){
+/* constructor */
+var Simulation = function(config){
     'use strict';
     var i,l,item;
     var a;
     var sim = this;
-    this.options = options;
+    this.config = config;
     // expected options
     // periods:  number of periods to run
     // buyerValues array of one for each ZI buyer
@@ -105,15 +106,15 @@ var Simulation = function(options){
     // L is the lowest possible random bid price
     // H is the highest possible random ask price
     // maxTries -- maximum number of tries to generate order
-    this.numberOfBuyers = options.numberOfBuyers;
+    this.numberOfBuyers = config.numberOfBuyers;
     if (!this.numberOfBuyers){
-	if (Array.isArray(options.buyerValues))
-	    this.numberOfBuyers = options.buyerValues.length;
+	if (Array.isArray(config.buyerValues))
+	    this.numberOfBuyers = config.buyerValues.length;
     }
-    this.numberOfSellers = options.numberOfSellers;
+    this.numberOfSellers = config.numberOfSellers;
     if (!this.numberOfSellers){
-	if (Array.isArray(options.sellerCosts))
-	    this.numberOfSellers = options.sellerCosts.length;
+	if (Array.isArray(config.sellerCosts))
+	    this.numberOfSellers = config.sellerCosts.length;
     }
     if ( (!this.numberOfBuyers) || (!this.numberOfSellers) )
 	throw new Error("single-market-robot-simulation: can not determine numberOfBuyers and/or numberOfSellers ");
@@ -122,9 +123,9 @@ var Simulation = function(options){
     /* we do not need test coverage of whether specific logs are enabled */
     /* provided all uses of each log are guarded by an if statement testing existance */
     /* istanbul ignore next */
-    if (typeof(sim.options.logs)==='object'){
-	for (item in sim.options.logs){
-	    if ((sim.options.logs.hasOwnProperty(item)) && (sim.options.logs[item]))
+    if (typeof(sim.config.logs)==='object'){
+	for (item in sim.config.logs){
+	    if ((sim.config.logs.hasOwnProperty(item)) && (sim.config.logs[item]))
 		this.logs[item] = new Log("./"+item+".csv");
 	}
     } else {
@@ -134,26 +135,32 @@ var Simulation = function(options){
 	this.logs.ohlc   = new Log('./ohlc.csv');
 	this.logs.volume = new Log('./volume.csv');
     }
+    if (this.logs.ohlc)
+	this.logs.ohlc.write(['period','open','high','low','close']);
+    if (this.logs.order)
+	this.logs.order.write(['period','t','id','bs','price','vc','x']);
     if (this.logs.trade)
 	this.logs.trade.write(['period','t','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit']);
+    if (this.logs.volume)
+	this.logs.volume.write(['period','volume']);
     this.pool = new Pool();
     this.buyersPool = new Pool();
     this.sellersPool = new Pool();
     var common = {
-	integer: options.integer,
-	ignoreBudgetConstraint: options.ignoreBudgetConstraint,
+	integer: config.integer,
+	ignoreBudgetConstraint: config.ignoreBudgetConstraint,
 	markets: {X:{}},
-	period: {number:0, equalDuration:true, duration:(options.periodDuration || 1000), init: {inventory:{X:0, money:0}}},
-	minPrice: options.L || 0,
-	maxPrice: options.H || (2*Math.max(options.buyerValues[0], options.sellerCosts[options.sellerCosts.length-1]))
+	period: {number:0, equalDuration:true, duration:(config.periodDuration || 1000), init: {inventory:{X:0, money:0}}},
+	minPrice: config.L || 0,
+	maxPrice: config.H || (2*Math.max(config.buyerValues[0], config.sellerCosts[config.sellerCosts.length-1]))
     };
     var newBuyerAgent = function(){
-	var a = new ziAgent(Object.assign({}, common, {rate: (options.buyerRate || 1)}));
+	var a = new ziAgent(Object.assign({}, common, {rate: (config.buyerRate || 1)}));
 	a.sim = sim; /* sim must be monkey patched in to avoid deep cloning in the constructor */
 	return a;
     };
     var newSellerAgent = function(){
-	var a = new ziAgent(Object.assign({}, common, {rate: (options.sellerRate || 1)}));
+	var a = new ziAgent(Object.assign({}, common, {rate: (config.sellerRate || 1)}));
 	a.sim = sim; /* sim must be monkey patched in to avoid deep cloaning in the constructor */
 	return a;
     };
@@ -167,14 +174,14 @@ var Simulation = function(options){
 	this.sellersPool.push(a);
 	this.pool.push(a);
     }
-    this.buyersPool.distribute('values','X',options.buyerValues);
-    this.sellersPool.distribute('costs','X',options.sellerCosts);
+    this.buyersPool.distribute('values','X',config.buyerValues);
+    this.sellersPool.distribute('costs','X',config.sellerCosts);
     this.period = 0;
     this.periodDuration = common.period.duration;
     this.periodTradePrices = [];
     /* ignore console.log messages in coverage testing */
     /* istanbul ignore if */
-    if (!this.options.silent){
+    if (!this.config.silent){
 	console.log("duration of each period = "+this.periodDuration);
 	console.log(" ");
 	console.log("Number of Buyers  = "+this.numberOfBuyers);
@@ -191,7 +198,7 @@ ziAgent.prototype.bid = function(good, price){
     if ((typeof(good)!=='string') ||
 	(typeof(price)!=='number'))
 	throw new Error("bid function received invalid parameters: "+typeof(good)+" "+typeof(price));
-    var order = simpleBuyOrder(this.wakeTime, this.id, price, this.sim.options.keepPreviousOrders);
+    var order = simpleBuyOrder(this.wakeTime, this.id, price, this.sim.config.keepPreviousOrders);
     if (good === 'X'){
 	this.sim.logOrder([this.period.number, this.wakeTime, this.id, 1, price, this.unitValueFunction('X',this.inventory), this.inventory.X]);
 	this.sim.xMarket.inbox.push(order);
@@ -205,7 +212,7 @@ ziAgent.prototype.ask = function(good, price){
     if ((typeof(good)!=='string') ||
 	(typeof(price)!=='number'))
 	throw new Error("ask function received invalid parameters: "+typeof(good)+" "+typeof(price));
-    var order = simpleSellOrder(this.wakeTime, this.id, price, this.sim.options.keepPreviousOrders);
+    var order = simpleSellOrder(this.wakeTime, this.id, price, this.sim.config.keepPreviousOrders);
     if (good === 'X'){
 	this.sim.logOrder([this.period.number, this.wakeTime, this.id, -1, price, this.unitCostFunction('X',this.inventory), this.inventory.X]);
 	this.sim.xMarket.inbox.push(order);
@@ -219,10 +226,10 @@ Simulation.prototype.runPeriod = function(cb){
     var sim = this;
     sim.period++;
     /* istanbul ignore if */
-    if (!sim.options.silent)
+    if (!sim.config.silent)
 	console.log("period: "+sim.period);
     sim.pool.initPeriod(sim.period);
-    sim.xMarket = new Market(this.options.xMarket);
+    sim.xMarket = new Market(this.config.xMarket);
     sim.xMarket.on('trade', function(tradeSpec){ 
 	tradeSpec.money = 'money';
 	tradeSpec.goods = 'X';

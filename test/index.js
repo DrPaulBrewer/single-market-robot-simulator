@@ -153,7 +153,7 @@ describe('Log.write({a:23}) to fake fs ', function(){
 
 describe('blank Simulation not allowed', function(){
     delete global.fs;
-    it('new Simulation({}) with empty options {} should throw error', function(){
+    it('new Simulation({}) with empty config {} should throw error', function(){
 	var simulation_with_omitted_options = function(){
 	    var S = new Simulation({});
 	};
@@ -171,7 +171,7 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
     };
     describe('on new Simulation', function(){
 	var S = new Simulation(config_costs_exceed_values);
-	var props = ['options', 
+	var props = ['config', 
 		     'numberOfBuyers',
 		     'numberOfSellers',
 		     'numberOfAgents',
@@ -185,8 +185,8 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	it('should have properties '+props.join(","), function(){
 	    S.should.have.properties(props);
 	});
-	it('should set .options properly', function(){
-	    assert.ok(S.options===config_costs_exceed_values);
+	it('should set .config properly', function(){
+	    assert.ok(S.config===config_costs_exceed_values);
 	});
 	it('should set .numberOfBuyers to 3', function(){
 	    S.numberOfBuyers.should.equal(3);
@@ -201,6 +201,11 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	    var props = ['trade','order','profit','ohlc','volume'];
 	    S.logs.should.have.properties(props);
 	    props.forEach(function(prop){ S.logs[prop].should.be.an.instanceOf(Log); });
+	});
+	it('trade, order, ohlc, volume logs have header rows; profit log is empty', function(){
+	    var withHeaderRow = ['trade','order','ohlc','volume'];
+	    withHeaderRow.forEach(function(prop){ S.logs[prop].data.length.should.equal(1); });
+	    S.logs.profit.data.length.should.equal(0);
 	});
 	it('.pool should be an instance of Pool containing 5 (ZI) agents with .bidPrice and .askPrice functions',function(){
 	    /* why are Pool, ziAgent, etc. in scope here? Is this a feature of should? */
@@ -253,12 +258,12 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	    state.S.logs.profit.data.length.should.be.equal(1);
 	    state.S.logs.profit.data.should.deepEqual([[0,0,0,0,0]]);
 	}); 
-	it('the ohlc log should be blank', function(){
-	    state.S.logs.ohlc.data.length.should.equal(0);
+	it('the ohlc log should have header row', function(){
+	    state.S.logs.ohlc.data.length.should.equal(1);
 	});
-	it('the volume log should have one entry equal to [1,0]', function(){
-	    state.S.logs.volume.data.length.should.equal(1);
-	    state.S.logs.volume.data.should.deepEqual([[1,0]]);
+	it('the volume log should header row and one entry equal to [1,0]', function(){
+	    state.S.logs.volume.data.length.should.equal(2);
+	    state.S.logs.volume.data.should.deepEqual([['period','volume'],[1,0]]);
 	});
 	it('.logTrade({totalQ:2}) should throw because of single unit trade requirement', function(){
 	    var logTwoUnitTrade = function(){ state.S.logTrade({totalQ:2}); };
@@ -277,14 +282,14 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	tests_for_config_costs_exceed_values({S:mySim});
     });
     describe('runPeriod(function(e,sim){...}) runs asynchronously', function(done){
-	describe('because async runPeriod returns immediately, order log should be empty', function(){
-	    it('order log should have length 0', function(done){
+	describe('because async runPeriod ', function(){
+	    it('immediate inspection of order log should only have length 1 from header row', function(done){
 		var mySim = new Simulation(config_costs_exceed_values);
 		var callback = function(e,S){
 		    done();
 		};
 		mySim.runPeriod(callback);
-		mySim.logs.order.data.length.should.equal(0);
+		mySim.logs.order.data.length.should.equal(1);
 	    });
 	});
 	describe('when done should pass same tests as runPeriod()', function(){
@@ -313,7 +318,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 
     describe('on new Simulation', function(){
 	var S = new Simulation(config_single_unit_trade);
-	var props = ['options', 
+	var props = ['config', 
 		     'numberOfBuyers',
 		     'numberOfSellers',
 		     'numberOfAgents',
@@ -327,8 +332,8 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	it('should have properties '+props.join(","), function(){
 	    S.should.have.properties(props);
 	});
-	it('should set .options properly', function(){
-	    assert.ok(S.options===config_single_unit_trade);
+	it('should set .config properly', function(){
+	    assert.ok(S.config===config_single_unit_trade);
 	});
 	it('should set .numberOfBuyers to 3', function(){
 	    S.numberOfBuyers.should.equal(1);
@@ -424,15 +429,15 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	    state.S.logs.profit.data.length.should.be.equal(1);
 	    state.S.logs.profit.data.should.deepEqual([correctProfits]);
 	}); 
-	it('the ohlc log should have one entry, with all 4 o,h,l,c elements equal to the trade price', function(){
+	it('the ohlc log should have header plus one entry, with all 4 o,h,l,c elements equal to the trade price', function(){
 	    var p = state.S.logs.trade.data[1][2];
 	    var correctOHLC = [state.S.period,p,p,p,p];
-	    state.S.logs.ohlc.data.length.should.equal(1);
-	    state.S.logs.ohlc.data.should.deepEqual([correctOHLC]);
+	    state.S.logs.ohlc.data.length.should.equal(2);
+	    state.S.logs.ohlc.data[1].should.deepEqual(correctOHLC);
 	});
-	it('the volume log should have one entry, [1,1]', function(){
-	    state.S.logs.volume.data.length.should.equal(1);
-	    state.S.logs.volume.data.should.deepEqual([[1,1]]);
+	it('the volume log should have header plus one entry, [1,1]', function(){
+	    state.S.logs.volume.data.length.should.equal(2);
+	    state.S.logs.volume.data[1].should.deepEqual([1,1]);
 	});
     };
 
@@ -446,14 +451,14 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	tests_for_config_single_unit_trade({S:mySim});
     });
     describe('runPeriod(function(e,sim){...}) runs asynchronously', function(done){
-	describe('because async runPeriod returns immediately, order log should be empty', function(){
-	    it('order log should have length 0', function(done){
+	describe('because async ', function(){
+	    it('order log should have length 1 (header)', function(done){
 		var mySim = new Simulation(config_single_unit_trade);
 		var callback = function(e,S){
 		    done();
 		};
 		mySim.runPeriod(callback);
-		mySim.logs.order.data.length.should.equal(0);
+		mySim.logs.order.data.length.should.equal(1);
 	    });
 	});
 	describe('when done should pass same tests as runPeriod()', function(){
@@ -493,7 +498,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 		assert.equal(row[0]+row[1],999);
 	    });
 	});
-	it('the ohlc log should have 10 entries, 1 trade per period, matching trade log', function(){
+	it('the ohlc log should have 11 entries, header + 1 trade per period, matching trade log', function(){
 	    var priceCol = tradeLogHeader.indexOf('price'),periodCol = tradeLogHeader.indexOf('period');
 	    /* use .slice(1) to copy trade log with header row omitted */
 	    var altOHLC = state.S.logs.trade.data.slice(1).map(
@@ -503,12 +508,12 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 		    /* o,h,l,c equal because it is a single unit trade scenario */
 		    return [period,price,price,price,price];
 		});
-	    state.S.logs.ohlc.data.length.should.equal(10);
-	    state.S.logs.ohlc.data.should.deepEqual(altOHLC);		
+	    state.S.logs.ohlc.data.length.should.equal(11);
+	    state.S.logs.ohlc.data.slice(1).should.deepEqual(altOHLC);		
 	});
-	it('the volume log should have 10 entries, 1 per period, showing 1 unit traded', function(){
-	    state.S.logs.volume.data.length.should.equal(10);
-	    state.S.logs.volume.data.should.deepEqual([[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[8,1],[9,1],[10,1]]);
+	it('the volume log should have 11 entries, header + 1 per period, showing 1 unit traded', function(){
+	    state.S.logs.volume.data.length.should.equal(11);
+	    state.S.logs.volume.data.slice(1).should.deepEqual([[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[8,1],[9,1],[10,1]]);
 	});
     };
 
@@ -520,13 +525,13 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 
     describe('runSimulation with 10 periods of single unit trade scenario, asyncrhonous', function(){
 	var config = Object.assign({}, config_single_unit_trade, {periods:10});
-	describe(' -- because runSimulation(config,callback) returns immediately, order log should be empty', function(){
-	    it('order log should have length 0', function(done){
+	describe(' -- because runSimulation(config,callback) returns immediately, order log should be header only', function(){
+	    it('order log should have length 1', function(done){
 		var callback = function(e,sim){
 		    done();
 		};
 		var S = runSimulation(config, callback);
-		S.logs.order.data.length.should.equal(0);
+		S.logs.order.data.length.should.equal(1);
 	    });
 	});
 	describe('when done should pass same tests as above ', function(){
