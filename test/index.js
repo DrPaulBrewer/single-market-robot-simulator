@@ -197,13 +197,13 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	it('should set .numberOfAgents to 5', function(){
 	    S.numberOfAgents.should.equal(5);
 	});
-	it('.logs should have properties trade, order, profit, ohlc, volume -- all instances of Log', function(){
-	    var props = ['trade','order','profit','ohlc','volume'];
-	    S.logs.should.have.properties(props);
-	    props.forEach(function(prop){ S.logs[prop].should.be.an.instanceOf(Log); });
+	var logsProps = ['trade','buyorder','sellorder','profit','ohlc','volume'];
+	it('.logs should have properties '+logsProps.join(',')+' -- all instances of Log', function(){
+	    S.logs.should.have.properties(logsProps);
+	    logsProps.forEach(function(prop){ S.logs[prop].should.be.an.instanceOf(Log); });
 	});
-	it('trade, order, ohlc, volume logs have header rows; profit log is empty', function(){
-	    var withHeaderRow = ['trade','order','ohlc','volume'];
+	it('trade, buyorder, sellorder, ohlc, volume logs have header rows; profit log is empty', function(){
+	    var withHeaderRow = ['trade','buyorder','sellorder','ohlc','volume'];
 	    withHeaderRow.forEach(function(prop){ S.logs[prop].data.length.should.equal(1); });
 	    S.logs.profit.data.length.should.equal(0);
 	});
@@ -247,8 +247,11 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	    ziAgent.prototype.bid.should.throw();
 	    ziAgent.prototype.ask.should.throw();
 	});	
-	it('the order log should have between ~4650 and ~5350 orders (5 sigma, poisson 5*1000)', function(){
-	    state.S.logs.order.data.length.should.be.within(4650,5350);
+	it('the buyorder log should have between ~2750 and ~3250 orders (5 sigma, poisson 3*1000)', function(){
+	    state.S.logs.buyorder.data.length.should.be.within(2750,3250);
+	});
+	it('the sellorder log should have between ~1750 and ~2250 orders (5 sigma, poisson 2*1000)', function(){
+	    state.S.logs.sellorder.data.length.should.be.within(1750,2250);
 	});
 	it('the trade log should have one entry, the header row', function(){
 	    state.S.logs.trade.data.length.should.be.equal(1);
@@ -281,20 +284,22 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	});
 	tests_for_config_costs_exceed_values({S:mySim});
     });
-    describe('runPeriod(function(e,sim){...}) runs asynchronously', function(done){
+
+    describe('runPeriod(function(e,sim){...}) runs asynchronously', function(){
 	describe('because async runPeriod ', function(){
-	    it('immediate inspection of order log should only have length 1 from header row', function(done){
+	    it('immediate inspection of order logs should only have length 1 from header row', function(done){
 		var mySim = new Simulation(config_costs_exceed_values);
 		var callback = function(e,S){
 		    done();
 		};
 		mySim.runPeriod(callback);
-		mySim.logs.order.data.length.should.equal(1);
+		mySim.logs.buyorder.data.length.should.equal(1);
+		mySim.logs.sellorder.data.length.should.equal(1);
 	    });
 	});
 	describe('when done should pass same tests as runPeriod()', function(){
 	    var state = {};
-	    beforeEach(function(done){
+	    before(function(done){
 		mySim = new Simulation(config_costs_exceed_values);
 		var callback = function(e,S){
 		    state.S = S;
@@ -344,10 +349,10 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	it('should set .numberOfAgents to 5', function(){
 	    S.numberOfAgents.should.equal(2);
 	});
-	it('.logs should have properties trade, order, profit, ohlc, volume -- all instances of Log', function(){
-	    var props = ['trade','order','profit','ohlc','volume'];
-	    S.logs.should.have.properties(props);
-	    props.forEach(function(prop){ S.logs[prop].should.be.an.instanceOf(Log); });
+	var logsProps = ['trade','buyorder','sellorder','profit','ohlc','volume'];
+	it('.logs should have properties '+logsProps.join(',')+' -- all instances of Log', function(){
+	    S.logs.should.have.properties(logsProps);
+	    logsProps.forEach(function(prop){ S.logs[prop].should.be.an.instanceOf(Log); });
 	});
 	it('.pool should be an instance of Pool containing 2 (ZI) agents with .bidPrice and .askPrice functions',function(){
 	    /* why are Pool, ziAgent, etc. in scope here? Is this a feature of should? */
@@ -386,8 +391,10 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	    assert.ok(typeof(ziAgent.prototype.bid)==='function');
 	    assert.ok(typeof(ziAgent.prototype.ask)==='function');
 	});
-	it('the order log should have at most ~2225 orders (5 sigma, poisson 2000, but will exhaust sooner by trade)', function(){
-	    state.S.logs.order.data.length.should.be.below(2225);
+	it('the order logs should have at most ~2225 orders (5 sigma, poisson 2000, but will exhaust sooner by trade)', function(){
+	    var number_of_orders = 
+		state.S.logs.buyorder.data.length+state.S.logs.sellorder.data.length;
+	    number_of_orders.should.be.below(2225);
 	});
 	it('the trade log should have two entrys, the header row plus a trade', function(){
 	    state.S.logs.trade.data.length.should.equal(2);
@@ -452,13 +459,14 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
     });
     describe('runPeriod(function(e,sim){...}) runs asynchronously', function(done){
 	describe('because async ', function(){
-	    it('order log should have length 1 (header)', function(done){
+	    it('order logs should have length 1 (header)', function(done){
 		var mySim = new Simulation(config_single_unit_trade);
 		var callback = function(e,S){
 		    done();
 		};
 		mySim.runPeriod(callback);
-		mySim.logs.order.data.length.should.equal(1);
+		mySim.logs.buyorder.data.length.should.equal(1);
+		mySim.logs.sellorder.data.length.should.equal(1);
 	    });
 	});
 	describe('when done should pass same tests as runPeriod()', function(){
@@ -482,9 +490,10 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	    state.S.should.have.property('xMarket');
 	    state.S.xMarket.should.be.instanceOf(MEC.Market);
 	});
-	it('the order log should have between 20 orders and 2000 orders', function(){
-	    /* 20 because we need 20 orders for 10 trades, 2000 tops is ad hoc but unlikely to be exceeded */ 
-	    state.S.logs.order.data.length.should.be.within(20,2000);
+	it('the buy and sell order logs should have between 10 orders and 1000 orders', function(){
+	    /* 10 because we need 10 orders each side for 10 trades, 1000 tops is ad hoc but unlikely to be exceeded */ 
+	    state.S.logs.buyorder.data.length.should.be.within(10,1000);
+	    state.S.logs.sellorder.data.length.should.be.within(10,1000);
 	});
 	it('the trade log should have 11 entries, the header row plus 10 trades, exactly 1 trade per period', function(){
 	    state.S.logs.trade.data.length.should.equal(11);
@@ -526,12 +535,13 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
     describe('runSimulation with 10 periods of single unit trade scenario, asyncrhonous', function(){
 	var config = Object.assign({}, config_single_unit_trade, {periods:10});
 	describe(' -- because runSimulation(config,callback) returns immediately, order log should be header only', function(){
-	    it('order log should have length 1', function(done){
+	    it('order logs should have length 1', function(done){
 		var callback = function(e,sim){
 		    done();
 		};
 		var S = runSimulation(config, callback);
-		S.logs.order.data.length.should.equal(1);
+		S.logs.buyorder.data.length.should.equal(1);
+		S.logs.sellorder.data.length.should.equal(1);
 	    });
 	});
 	describe('when done should pass same tests as above ', function(){

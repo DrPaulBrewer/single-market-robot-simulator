@@ -130,15 +130,18 @@ var Simulation = function(config){
 	}
     } else {
 	this.logs.trade  = new Log("./trades.csv");
-	this.logs.order  = new Log('./orders.csv');
+	this.logs.buyorder = new Log("./buyorders.csv");
+	this.logs.sellorder = new Log("./sellorders.csv"); 
 	this.logs.profit = new Log('./profit.csv');
 	this.logs.ohlc   = new Log('./ohlc.csv');
 	this.logs.volume = new Log('./volume.csv');
     }
     if (this.logs.ohlc)
 	this.logs.ohlc.write(['period','open','high','low','close']);
-    if (this.logs.order)
-	this.logs.order.write(['period','t','id','bs','price','vc','x']);
+    if (this.logs.buyorder)
+	this.logs.buyorder.write(['period','t','id','x', 'buyLimitPrice','value','','']);
+    if (this.logs.sellorder)
+	this.logs.sellorder.write(['period','t','id','x', '','','sellLimitPrice','cost']);
     if (this.logs.trade)
 	this.logs.trade.write(['period','t','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit']);
     if (this.logs.volume)
@@ -200,7 +203,17 @@ ziAgent.prototype.bid = function(good, price){
 	throw new Error("bid function received invalid parameters: "+typeof(good)+" "+typeof(price));
     var order = simpleBuyOrder(this.wakeTime, this.id, price, this.sim.config.keepPreviousOrders);
     if (good === 'X'){
-	this.sim.logOrder([this.period.number, this.wakeTime, this.id, 1, price, this.unitValueFunction('X',this.inventory), this.inventory.X]);
+	if (this.sim.logs.buyorder)
+	    this.sim.logs.buyorder.write([
+		this.period.number, 
+		this.wakeTime, 
+		this.id, 
+		this.inventory.X,
+		price, 
+		this.unitValueFunction('X',this.inventory), 
+		'',
+		''
+	    ]);
 	this.sim.xMarket.inbox.push(order);
 	while(this.sim.xMarket.inbox.length>0)
 	    this.sim.xMarket.push(this.sim.xMarket.inbox.shift());
@@ -214,7 +227,17 @@ ziAgent.prototype.ask = function(good, price){
 	throw new Error("ask function received invalid parameters: "+typeof(good)+" "+typeof(price));
     var order = simpleSellOrder(this.wakeTime, this.id, price, this.sim.config.keepPreviousOrders);
     if (good === 'X'){
-	this.sim.logOrder([this.period.number, this.wakeTime, this.id, -1, price, this.unitCostFunction('X',this.inventory), this.inventory.X]);
+	if (this.sim.logs.sellorder)
+	    this.sim.logs.sellorder.write([
+		this.period.number, 
+		this.wakeTime, 
+		this.id, 
+		this.inventory.X,
+		'',
+		'',
+		price, 
+		this.unitCostFunction('X',this.inventory), 
+	    ]);
 	this.sim.xMarket.inbox.push(order);
 	while(this.sim.xMarket.inbox.length>0)
 	    this.sim.xMarket.push(this.sim.xMarket.inbox.shift());
@@ -252,12 +275,6 @@ Simulation.prototype.runPeriod = function(cb){
 	return(sim);
     }
 };    	       
-
-Simulation.prototype.logOrder = function(details){ 
-    'use strict';
-    if (this.logs.order)
-	this.logs.order.write(details);
-};
 
 Simulation.prototype.logPeriod = function(){
     'use strict';
