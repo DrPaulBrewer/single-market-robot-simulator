@@ -139,11 +139,11 @@ var Simulation = function(config){
     if (this.logs.ohlc)
 	this.logs.ohlc.write(['period','open','high','low','close']);
     if (this.logs.buyorder)
-	this.logs.buyorder.write(['period','t','id','x', 'buyLimitPrice','value','','']);
+	this.logs.buyorder.write(['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost']);
     if (this.logs.sellorder)
-	this.logs.sellorder.write(['period','t','id','x', '','','sellLimitPrice','cost']);
+	this.logs.sellorder.write(['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost']);
     if (this.logs.trade)
-	this.logs.trade.write(['period','t','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit']);
+	this.logs.trade.write(['period','t','tp','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit']);
     if (this.logs.volume)
 	this.logs.volume.write(['period','volume']);
     this.pool = new Pool();
@@ -207,6 +207,7 @@ ziAgent.prototype.bid = function(good, price){
 	    this.sim.logs.buyorder.write([
 		this.period.number, 
 		this.wakeTime, 
+		this.wakeTime-this.period.startTime,
 		this.id, 
 		this.inventory.X,
 		price, 
@@ -231,6 +232,7 @@ ziAgent.prototype.ask = function(good, price){
 	    this.sim.logs.sellorder.write([
 		this.period.number, 
 		this.wakeTime, 
+		this.wakeTime-this.period.startTime,
 		this.id, 
 		this.inventory.X,
 		'',
@@ -328,6 +330,7 @@ Simulation.prototype.logTrade = function(tradespec){
     var tradeOutput = [
 	sim.period,
 	tradespec.t,
+	tradespec.t-(sim.period*sim.periodDuration),
 	tradePrice,
 	buyerid,
 	tradeBuyerValue,

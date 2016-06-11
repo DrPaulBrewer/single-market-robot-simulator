@@ -8,15 +8,30 @@ const Simulation = singleMarketRobotSimulator.Simulation;
 const runSimulation = singleMarketRobotSimulator.runSimulation;
 const MEC = require('market-example-contingent');
 
-var tradeLogHeader = ['period',
-		      't',
-		      'price',
-		      'buyerAgentId',
-		      'buyerValue',
-		      'buyerProfit',
-		      'sellerAgentId',
-		      'sellerCost',
-		      'sellerProfit'];
+var tradeLogHeader = [
+    'period',
+    't',
+    'tp',
+    'price',
+    'buyerAgentId',
+    'buyerValue',
+    'buyerProfit',
+    'sellerAgentId',
+    'sellerCost',
+    'sellerProfit'
+];
+
+var combinedOrderLogHeader = [
+    'period',
+    't',
+    'tp',
+    'id',
+    'x',
+    'buyLimitPrice',
+    'value',
+    'sellLimitPrice',
+    'cost'
+];
 
 function fakeFS(fsinfo){
     global.fs = {
@@ -205,8 +220,12 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	it('trade, buyorder, sellorder, ohlc, volume logs have header rows; profit log is empty', function(){
 	    var withHeaderRow = ['trade','buyorder','sellorder','ohlc','volume'];
 	    withHeaderRow.forEach(function(prop){ S.logs[prop].data.length.should.equal(1); });
+	    S.logs.trade.data[0].should.deepEqual(tradeLogHeader);
+	    S.logs.buyorder.data[0].should.deepEqual(combinedOrderLogHeader);
+	    S.logs.sellorder.data[0].should.deepEqual(combinedOrderLogHeader);
 	    S.logs.profit.data.length.should.equal(0);
 	});
+
 	it('.pool should be an instance of Pool containing 5 (ZI) agents with .bidPrice and .askPrice functions',function(){
 	    /* why are Pool, ziAgent, etc. in scope here? Is this a feature of should? */
 	    S.pool.should.be.an.instanceOf(Pool);
@@ -247,10 +266,12 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	    ziAgent.prototype.bid.should.throw();
 	    ziAgent.prototype.ask.should.throw();
 	});	
-	it('the buyorder log should have between ~2750 and ~3250 orders (5 sigma, poisson 3*1000)', function(){
+	it('the buyorder log should have the header row and between ~2750 and ~3250 orders (5 sigma, poisson 3*1000)', function(){
+	    state.S.logs.buyorder.data[0].should.deepEqual(combinedOrderLogHeader);
 	    state.S.logs.buyorder.data.length.should.be.within(2750,3250);
 	});
-	it('the sellorder log should have between ~1750 and ~2250 orders (5 sigma, poisson 2*1000)', function(){
+	it('the sellorder log should have the header row and between ~1750 and ~2250 orders (5 sigma, poisson 2*1000)', function(){
+	    state.S.logs.sellorder.data[0].should.deepEqual(combinedOrderLogHeader);
 	    state.S.logs.sellorder.data.length.should.be.within(1750,2250);
 	});
 	it('the trade log should have one entry, the header row', function(){
@@ -406,38 +427,47 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	    state.S.logs.trade.data[1][0].should.equal(1);
 	});
 	it('the tradelog should report a trade price between 1 and 1000', function(){
-	    state.S.logs.trade.data[1][2].should.be.within(1,1000);
+	    var priceCol = tradeLogHeader.indexOf("price");
+	    state.S.logs.trade.data[1][priceCol].should.be.within(1,1000);
 	});
 	it('the tradelog should report the correct buyerAgentId', function(){
 	    var buyerId = state.S.buyersPool.agents[0].id;
-	    var tradeLogBuyerId = state.S.logs.trade.data[1][3];
+	    var col = tradeLogHeader.indexOf("buyerAgentId");
+	    var tradeLogBuyerId = state.S.logs.trade.data[1][col];
 	    assert.ok(tradeLogBuyerId===buyerId);
 	});
 	it('the tradelog should report the correct buyerValue', function(){
-	    state.S.logs.trade.data[1][4].should.equal(1000);
+	    var col = tradeLogHeader.indexOf("buyerValue");
+	    state.S.logs.trade.data[1][col].should.equal(1000);
 	});
 	it('the tradelog should report the correct buyerProfit', function(){
-	    state.S.logs.trade.data[1][5].should.equal(1000-state.S.logs.trade.data[1][2]);
+	    var buyerProfitCol = tradeLogHeader.indexOf("buyerProfit");
+	    var priceCol = tradeLogHeader.indexOf("price");
+	    state.S.logs.trade.data[1][buyerProfitCol].should.equal(1000-state.S.logs.trade.data[1][priceCol]);
 	});
 	it('the tradelog should report the correct sellerAgentId', function(){
 	    var sellerId = state.S.sellersPool.agents[0].id;
-	    var tradeLogSellerId = state.S.logs.trade.data[1][6];
+	    var col = tradeLogHeader.indexOf("sellerAgentId");
+	    var tradeLogSellerId = state.S.logs.trade.data[1][col];
 	    assert.ok(tradeLogSellerId===sellerId);
 	});
 	it('the tradelog should report the correct seller cost', function(){
-	    state.S.logs.trade.data[1][7].should.equal(1);
+	    var col = tradeLogHeader.indexOf("sellerCost");
+	    state.S.logs.trade.data[1][col].should.equal(1);
 	});
 	it('the tradelog should report the correct seller profit', function(){
-	    state.S.logs.trade.data[1][8].should.equal(state.S.logs.trade.data[1][2]-1);
+	    var sellerProfitCol = tradeLogHeader.indexOf("sellerProfit");
+	    var priceCol = tradeLogHeader.indexOf("price");
+	    state.S.logs.trade.data[1][sellerProfitCol].should.equal(state.S.logs.trade.data[1][priceCol]-1);
 	});
 	it('the profit log should have one entry equal to [1000-p,p-1]', function(){
-	    var p = state.S.logs.trade.data[1][2];
+	    var p = state.S.logs.trade.data[1][tradeLogHeader.indexOf("price")];
 	    var correctProfits = [1000-p,p-1];
 	    state.S.logs.profit.data.length.should.be.equal(1);
 	    state.S.logs.profit.data.should.deepEqual([correctProfits]);
 	}); 
 	it('the ohlc log should have header plus one entry, with all 4 o,h,l,c elements equal to the trade price', function(){
-	    var p = state.S.logs.trade.data[1][2];
+	    var p = state.S.logs.trade.data[1][tradeLogHeader.indexOf("price")];
 	    var correctOHLC = [state.S.period,p,p,p,p];
 	    state.S.logs.ohlc.data.length.should.equal(2);
 	    state.S.logs.ohlc.data[1].should.deepEqual(correctOHLC);
@@ -495,6 +525,30 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 	    state.S.logs.buyorder.data.length.should.be.within(10,1000);
 	    state.S.logs.sellorder.data.length.should.be.within(10,1000);
 	});
+	it('tp should equal t % periodDuration in all logs having t and tp fields', function(){
+	    var tested = 0;
+	    (Object
+	     .keys(state.S.logs)
+	     .filter(function(log){ 
+		 var header = state.S.logs[log].data[0];
+		 return (header.indexOf('t')>=0) && (header.indexOf('tp')>=0);
+	     })
+	     .forEach(function(log){
+		 var data = state.S.logs[log].data;
+		 var tCol  = data[0].indexOf('t');
+		 var tpCol = data[0].indexOf('tp');
+		 var i,l,row;
+		 for(i=1,l=data.length;i<l;++i){
+		     row = data[i];
+		     row[tpCol].should.be.type('number');
+		     row[tCol].should.be.type('number');
+		     row[tpCol].should.equal(row[tCol] % state.S.periodDuration);
+		     if (row[tCol]!==row[tpCol]) tested++;
+		 }
+	     })
+	    );
+	    tested.should.be.above(9);
+	   });
 	it('the trade log should have 11 entries, the header row plus 10 trades, exactly 1 trade per period', function(){
 	    state.S.logs.trade.data.length.should.equal(11);
 	    state.S.logs.trade.data[0].should.deepEqual(tradeLogHeader);
