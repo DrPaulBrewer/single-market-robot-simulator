@@ -159,12 +159,12 @@ var Simulation = function(config){
     };
     var newBuyerAgent = function(){
 	var a = new ziAgent(Object.assign({}, common, {rate: (config.buyerRate || 1)}));
-	a.sim = sim; /* sim must be monkey patched in to avoid deep cloning in the constructor */
+	monkeyPatch(a, sim);
 	return a;
     };
     var newSellerAgent = function(){
 	var a = new ziAgent(Object.assign({}, common, {rate: (config.sellerRate || 1)}));
-	a.sim = sim; /* sim must be monkey patched in to avoid deep cloaning in the constructor */
+	monkeyPatch(a, sim);
 	return a;
     };
     for(i=0,l=this.numberOfBuyers;i<l;++i){
@@ -194,58 +194,69 @@ var Simulation = function(config){
 	console.log("minPrice = "+common.minPrice);
 	console.log("maxPrice = "+common.maxPrice);
     }
+    sim.xMarket = new Market(this.config.xMarket);
+    sim.xMarket.on('trade', function(tradeSpec){ 
+	tradeSpec.money = 'money';
+	tradeSpec.goods = 'X';
+	sim.logTrade(tradeSpec);
+	sim.pool.trade(tradeSpec);
+    });
 };
 
-ziAgent.prototype.bid = function(good, price){
+function monkeyPatch(A,sim){
     'use strict';
-    if ((typeof(good)!=='string') ||
-	(typeof(price)!=='number'))
-	throw new Error("bid function received invalid parameters: "+typeof(good)+" "+typeof(price));
-    var order = simpleBuyOrder(this.wakeTime, this.id, price, this.sim.config.keepPreviousOrders);
-    if (good === 'X'){
-	if (this.sim.logs.buyorder)
-	    this.sim.logs.buyorder.write([
-		this.period.number, 
-		this.wakeTime, 
-		this.wakeTime-this.period.startTime,
-		this.id, 
-		this.inventory.X,
-		price, 
-		this.unitValueFunction('X',this.inventory), 
-		'',
-		''
-	    ]);
-	this.sim.xMarket.inbox.push(order);
-	while(this.sim.xMarket.inbox.length>0)
-	    this.sim.xMarket.push(this.sim.xMarket.inbox.shift());
-    }
-};
 
-ziAgent.prototype.ask = function(good, price){
-    'use strict';
-    if ((typeof(good)!=='string') ||
-	(typeof(price)!=='number'))
-	throw new Error("ask function received invalid parameters: "+typeof(good)+" "+typeof(price));
-    var order = simpleSellOrder(this.wakeTime, this.id, price, this.sim.config.keepPreviousOrders);
-    if (good === 'X'){
-	if (this.sim.logs.sellorder)
-	    this.sim.logs.sellorder.write([
-		this.period.number, 
-		this.wakeTime, 
-		this.wakeTime-this.period.startTime,
-		this.id, 
-		this.inventory.X,
-		'',
-		'',
-		price, 
-		this.unitCostFunction('X',this.inventory), 
-	    ]);
-	this.sim.xMarket.inbox.push(order);
-	while(this.sim.xMarket.inbox.length>0)
-	    this.sim.xMarket.push(this.sim.xMarket.inbox.shift());
-    }
-};
+    A.bid = function(good, price){
+	'use strict';
+	if ((typeof(good)!=='string') ||
+	    (typeof(price)!=='number'))
+	    throw new Error("bid function received invalid parameters: "+typeof(good)+" "+typeof(price));
+	var order = simpleBuyOrder(this.wakeTime, this.id, price, sim.config.keepPreviousOrders);
+	if (good === 'X'){
+	    if (sim.logs.buyorder)
+		sim.logs.buyorder.write([
+		    this.period.number, 
+		    this.wakeTime, 
+		    this.wakeTime-this.period.startTime,
+		    this.id, 
+		    this.inventory.X,
+		    price, 
+		    this.unitValueFunction('X',this.inventory), 
+		    '',
+		    ''
+		]);
+	    sim.xMarket.inbox.push(order);
+	    while(sim.xMarket.inbox.length>0)
+		sim.xMarket.push(sim.xMarket.inbox.shift());
+	}
+    };
 
+    A.ask = function(good, price){
+	'use strict';
+	if ((typeof(good)!=='string') ||
+	    (typeof(price)!=='number'))
+	    throw new Error("ask function received invalid parameters: "+typeof(good)+" "+typeof(price));
+	var order = simpleSellOrder(this.wakeTime, this.id, price, sim.config.keepPreviousOrders);
+	if (good === 'X'){
+	    if (sim.logs.sellorder)
+		sim.logs.sellorder.write([
+		    this.period.number, 
+		    this.wakeTime, 
+		    this.wakeTime-this.period.startTime,
+		    this.id, 
+		    this.inventory.X,
+		    '',
+		    '',
+		    price, 
+		    this.unitCostFunction('X',this.inventory), 
+		]);
+	    sim.xMarket.inbox.push(order);
+	    while(sim.xMarket.inbox.length>0)
+		sim.xMarket.push(sim.xMarket.inbox.shift());
+	}
+    };
+}
+    
 Simulation.prototype.runPeriod = function(cb){
     'use strict';
     var sim = this;
@@ -254,13 +265,7 @@ Simulation.prototype.runPeriod = function(cb){
     if (!sim.config.silent)
 	console.log("period: "+sim.period);
     sim.pool.initPeriod(sim.period);
-    sim.xMarket = new Market(this.config.xMarket);
-    sim.xMarket.on('trade', function(tradeSpec){ 
-	tradeSpec.money = 'money';
-	tradeSpec.goods = 'X';
-	sim.logTrade(tradeSpec);
-	sim.pool.trade(tradeSpec);
-    });
+    sim.xMarket.clear();
     if (typeof(cb)==='function'){
 	/* run asynchronously, call cb function at end */
 	var poolCallback = function(){
