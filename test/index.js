@@ -256,7 +256,6 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 	});
 	it('should have property xMarket -- an instance of Market', function(){
 	    state.S.should.have.property('xMarket');
-	    /* unlike above test with .pool where Pool was in scope, Market is not in scope here. wonder why? */
 	    state.S.xMarket.should.be.instanceOf(MEC.Market);
 	});
 	it('the buyorder log should have the header row and between ~2750 and ~3250 orders (5 sigma, poisson 3*1000)', function(){

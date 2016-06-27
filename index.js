@@ -1,4 +1,6 @@
-// Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC                             // This is open source software. The MIT License applies to this software.                                  // see https://opensource.org/licenses/MIT or included License.md file
+// Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC                             
+// This is open source software. The MIT License applies to this software.                                  
+// see https://opensource.org/licenses/MIT or included License.md file
 
 /* jshint node:true,esnext:true,eqeqeq:true,undef:true,lastsemic:true,strict:true,unused:true */
 /* globals fs:true */
@@ -106,6 +108,17 @@ var Simulation = function(config){
     // L is the lowest possible random bid price
     // H is the highest possible random ask price
     // maxTries -- maximum number of tries to generate order
+    var xDefaults = {
+	goods: "X"
+    };
+    sim.xMarket = new Market(Object.assign({}, xDefaults, this.config.xMarket));
+    sim.xMarket.on('trade', function(tradeSpec){ 
+	tradeSpec.money = 'money';
+	tradeSpec.goods = 'X';
+	sim.logTrade(tradeSpec);
+	sim.pool.trade(tradeSpec);
+    });
+
     this.numberOfBuyers = config.numberOfBuyers;
     if (!this.numberOfBuyers){
 	if (Array.isArray(config.buyerValues))
@@ -152,7 +165,6 @@ var Simulation = function(config){
     var common = {
 	integer: config.integer,
 	ignoreBudgetConstraint: config.ignoreBudgetConstraint,
-	markets: {X:{}},
 	period: {number:0, equalDuration:true, duration:(config.periodDuration || 1000), init: {inventory:{X:0, money:0}}},
 	minPrice: config.L || 0,
 	maxPrice: config.H || (2*Math.max(config.buyerValues[0], config.sellerCosts[config.sellerCosts.length-1]))
@@ -194,25 +206,14 @@ var Simulation = function(config){
 	console.log("minPrice = "+common.minPrice);
 	console.log("maxPrice = "+common.maxPrice);
     }
-    sim.xMarket = new Market(this.config.xMarket);
-    sim.xMarket.on('trade', function(tradeSpec){ 
-	tradeSpec.money = 'money';
-	tradeSpec.goods = 'X';
-	sim.logTrade(tradeSpec);
-	sim.pool.trade(tradeSpec);
-    });
 };
 
 function monkeyPatch(A,sim){
     'use strict';
 
-    A.bid = function(good, price){
-	'use strict';
-	if ((typeof(good)!=='string') ||
-	    (typeof(price)!=='number'))
-	    throw new Error("bid function received invalid parameters: "+typeof(good)+" "+typeof(price));
+    A.bid = function(market, price){
 	var order = simpleBuyOrder(this.wakeTime, this.id, price, sim.config.keepPreviousOrders);
-	if (good === 'X'){
+	if (market.goods === 'X'){
 	    if (sim.logs.buyorder)
 		sim.logs.buyorder.write([
 		    this.period.number, 
@@ -225,19 +226,15 @@ function monkeyPatch(A,sim){
 		    '',
 		    ''
 		]);
-	    sim.xMarket.inbox.push(order);
-	    while(sim.xMarket.inbox.length>0)
-		sim.xMarket.push(sim.xMarket.inbox.shift());
+	    market.inbox.push(order);
+	    while(market.inbox.length>0)
+		market.push(sim.xMarket.inbox.shift());
 	}
     };
 
-    A.ask = function(good, price){
-	'use strict';
-	if ((typeof(good)!=='string') ||
-	    (typeof(price)!=='number'))
-	    throw new Error("ask function received invalid parameters: "+typeof(good)+" "+typeof(price));
+    A.ask = function(market, price){
 	var order = simpleSellOrder(this.wakeTime, this.id, price, sim.config.keepPreviousOrders);
-	if (good === 'X'){
+	if (market.goods === 'X'){
 	    if (sim.logs.sellorder)
 		sim.logs.sellorder.write([
 		    this.period.number, 
@@ -250,11 +247,13 @@ function monkeyPatch(A,sim){
 		    price, 
 		    this.unitCostFunction('X',this.inventory), 
 		]);
-	    sim.xMarket.inbox.push(order);
-	    while(sim.xMarket.inbox.length>0)
-		sim.xMarket.push(sim.xMarket.inbox.shift());
+	    market.inbox.push(order);
+	    while(market.inbox.length>0)
+		market.push(sim.xMarket.inbox.shift());
 	}
     };
+
+    A.markets = [sim.xMarket];
 }
     
 Simulation.prototype.runPeriod = function(cb){
