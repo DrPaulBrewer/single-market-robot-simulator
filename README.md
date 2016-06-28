@@ -1,17 +1,61 @@
 single-market-robot-simulator
 ========
 
-configurable supply and demand (config.json)
+A stand alone nodejs app or module for creating robot trading simulations in a single market with configurable supply and demand. 
 
-by default uses Gode and Sunde Zero Intelligence Robot algorithm, but you can also write your own robots.
+By default uses Gode and Sunder's Zero Intelligence Robots, but you can also write your own robots.
 
-isomorphic javascript
+##Installation
+    npm i single-robot-market-simulator -S
+    
+##Configuration
 
-Documentation will be written as the software stabilizes....
+Configuration in the stand alone app occurs in the file `config.json` which is read by `main()` in stand-alone app mode.
 
-Format for config.json is given in configSchema.json as a JSON Schema.  
+When used as a software module, the configuration object is passed to `runSimulation` or `new Simulation`.
+    
+Format for config.json is given in configSchema.json as a JSON Schema.
 
-open source LICENSE: The MIT License
+##Usage 
+
+###Stand Alone App
+
+When used as a stand alone app `node index.js` or `npm run` will run the simulation, reading the `config.json` file and
+outputting log files: `buyorders.csv`, `sellorders.csv`, `ohlc.csv`, `trades.csv`, `profits.csv`, and `volume.csv`. 
+
+With the exception of `profits.csv` these logs have header rows and are in comma-separated value format, compatible with
+Excel and other spreadsheets and most analysis software that accepts  a`.csv` file as data input.
+
+###As a module
+
+    require("single-market-robot-simulator")
+
+returns an object containing constructors for `Log`, `Simulation` and function `runSimulation`.  Simulation functionality
+will run either in the browser or nodejs without modification ("isomorphic javascript").  Simulations can be run in either
+synchronous or asynchronous mode.  Asynchronous mode is useful for running on the browser so that the event loop servicing
+the user interface does not freeze while waiting for simulation results.
+
+Example code for a web-based simulator based on `single-market-robot-simulator` may be found at
+
+http://github.com/DrPaulBrewer/robot-trading-webapp
+
+which can be accessed at
+
+http://drpaulbrewer.github.io/robot-trading-webapp/
+
+Documentation will be expanded as time permits.  
+
+##Tests
+
+    npm test
+    
+will run the tests.  You can also click on the build or coverage badges to view public test reports.
+
+##Copyright 
+
+Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC
+
+##LICENSE: MIT License
 
 This software is provided as-is.  Also, versions less than 1.0.0 represent software under development that is subject
 to rapid change, and may not function or not fully function as intended. You may wish to review the results of 
