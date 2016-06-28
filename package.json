@@ -22,7 +22,7 @@
   "dependencies": {
     "async": "^2.0.0-rc.5",
     "market-agents": "^0.14.0",
-    "market-example-contingent": "^0.11.0"
+    "market-example-contingent": "^0.12.0"
   },
   "devDependencies": {
     "coveralls": "^2.11.9",

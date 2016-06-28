@@ -108,17 +108,18 @@ var Simulation = function(config){
     // L is the lowest possible random bid price
     // H is the highest possible random ask price
     // maxTries -- maximum number of tries to generate order
+    this.pool = new Pool();
+    this.buyersPool = new Pool();
+    this.sellersPool = new Pool();
     var xDefaults = {
-	goods: "X"
+	goods: "X",
+	money: "money"
     };
     sim.xMarket = new Market(Object.assign({}, xDefaults, this.config.xMarket));
-    sim.xMarket.on('trade', function(tradeSpec){ 
-	tradeSpec.money = 'money';
-	tradeSpec.goods = 'X';
-	sim.logTrade(tradeSpec);
-	sim.pool.trade(tradeSpec);
+    sim.xMarket.on('trade', function(tradespec){ 
+	sim.logTrade(tradespec);
+	sim.pool.trade(tradespec);
     });
-
     this.numberOfBuyers = config.numberOfBuyers;
     if (!this.numberOfBuyers){
 	if (Array.isArray(config.buyerValues))
@@ -159,9 +160,6 @@ var Simulation = function(config){
 	this.logs.trade.write(['period','t','tp','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit']);
     if (this.logs.volume)
 	this.logs.volume.write(['period','volume']);
-    this.pool = new Pool();
-    this.buyersPool = new Pool();
-    this.sellersPool = new Pool();
     var common = {
 	integer: config.integer,
 	ignoreBudgetConstraint: config.ignoreBudgetConstraint,
