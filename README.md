@@ -31,9 +31,15 @@ Excel and other spreadsheets and most analysis software that accepts  a`.csv` fi
     require("single-market-robot-simulator")
 
 returns an object containing constructors for `Log`, `Simulation` and function `runSimulation`.  Simulation functionality
-will run either in the browser or nodejs without modification ("isomorphic javascript").  Simulations can be run in either
-synchronous or asynchronous mode.  Asynchronous mode is useful for running on the browser so that the event loop servicing
-the user interface does not freeze while waiting for simulation results.
+will run either in the browser or nodejs without modification ("isomorphic javascript").  On the browser, security policies
+require different procedures for writing out files.  Therefore, the log files are not immediately written out to .csv files
+(as with the stand alone app) but are maintained in memory for use with browser-based plotting software.  It is the 
+responsibility of other browser software (e.g. `single-market-robot-simulator-savezip`) to write the logs to browser-side
+`.csv` files.    
+
+
+Simulations can be run in either synchronous or asynchronous mode.  Asynchronous mode is useful for running on the browser
+so that the event loop and user interface does not freeze while waiting for simulation results.
 
 Example code for a web-based simulator based on `single-market-robot-simulator` may be found at
 
