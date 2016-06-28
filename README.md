@@ -41,11 +41,11 @@ responsibility of other browser software (e.g. `single-market-robot-simulator-sa
 Simulations can be run in either synchronous or asynchronous mode.  Asynchronous mode is useful for running on the browser
 so that the event loop and user interface does not freeze while waiting for simulation results.
 
-Example code for a web-based simulator based on `single-market-robot-simulator` may be found at
+Example source code for a web-based simulator based on `single-market-robot-simulator` may be found at
 
 http://github.com/DrPaulBrewer/robot-trading-webapp
 
-which can be accessed at
+and the resulting simulator web app is at
 
 http://drpaulbrewer.github.io/robot-trading-webapp/
 
