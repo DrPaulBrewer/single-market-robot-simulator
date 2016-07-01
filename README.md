@@ -6,7 +6,14 @@ A stand alone nodejs app or module for creating robot trading simulations in a s
 By default uses Gode and Sunder's Zero Intelligence Robots, but you can also write your own robots.
 
 ##Installation
-    npm i single-robot-market-simulator -S
+
+To run as a nodejs command-line program, clone this repository:
+
+     git clone https://github.com/DrPaulBrewer/single-market-robot-simulator
+     
+If, instead, you want to use it as a library in another program, use npm install:
+
+     npm i single-robot-market-simulator -S
     
 ##Configuration
 
@@ -41,11 +48,11 @@ responsibility of other browser software (e.g. `single-market-robot-simulator-sa
 Simulations can be run in either synchronous or asynchronous mode.  Asynchronous mode is useful for running on the browser
 so that the event loop and user interface does not freeze while waiting for simulation results.
 
-Example code for a web-based simulator based on `single-market-robot-simulator` may be found at
+Example source code for a web-based simulator based on `single-market-robot-simulator` may be found at
 
 http://github.com/DrPaulBrewer/robot-trading-webapp
 
-which can be accessed at
+and the resulting simulator web app is at
 
 http://drpaulbrewer.github.io/robot-trading-webapp/
 
