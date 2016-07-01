@@ -64,23 +64,33 @@ describe('new Log() to data array', function(){
     });
 });
 
+
 describe('Log.write([1,2,3,4,5]) to data array ', function(){
+    var L = new Log();
+    L.data.length.should.equal(0);
+    L.write([1,2,3,4,5]);
+
     it('should add the array [1,2,3,4,5] to the data array', function(){
-	var L = new Log();
-	L.data.length.should.equal(0);
-	L.write([1,2,3,4,5]);
 	L.data.length.should.equal(1);
 	L.data.should.deepEqual([[1,2,3,4,5]]);
+    });
+    it('should set .last to [1,2,3,4,5]', function(){
+	L.last.should.deepEqual([1,2,3,4,5]);
     });
 });
 
 describe('Log.write(23) to data array', function(){
+    var L = new Log();
+    L.data.length.should.equal(0);
+    L.write(23);
+
     it('should add the number 23 to the data array', function(){
-	var L = new Log();
-	L.data.length.should.equal(0);
-	L.write(23);
 	L.data.length.should.equal(1);
 	L.data.should.deepEqual([23]);
+    });
+    
+    it('should set .last to 23', function(){
+	L.last.should.equal(23);
     });
 });
 
@@ -89,6 +99,7 @@ describe('Log.write({a:23}) to data array', function(){
 	var L = new Log();
 	L.data.length.should.equal(0);
 	L.write({a:23});
+	L.last.should.deepEqual({a:23});
 	L.data.length.should.equal(1);
 	L.data.should.deepEqual([{a:23}]);
     });
@@ -101,6 +112,7 @@ describe('Log.write(undefined) to data array', function(){
 	L.write();
 	L.write(undefined);
 	L.data.length.should.equal(0);
+	assert.ok(typeof(L.last)==='undefined');
     });
 });
 
@@ -136,6 +148,7 @@ describe('Log.write([1,2,3,4,5]) to fake fs', function(){
 	fakeFS(fsinfo);
 	var L = new Log('fakedata');
 	L.write([1,2,3,4,5]);
+	L.last.should.deepEqual([1,2,3,4,5]);
 	fsinfo.call.should.equal('writeSync');
 	fsinfo.params.should.deepEqual([37363, "1,2,3,4,5\n"]);
 	delete global.fs;
@@ -148,6 +161,7 @@ describe('Log.write(23) to fake fs ', function(){
 	fakeFS(fsinfo);
 	var L = new Log('fakedata');
 	L.write(23);
+	L.last.should.equal(23);
 	fsinfo.call.should.equal("writeSync");
 	fsinfo.params.should.deepEqual([37363, "23\n"]);
 	delete global.fs;
@@ -160,6 +174,7 @@ describe('Log.write({a:23}) to fake fs ', function(){
 	fakeFS(fsinfo);
 	var L = new Log('fakedata');
 	L.write({a:23});
+	L.last.should.deepEqual({a:23});
 	fsinfo.call.should.equal("writeSync");
 	fsinfo.params.should.deepEqual([37363, '{"a":23}\n']);
 	delete global.fs;

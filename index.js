@@ -81,6 +81,7 @@ var Log = function(fname){
 Log.prototype.write = function(x){
     'use strict';
     if (x===undefined) return;
+    this.last = x;
     if (this.useFS){
 	if (Array.isArray(x)){
 	    fs.writeSync(this.fd, x.join(",")+"\n");
@@ -252,6 +253,17 @@ function monkeyPatch(A,sim){
     };
 
     A.markets = [sim.xMarket];
+
+    if (A instanceof MarketAgents.KaplanSniperAgent){
+	A.getJuicyBidPrice = function(){
+	    if (sim.logs && sim.logs.ohlc && sim.logs.ohlc.last && sim.logs.ohlc.last.length)
+		return sim.logs.ohlc.last[2];
+	};
+	A.getJuicyAskPrice = function(){
+	    if (sim.logs && sim.logs.ohlc && sim.logs.ohlc.last && sim.logs.ohlc.last.length)
+	    return sim.logs.ohlc.last[3];
+	};
+    }
 }
     
 Simulation.prototype.runPeriod = function(cb){
