@@ -7,10 +7,10 @@
 
 const async = require('async');
 const MEC = require('market-example-contingent');
-var Market = MEC.Market;
+const Market = MEC.Market;
 const MarketAgents = require('market-agents');
-var ziAgent = MarketAgents.ziAgent;
-var Pool = MarketAgents.Pool;
+const ziAgent = MarketAgents.ziAgent;
+const Pool = MarketAgents.Pool;
 
 try { fs = require('fs'); } catch(e) {}
 
