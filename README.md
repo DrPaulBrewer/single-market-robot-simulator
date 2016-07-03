@@ -7,11 +7,14 @@ By default uses Gode and Sunder's Zero Intelligence Robots, but you can also wri
 
 ##Installation
 
-To run as a nodejs command-line program, clone this repository:
+To run as a nodejs command-line program, clone this repository and run `npm install` from the cloned
+directory to install the dependencies:
 
      git clone https://github.com/DrPaulBrewer/single-market-robot-simulator
-     
-If, instead, you want to use it as a library in another program, use npm install:
+     cd ./single-market-robot-simulator
+     npm install     
+
+If, instead, you want to use it as a library in another program, simply use `npm i` as usual:
 
      npm i single-robot-market-simulator -S
     
