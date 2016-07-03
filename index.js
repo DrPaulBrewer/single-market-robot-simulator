@@ -5,38 +5,14 @@
 /* jshint node:true,esnext:true,eqeqeq:true,undef:true,lastsemic:true,strict:true,unused:true */
 /* globals fs:true */
 
-// order format (subtract 2 from indexid as counter and tolocal are prepended on submission)
-// order = [
-// 0      counter: // strictly increasing, may have gaps
-// 1      tlocal: // local insertion time   (numeric JS timestamp)
-// 2      t: // official time
-// 3      tx: // expiration time, in units of official time 
-// 4      u: user number
-// 5      c: // 1 to cancel all active orders by userid
-// 6      q: // quantity (could be 0)
-// 7      b: // limit order price to buy
-// 8      s: // limit order price to sell 
-// 9      bs: // buy stop.  rising price triggers market order to buy (numeric)
-// 10     bsp: // buy stop limit price. buy limit price sent when trade price is greater than or equal to stop
-// 11     ss: // sell stop. falling price triggers market order to sell (numeric)
-// 12     ssp: // sell stop limit price. sell limit price sent when trade price is less than or equal to stop
-// 13     trigb: //  triggers new buy limit order asap
-// 14     trigs: //  triggers new sell limit order asap
-// 15     trigbs: // triggers new buy stop order asap
-// 16     trigbsp: // limit price if triggered buy stop is activated
-// 17     trigss: // triggers new sell stop order asap
-// 18     trigssp: // limit price if triggered sell stop is activated
-// ]
-
-try { fs = require('fs'); } catch(e) {}
-
 const async = require('async');
-
 const MEC = require('market-example-contingent');
 var Market = MEC.Market;
 const MarketAgents = require('market-agents');
 var ziAgent = MarketAgents.ziAgent;
 var Pool = MarketAgents.Pool;
+
+try { fs = require('fs'); } catch(e) {}
 
 var Log = function(fname){
     'use strict';
