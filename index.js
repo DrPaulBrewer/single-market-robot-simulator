@@ -360,6 +360,8 @@ var runSimulation = function(config, done, update, delay){
     return mySim;
 };
 
+/* the next comment tells the coverage tester that the main() function is not tested by the test suite */
+/* istanbul ignore next */
 var main = function(){
     'use strict';
 
@@ -374,6 +376,7 @@ var main = function(){
 
 };
 
+/* istanbul ignore if */
 if (require && (require.main===module)){
     main();
 } else if (typeof(module)==='object') {
