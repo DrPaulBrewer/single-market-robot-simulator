@@ -38,31 +38,6 @@ const MarketAgents = require('market-agents');
 var ziAgent = MarketAgents.ziAgent;
 var Pool = MarketAgents.Pool;
 
-var simpleOrder = function(t,uid,cancelreplace){
-    'use strict';
-    var i,l,o;
-    for(i=0,l=17,o=[];i<l;++i) o[i]=0;
-    o[0]=t;
-    o[2]=uid;
-    o[3]=cancelreplace;
-    o[4]=1; // quantity
-    return o;
-};
-
-var simpleBuyOrder = function(t,uid,buyprice,keepOldOrders){
-    'use strict';
-    var o = simpleOrder(t,uid,((keepOldOrders)?0:1));
-    o[5]=buyprice;
-    return o;
-};
-
-var simpleSellOrder = function(t,uid,sellprice,keepOldOrders){
-    'use strict';
-    var o = simpleOrder(t,uid,((keepOldOrders)?0:1));
-    o[6]=sellprice;
-    return o;
-}; 
-
 var Log = function(fname){
     'use strict';
     this.useFS = false;
@@ -211,7 +186,13 @@ function monkeyPatch(A,sim){
     'use strict';
 
     A.bid = function(market, price){
-	var order = simpleBuyOrder(this.wakeTime, this.id, price, sim.config.keepPreviousOrders);
+	var order = MEC.oa({
+	    t: this.wakeTime,
+	    id: this.id,
+	    cancel: !sim.config.keepPreviousOrders,
+	    q: 1,
+	    buyPrice: price
+	});
 	if (market.goods === 'X'){
 	    if (sim.logs.buyorder)
 		sim.logs.buyorder.write([
@@ -232,7 +213,14 @@ function monkeyPatch(A,sim){
     };
 
     A.ask = function(market, price){
-	var order = simpleSellOrder(this.wakeTime, this.id, price, sim.config.keepPreviousOrders);
+	var order = MEC.oa({
+	    t: this.wakeTime,
+	    id: this.id,
+	    cancel: !sim.config.keepPreviousOrders,
+	    q: 1,
+	    sellPrice: price
+	});
+
 	if (market.goods === 'X'){
 	    if (sim.logs.sellorder)
 		sim.logs.sellorder.write([
