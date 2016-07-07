@@ -4,15 +4,14 @@ const assert = require('assert');
 
 require('should');
 
-/* why are Pool, ziAgent, etc. in scope here? Is this a feature of should? */
-/* global Pool, ziAgent */
-
-
 const singleMarketRobotSimulator = require("../src/index.js");
 const Log = singleMarketRobotSimulator.Log;
 const Simulation = singleMarketRobotSimulator.Simulation;
 const runSimulation = singleMarketRobotSimulator.runSimulation;
 const MEC = require('market-example-contingent');
+const MarketAgents = require('market-agents');
+const Pool = MarketAgents.Pool;
+const ZIAgent = MarketAgents.ZIAgent;
 
 const tradeLogHeader = [
     'period',
@@ -267,7 +266,7 @@ function allTests(){
                 S.pool.should.be.an.instanceOf(Pool); 
                 S.pool.agents.length.should.equal(5);
                 S.pool.agents.forEach(function(A){ 
-                    A.should.be.an.instanceOf(ziAgent).and.have.properties('bidPrice','askPrice');  
+                    A.should.be.an.instanceOf(ZIAgent).and.have.properties('bidPrice','askPrice');  
                 });
             });
             it('.buyersPool should be an instance of Pool containing 3 agents', function(){
@@ -407,7 +406,7 @@ function allTests(){
                 S.pool.should.be.an.instanceOf(Pool);
                 S.pool.agents.length.should.equal(2);
                 S.pool.agents.forEach(function(A){ 
-                    A.should.be.an.instanceOf(ziAgent).and.have.properties('bidPrice','askPrice'); 
+                    A.should.be.an.instanceOf(ZIAgent).and.have.properties('bidPrice','askPrice'); 
                 });
             });
             it('.buyersPool should be an instance of Pool containing 1 agents', function(){

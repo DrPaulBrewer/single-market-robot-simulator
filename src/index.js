@@ -8,7 +8,7 @@ const async = require('async');
 const MEC = require('market-example-contingent');
 const Market = MEC.Market;
 const MarketAgents = require('market-agents');
-const ZIAgent = MarketAgents.ziAgent;
+const ZIAgent = MarketAgents.ZIAgent;
 const Pool = MarketAgents.Pool;
 
 class Log {
