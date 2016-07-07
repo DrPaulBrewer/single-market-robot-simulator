@@ -6,7 +6,7 @@ single-market-robot-simulator
 
 A stand alone nodejs app or module for creating robot trading simulations in a single market with configurable supply and demand. 
 
-By default uses Gode and Sunder's Zero Intelligence Robots, but you can also write your own robots.
+By default uses my implementation of Gode and Sunder's Zero Intelligence Robots, but you can also write your own robots.
 
 ##Installation
 
@@ -70,13 +70,17 @@ Documentation will be expanded as time permits.
     
 will run the tests.  You can also click on the build or coverage badges to view public test reports.
 
+##Warnings
+
+ES6 code with CommonJS (`require()`) packaging is used in versions 0.30 and later.  You may need the newest Chrome, FF, or Edge browsers, or node 6.x, or an ES5 transpiler.
+
 ##Copyright 
 
 Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC
 
 ##LICENSE: MIT License
 
-This software is provided as-is.  Also, versions less than 1.0.0 represent software under development that is subject
+This software is provided as-is with NO WARANTEE of any kind.  Also, versions less than 1.0.0 represent software under development that is subject
 to rapid change, and may not function or not fully function as intended. You may wish to review the results of 
 automated tests, as well as write your own additional tests, before using it in an application.
 
