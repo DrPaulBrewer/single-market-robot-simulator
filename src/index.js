@@ -4,14 +4,14 @@
 
 /* global fs:true */
 
-const async = require('async');
-const MEC = require('market-example-contingent');
-const Market = MEC.Market;
-const MarketAgents = require('market-agents');
-const ZIAgent = MarketAgents.ZIAgent;
-const Pool = MarketAgents.Pool;
+import async from 'async';
+import * as MEC from 'market-example-contingent';
+import * as MarketAgents from 'market-agents';
 
-class Log {
+const Market = MEC.Market;
+const {ZIAgent, Pool} = MarketAgents;
+
+export class Log {
     constructor(fname){
         this.useFS = false;
         try { 
@@ -43,7 +43,7 @@ class Log {
     }
 }
 
-class Simulation {
+export class Simulation {
     constructor(config){
         this.config = config;
         // expected options
@@ -324,7 +324,7 @@ class Simulation {
 }
 
 // eslint-disable-next-line max-params
-function runSimulation(config, done, update, delay){
+export function runSimulation(config, done, update, delay){
     "use strict";
     const mySim = new Simulation(config);
 
@@ -393,11 +393,5 @@ if (typeof(module)==='object'){
 
     if (require && (require.main===module))
 	main();
-    else 
-	module.exports = {
-            Simulation,
-            runSimulation,
-            Log
-	};
 }
 

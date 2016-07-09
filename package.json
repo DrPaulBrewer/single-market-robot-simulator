@@ -1,37 +1,48 @@
 {
-  "name": "single-market-robot-simulator",
-  "version": "0.31.0",
-  "description": "market-contingent-example populated by Robot, initially Gode/Sunder ZI Robots, with configurable supply/demand",
-  "main": "src/index.js",
-  "scripts": {
-    "test": "mocha --reporter spec --slow 50 --timeout 2000",
-    "cover": "node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- -R spec test/*"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/drpaulbrewer/single-market-robot-simulator"
-  },
-  "keywords": [
-    "robot-trading",
-    "hft",
-    "market-simulation",
-    "financial-simulation"
-  ],
-  "author": "drpaulbrewer@eaftc.com",
-  "license": "MIT",
-  "dependencies": {
-    "async": "^2.0.0-rc.5",
-    "market-agents": "^0.17.0",
-    "market-example-contingent": "^0.15.0"
-  },
-  "devDependencies": {
-    "coveralls": "^2.11.9",
-    "eslint": "^3.0.1",
-    "istanbul": "^0.4.3",
-    "mocha": "^2.4.5",
-    "should": "^8.3.1"
-  },
-  "directories": {
-    "test": "test"
-  }
+    "name": "single-market-robot-simulator",
+    "version": "0.31.0",
+    "description": "market-contingent-example populated by Robot, initially Gode/Sunder ZI Robots, with configurable supply/demand",
+    "main": "build/index.js",
+    "scripts": {
+        "clean": "rm -rf ./build ./doc ; mkdir ./build",
+        "build": "node_modules/.bin/babel build src/index.js -o build/index.js",
+        "doc": "node_modules/.bin/esdoc -c esdoc.json",
+        "lint": "node_modules/.bin/eslint src/index.js",
+        "lint-test": "node_modules/.bin/eslint test/index.js",
+        "test": "node_modules/.bin/mocha --compilers js:babel-core/register --reporter spec --slow 50 --timeout 60000",
+        "cover": "node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- -u exports --compilers js:babel-register --timeout 60000"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/drpaulbrewer/single-market-robot-simulator"
+    },
+    "keywords": [
+        "robot-trading",
+        "hft",
+        "market-simulation",
+        "financial-simulation"
+    ],
+    "author": "drpaulbrewer@eaftc.com",
+    "license": "MIT",
+    "dependencies": {
+        "async": "^2.0.0-rc.5",
+        "market-agents": "^0.19.0",
+        "market-example-contingent": "^0.16.0"
+    },
+    "devDependencies": {
+        "babel": "^6.5.2",
+        "babel-cli": "^6.10.1",
+        "babel-core": "^6.10.4",
+        "babel-preset-es2015": "^6.9.0",
+        "coveralls": "^2.11.9",
+        "esdoc": "^0.4.7",
+        "eslint": "^3.0.1",
+        "istanbul": "^1.0.0-alpha.2",
+        "mocha": "^2.5.3",
+        "should": "^8.3.1"
+    },
+    "directories": {
+        "test": "test"
+    },
+    "jsnext:main": "src/index.js"
 }

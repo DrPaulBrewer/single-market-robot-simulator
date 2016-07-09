@@ -1,17 +1,13 @@
 /* eslint-env node, mocha */
 
-const assert = require('assert');
+import assert from 'assert';
+import 'should';
+import * as singleMarketRobotSimulator from '../src/index.js'
+import * as MEC from 'market-example-contingent';
+import * as MarketAgents from 'market-agents';
 
-require('should');
-
-const singleMarketRobotSimulator = require("../src/index.js");
-const Log = singleMarketRobotSimulator.Log;
-const Simulation = singleMarketRobotSimulator.Simulation;
-const runSimulation = singleMarketRobotSimulator.runSimulation;
-const MEC = require('market-example-contingent');
-const MarketAgents = require('market-agents');
-const Pool = MarketAgents.Pool;
-const ZIAgent = MarketAgents.ZIAgent;
+const {Log, Simulation, runSimulation} = singleMarketRobotSimulator;
+const {Pool, ZIAgent} = MarketAgents;
 
 const tradeLogHeader = [
     'period',
