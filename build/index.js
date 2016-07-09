@@ -13,6 +13,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 /* global fs:true */
 
+/* eslint no-console: "off", no-sync:"off", consistent-this:"off" */
+
 exports.runSimulation = runSimulation;
 
 var _async = require('async');
@@ -318,8 +320,6 @@ var Simulation = exports.Simulation = function () {
 
 
 function runSimulation(config, done, update, delay) {
-    "use strict";
-
     var mySim = new Simulation(config);
 
     /* istanbul ignore if */
@@ -361,7 +361,6 @@ function runSimulation(config, done, update, delay) {
 /* istanbul ignore next */
 
 function main() {
-    "use strict";
 
     /* suggested by Krumia's http://stackoverflow.com/users/1461424/krumia */
     /* posting at http://stackoverflow.com/a/25710749/103081 */

@@ -6,6 +6,10 @@ module.exports = {
         "node": true
     },
     "extends": "eslint:recommended",
+    "parserOptions": {
+       "ecmaVersion": 6,
+       "sourceType": "module"
+    },
     "rules": {
         "accessor-pairs": "error",
         "array-bracket-spacing": "error",
@@ -33,7 +37,7 @@ module.exports = {
             "never"
         ],
         "consistent-return": "off",
-        "consistent-this": "off",
+        "consistent-this": "error",
         "curly": "off",
         "default-case": "error",
         "dot-location": "off",
@@ -83,7 +87,6 @@ module.exports = {
         "no-caller": "error",
         "no-catch-shadow": "error",
         "no-confusing-arrow": "error",
-	"no-console": "off",
         "no-continue": "error",
         "no-div-regex": "error",
         "no-duplicate-imports": "error",
@@ -108,7 +111,7 @@ module.exports = {
         "no-lonely-if": "error",
         "no-loop-func": "error",
         "no-magic-numbers": "off",
-        "no-mixed-operators": "error",
+        "no-mixed-operators": "off",
         "no-mixed-requires": "error",
         "no-multi-spaces": "off",
         "no-multi-str": "error",
@@ -144,7 +147,7 @@ module.exports = {
         "no-shadow": "error",
         "no-shadow-restricted-names": "error",
         "no-spaced-func": "error",
-        "no-sync": "off",
+        "no-sync": "error",
         "no-ternary": "off",
         "no-throw-literal": "error",
         "no-trailing-spaces": "off",
@@ -197,7 +200,7 @@ module.exports = {
                 "before": false
             }
         ],
-        "sort-imports": "error",
+        "sort-imports": "off",
         "sort-vars": "off",
         "space-before-blocks": "off",
         "space-before-function-paren": "off",
@@ -216,7 +219,7 @@ module.exports = {
         ],
         "strict": [
             "error",
-	    "function"
+            "never"
         ],
         "template-curly-spacing": "error",
         "unicode-bom": [

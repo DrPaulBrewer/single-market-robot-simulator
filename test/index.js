@@ -2,7 +2,7 @@
 
 import assert from 'assert';
 import 'should';
-import * as singleMarketRobotSimulator from '../src/index.js'
+import * as singleMarketRobotSimulator from '../src/index.js';
 import * as MEC from 'market-example-contingent';
 import * as MarketAgents from 'market-agents';
 
@@ -35,7 +35,6 @@ const combinedOrderLogHeader = [
 ];
 
 function allTests(){
-    "use strict";
 
 
     function fakeFS(fsinfo){

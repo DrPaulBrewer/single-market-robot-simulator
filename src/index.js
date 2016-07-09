@@ -4,6 +4,8 @@
 
 /* global fs:true */
 
+/* eslint no-console: "off", no-sync:"off", consistent-this:"off" */
+
 import async from 'async';
 import * as MEC from 'market-example-contingent';
 import * as MarketAgents from 'market-agents';
@@ -325,7 +327,6 @@ export class Simulation {
 
 // eslint-disable-next-line max-params
 export function runSimulation(config, done, update, delay){
-    "use strict";
     const mySim = new Simulation(config);
 
     /* istanbul ignore if */
@@ -374,7 +375,6 @@ export function runSimulation(config, done, update, delay){
 /* istanbul ignore next */
 
 function main(){
-    "use strict";
 
     /* suggested by Krumia's http://stackoverflow.com/users/1461424/krumia */
     /* posting at http://stackoverflow.com/a/25710749/103081 */
