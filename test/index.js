@@ -6,7 +6,7 @@ import * as singleMarketRobotSimulator from '../src/index.js';
 import * as MEC from 'market-example-contingent';
 import * as MarketAgents from 'market-agents';
 
-const {Log, Simulation, runSimulation} = singleMarketRobotSimulator;
+const {Log, Simulation} = singleMarketRobotSimulator;
 const {Pool, ZIAgent} = MarketAgents;
 
 const tradeLogHeader = [
@@ -605,7 +605,7 @@ function allTests(){
 
         describe('runSimulation with 10 periods of single unit trade scenario, synchronous', function(){
             let config = Object.assign({}, configSingleUnitTrade, {periods:10});
-            let S = runSimulation(config);
+            let S = new Simulation(config).run();
             testsForRunSimulationSingleTradeTenPeriods({S});
         }); 
 
@@ -613,7 +613,7 @@ function allTests(){
             let config = Object.assign({}, configSingleUnitTrade, {periods:10});
             describe(' -- because runSimulation(config,callback) returns immediately, order log should be header only', function(){
                 it('order logs should have length 1', function(done){
-                    let S = runSimulation(config, function(){ done();});
+                    let S = new Simulation(config).run(done);
                     S.logs.buyorder.data.length.should.equal(1);
                     S.logs.sellorder.data.length.should.equal(1);
                 });
@@ -621,7 +621,7 @@ function allTests(){
             describe('when done should pass same tests as above ', function(){
                 let state = {};
                 beforeEach(function(done){
-                    runSimulation(config,function(e,S){
+                    new Simulation(config).run(function(e,S){
                         state.S = S;
                         done();
                     });
@@ -646,9 +646,9 @@ function allTests(){
                             done();
                         }
                     }
-                    runSimulation(configA, callback);
-                    runSimulation(configB, callback);
-                    runSimulation(configC, callback);
+                    new Simulation(configA).run(callback);
+                    new Simulation(configB).run(callback);
+                    new Simulation(configC).run(callback);
                 });
                 testsForRunSimulationSingleTradeTenPeriods(states[0]);
                 testsForRunSimulationSingleTradeTenPeriods(states[1]);

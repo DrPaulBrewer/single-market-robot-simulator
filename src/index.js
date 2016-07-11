@@ -323,52 +323,54 @@ export class Simulation {
         if (sim.logs.trade)
             sim.logs.trade.write(tradeOutput);
     }
-}
 
-// eslint-disable-next-line max-params
-export function runSimulation(config, done, update, delay){
-    const mySim = new Simulation(config);
+    run(done, update, delay){
 
-    /* istanbul ignore if */
+	const mySim = this;
+	const config = this.config;
 
-    if (!config.silent)
-        console.log("Periods = "+config.periods);
-    if(typeof(done)==='function'){
-        async.whilst(
-            function(){
-                return (mySim.period<config.periods); 
-            },
-            function(callback){
-                setTimeout(function(){
-                    mySim.runPeriod(function(e,d){
-                        if (typeof(update)==='function') update(e,d);
-                        callback(e,d);
-                    });
-                }, (delay || 100) );
-            },
-            function(){ 
+	/* istanbul ignore if */
 
-                /* istanbul ignore if */
+	if (!config.silent)
+            console.log("Periods = "+config.periods);
+	if(typeof(done)==='function'){
+            async.whilst(
+		function(){
+                    return (mySim.period<config.periods); 
+		},
+		function(callback){
+                    setTimeout(function(){
+			mySim.runPeriod(function(e,d){
+                            if (typeof(update)==='function') update(e,d);
+                            callback(e,d);
+			});
+                    }, (delay || 100) );
+		},
+		function(){ 
 
-                if (!config.silent)
-                    console.log("done");
-                done(false, mySim);
+                    /* istanbul ignore if */
+
+                    if (!config.silent)
+			console.log("done");
+                    done(false, mySim);
+		}
+            );
+	} else {
+
+            /* no done callback, run synchronously */
+
+            while(mySim.period<config.periods){
+		mySim.runPeriod();
             }
-        );
-    } else {
 
-        /* no done callback, run synchronously */
+            /* istanbul ignore if */
 
-        while(mySim.period<config.periods){
-            mySim.runPeriod();
-        }
-
-        /* istanbul ignore if */
-
-        if (!config.silent)
-            console.log("done");
+            if (!config.silent)
+		console.log("done");
+	}
+	return mySim;
     }
-    return mySim;
+
 }
     
 /* the next comment tells the coverage tester that the main() function is not tested by the test suite */
@@ -383,7 +385,7 @@ function main(){
         fs.readFileSync('./config.json', 'utf8')
     );
 
-    runSimulation(config);
+    new Simulation(config).run();
 
 }
 

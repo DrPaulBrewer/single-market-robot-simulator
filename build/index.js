@@ -15,8 +15,6 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 /* eslint no-console: "off", no-sync:"off", consistent-this:"off" */
 
-exports.runSimulation = runSimulation;
-
 var _async = require('async');
 
 var _async2 = _interopRequireDefault(_async);
@@ -311,51 +309,51 @@ var Simulation = exports.Simulation = function () {
             sim.periodTradePrices.push(tradePrice);
             if (sim.logs.trade) sim.logs.trade.write(tradeOutput);
         }
+    }, {
+        key: 'run',
+        value: function run(done, update, delay) {
+
+            var mySim = this;
+            var config = this.config;
+
+            /* istanbul ignore if */
+
+            if (!config.silent) console.log("Periods = " + config.periods);
+            if (typeof done === 'function') {
+                _async2.default.whilst(function () {
+                    return mySim.period < config.periods;
+                }, function (callback) {
+                    setTimeout(function () {
+                        mySim.runPeriod(function (e, d) {
+                            if (typeof update === 'function') update(e, d);
+                            callback(e, d);
+                        });
+                    }, delay || 100);
+                }, function () {
+
+                    /* istanbul ignore if */
+
+                    if (!config.silent) console.log("done");
+                    done(false, mySim);
+                });
+            } else {
+
+                /* no done callback, run synchronously */
+
+                while (mySim.period < config.periods) {
+                    mySim.runPeriod();
+                }
+
+                /* istanbul ignore if */
+
+                if (!config.silent) console.log("done");
+            }
+            return mySim;
+        }
     }]);
 
     return Simulation;
 }();
-
-// eslint-disable-next-line max-params
-
-
-function runSimulation(config, done, update, delay) {
-    var mySim = new Simulation(config);
-
-    /* istanbul ignore if */
-
-    if (!config.silent) console.log("Periods = " + config.periods);
-    if (typeof done === 'function') {
-        _async2.default.whilst(function () {
-            return mySim.period < config.periods;
-        }, function (callback) {
-            setTimeout(function () {
-                mySim.runPeriod(function (e, d) {
-                    if (typeof update === 'function') update(e, d);
-                    callback(e, d);
-                });
-            }, delay || 100);
-        }, function () {
-
-            /* istanbul ignore if */
-
-            if (!config.silent) console.log("done");
-            done(false, mySim);
-        });
-    } else {
-
-        /* no done callback, run synchronously */
-
-        while (mySim.period < config.periods) {
-            mySim.runPeriod();
-        }
-
-        /* istanbul ignore if */
-
-        if (!config.silent) console.log("done");
-    }
-    return mySim;
-}
 
 /* the next comment tells the coverage tester that the main() function is not tested by the test suite */
 /* istanbul ignore next */
@@ -367,7 +365,7 @@ function main() {
 
     var config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
-    runSimulation(config);
+    new Simulation(config).run();
 }
 
 if ((typeof module === 'undefined' ? 'undefined' : _typeof(module)) === 'object') {
