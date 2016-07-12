@@ -2,16 +2,32 @@
 // This is open source software. The MIT License applies to this software.                                  
 // see https://opensource.org/licenses/MIT or included License.md file
 
-/* global fs:true */
-
 /* eslint no-console: "off", no-sync:"off", consistent-this:"off" */
 
 import async from 'async';
 import * as MEC from 'market-example-contingent';
 import * as MarketAgents from 'market-agents';
 
+/* 
+ *  on the browser, the jspm package manager can be programmed to set the
+ *  fs module to @empty with jspm install single-market-robot-simulator -o override.json
+ *  where override.json looks like {"map": {"fs": "@empty" }}
+ */
+
+import * as fs from 'fs'; // remember to override in jspm dep configuration to empty
+
 const Market = MEC.Market;
-const {ZIAgent, Pool} = MarketAgents;
+const {ZIAgent, UnitAgent, KaplanSniperAgent, Pool} = MarketAgents;
+
+const AgentFactoryWarehouse = {ZIAgent, UnitAgent, KaplanSniperAgent};
+
+function newAgentFactory(name, options){ 
+    return new AgentFactoryWarehouse[name](options); 
+}
+
+export function AgentRegister(obj){ 
+    Object.assign(AgentFactoryWarehouse, obj); 
+}
 
 export class Log {
     constructor(fname){
@@ -20,7 +36,8 @@ export class Log {
             this.useFS = ( (typeof(fname)==='string') &&
                            (fs) &&
                            (fs.openSync) &&
-                           (fs.writeSync) );
+                           (fs.writeSync) &&
+                           !(fs.should) );
         } catch(e){} // eslint-disable-line no-empty
         if (this.useFS)
             this.fd = fs.openSync(fname, 'w');
@@ -76,7 +93,7 @@ export class Simulation {
     }
 
     initLogs(){
-	const sim = this;
+        const sim = this;
         sim.logs = {};
 
         /* we do not need test coverage of whether specific logs are enabled */
@@ -130,98 +147,111 @@ export class Simulation {
             maxPrice: config.H
         };
         sim.periodDuration = common.period.duration;
-        function monkeyPatch(A){
-            A.bid = function(market, price){
-                const order = MEC.oa({
-                    t: this.wakeTime,
-                    id: this.id,
-                    cancel: !sim.config.keepPreviousOrders,
-                    q: 1,
-                    buyPrice: price
-                });
-                if (market.goods === 'X'){
-                    if (sim.logs.buyorder)
-                        sim.logs.buyorder.write([
-                            this.period.number, 
-                            this.wakeTime, 
-                            this.wakeTime-this.period.startTime,
-                            this.id, 
-                            this.inventory.X,
-                            price, 
-                            this.unitValueFunction('X',this.inventory), 
-                            '',
-                            ''
-                        ]);
-                    market.inbox.push(order);
-                    while(market.inbox.length>0)
-                        market.push(sim.xMarket.inbox.shift());
-                }
-            };
-
-            A.ask = function(market, price){
-                const order = MEC.oa({
-                    t: this.wakeTime,
-                    id: this.id,
-                    cancel: !sim.config.keepPreviousOrders,
-                    q: 1,
-                    sellPrice: price
-                });
-
-                if (market.goods === 'X'){
-                    if (sim.logs.sellorder)
-                        sim.logs.sellorder.write([
-                            this.period.number, 
-                            this.wakeTime, 
-                            this.wakeTime-this.period.startTime,
-                            this.id, 
-                            this.inventory.X,
-                            '',
-                            '',
-                            price, 
-                            this.unitCostFunction('X',this.inventory) 
-                        ]);
-                    market.inbox.push(order);
-                    while(market.inbox.length>0)
-                        market.push(sim.xMarket.inbox.shift());
-                }
-            };
-
-            A.markets = [sim.xMarket];
-
-            if (A instanceof MarketAgents.KaplanSniperAgent){
-                A.getJuicyBidPrice = function(){
-                    if (sim.logs && sim.logs.ohlc && sim.logs.ohlc.last && sim.logs.ohlc.last.length)
-                        return sim.logs.ohlc.last[2];
-                };
-                A.getJuicyAskPrice = function(){
-                    if (sim.logs && sim.logs.ohlc && sim.logs.ohlc.last && sim.logs.ohlc.last.length)
-                        return sim.logs.ohlc.last[3];
-                };
-            }
-        }
-        function newBuyerAgent(){
-            const a = new ZIAgent(Object.assign({}, common, {rate: (config.buyerRate || 1)}));
-            monkeyPatch(a, sim);
-            return a;
-        }
-        function  newSellerAgent(){
-            const a = new ZIAgent(Object.assign({}, common, {rate: (config.sellerRate || 1)}));
-            monkeyPatch(a, sim);
-            return a;
-        }
-
         for(let i=0,l=sim.numberOfBuyers;i<l;++i){
-            const a = newBuyerAgent();
+            const a = sim.newBuyerAgent(i, common);
             sim.buyersPool.push(a);
             sim.pool.push(a);
         }
         for(let i=0,l=sim.numberOfSellers;i<l;++i){
-            const a = newSellerAgent();
+            const a = sim.newSellerAgent(i, common);
             sim.sellersPool.push(a);
             sim.pool.push(a);
         }
         sim.buyersPool.distribute('values','X',config.buyerValues);
         sim.sellersPool.distribute('costs','X',config.sellerCosts);
+    }
+
+    newBuyerAgent(i, common){
+        const sim = this;
+        const l = sim.config.buyerAgentType.length;
+        const a = newAgentFactory(
+            sim.config.buyerAgentType[i%l],
+            Object.assign({}, common, {rate: (sim.config.buyerRate || 1)})
+        );
+        sim.teachAgent(a);
+        return a;
+    }
+
+    newSellerAgent(i, common){
+        const sim = this;
+        const l = sim.config.sellerAgentType.length;
+        const a = newAgentFactory(
+            sim.config.sellerAgentType[i%l],
+            Object.assign({}, common, {rate: (sim.config.sellerRate || 1)})
+        );
+        sim.teachAgent(a);
+        return a;
+    }
+
+    teachAgent(A) { 
+        const sim = this;
+        A.bid = function(market, price){
+            const order = MEC.oa({
+                t: this.wakeTime,
+                id: this.id,
+                cancel: !sim.config.keepPreviousOrders,
+                q: 1,
+                buyPrice: price
+            });
+            if (market.goods === 'X'){
+                if (sim.logs.buyorder)
+                    sim.logs.buyorder.write([
+                        this.period.number, 
+                        this.wakeTime, 
+                        this.wakeTime-this.period.startTime,
+                        this.id, 
+                        this.inventory.X,
+                        price, 
+                        this.unitValueFunction('X',this.inventory), 
+                        '',
+                        ''
+                    ]);
+                market.inbox.push(order);
+                while(market.inbox.length>0)
+                    market.push(sim.xMarket.inbox.shift());
+            }
+        };
+
+        A.ask = function(market, price){
+            const order = MEC.oa({
+                t: this.wakeTime,
+                id: this.id,
+                cancel: !sim.config.keepPreviousOrders,
+                q: 1,
+                sellPrice: price
+            });
+
+            if (market.goods === 'X'){
+                if (sim.logs.sellorder)
+                    sim.logs.sellorder.write([
+                        this.period.number, 
+                        this.wakeTime, 
+                        this.wakeTime-this.period.startTime,
+                        this.id, 
+                        this.inventory.X,
+                        '',
+                        '',
+                        price, 
+                        this.unitCostFunction('X',this.inventory) 
+                    ]);
+                market.inbox.push(order);
+                while(market.inbox.length>0)
+                    market.push(sim.xMarket.inbox.shift());
+            }
+        };
+
+        A.markets = [sim.xMarket];
+
+        if (A instanceof MarketAgents.KaplanSniperAgent){
+            A.getJuicyBidPrice = function(){
+                if (sim.logs && sim.logs.ohlc && sim.logs.ohlc.last && sim.logs.ohlc.last.length)
+                    return sim.logs.ohlc.last[2];
+            };
+            A.getJuicyAskPrice = function(){
+                if (sim.logs && sim.logs.ohlc && sim.logs.ohlc.last && sim.logs.ohlc.last.length)
+                    return sim.logs.ohlc.last[3];
+            };
+        }
     }
 
     runPeriod(cb){
@@ -326,49 +356,49 @@ export class Simulation {
 
     run(done, update, delay){
 
-	const mySim = this;
-	const config = this.config;
+        const mySim = this;
+        const config = this.config;
 
-	/* istanbul ignore if */
+        /* istanbul ignore if */
 
-	if (!config.silent)
+        if (!config.silent)
             console.log("Periods = "+config.periods);
-	if(typeof(done)==='function'){
+        if(typeof(done)==='function'){
             async.whilst(
-		function(){
+                function(){
                     return (mySim.period<config.periods); 
-		},
-		function(callback){
+                },
+                function(callback){
                     setTimeout(function(){
-			mySim.runPeriod(function(e,d){
+                        mySim.runPeriod(function(e,d){
                             if (typeof(update)==='function') update(e,d);
                             callback(e,d);
-			});
+                        });
                     }, (delay || 100) );
-		},
-		function(){ 
+                },
+                function(){ 
 
                     /* istanbul ignore if */
 
                     if (!config.silent)
-			console.log("done");
+                        console.log("done");
                     done(false, mySim);
-		}
+                }
             );
-	} else {
+        } else {
 
             /* no done callback, run synchronously */
 
             while(mySim.period<config.periods){
-		mySim.runPeriod();
+                mySim.runPeriod();
             }
 
             /* istanbul ignore if */
 
             if (!config.silent)
-		console.log("done");
-	}
-	return mySim;
+                console.log("done");
+        }
+        return mySim;
     }
 
 }
@@ -394,6 +424,6 @@ if (typeof(module)==='object'){
     /* istanbul ignore if */
 
     if (require && (require.main===module))
-	main();
+        main();
 }
 
