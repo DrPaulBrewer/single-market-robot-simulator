@@ -19,7 +19,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
  *  where override.json looks like {"map": {"fs": "@empty" }}
  */
 
-exports.AgentRegister = AgentRegister;
+exports.agentRegister = agentRegister;
 
 var _async = require('async');
 
@@ -48,21 +48,20 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 // remember to override in jspm dep configuration to empty
 
 var Market = MEC.Market;
-var ZIAgent = MarketAgents.ZIAgent;
-var UnitAgent = MarketAgents.UnitAgent;
-var KaplanSniperAgent = MarketAgents.KaplanSniperAgent;
 var Pool = MarketAgents.Pool;
 
 
-var AgentFactoryWarehouse = { ZIAgent: ZIAgent, UnitAgent: UnitAgent, KaplanSniperAgent: KaplanSniperAgent };
+var AgentFactoryWarehouse = {};
 
 function newAgentFactory(name, options) {
     return new AgentFactoryWarehouse[name](options);
 }
 
-function AgentRegister(obj) {
+function agentRegister(obj) {
     Object.assign(AgentFactoryWarehouse, obj);
 }
+
+agentRegister(MarketAgents); // a bit overbroad but gets all of them
 
 var Log = exports.Log = function () {
     function Log(fname) {

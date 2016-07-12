@@ -17,17 +17,19 @@ import * as MarketAgents from 'market-agents';
 import * as fs from 'fs'; // remember to override in jspm dep configuration to empty
 
 const Market = MEC.Market;
-const {ZIAgent, UnitAgent, KaplanSniperAgent, Pool} = MarketAgents;
+const {Pool} = MarketAgents;
 
-const AgentFactoryWarehouse = {ZIAgent, UnitAgent, KaplanSniperAgent};
+const AgentFactoryWarehouse = {};
 
 function newAgentFactory(name, options){ 
     return new AgentFactoryWarehouse[name](options); 
 }
 
-export function AgentRegister(obj){ 
+export function agentRegister(obj){ 
     Object.assign(AgentFactoryWarehouse, obj); 
 }
+
+agentRegister(MarketAgents); // a bit overbroad but gets all of them
 
 export class Log {
     constructor(fname){
