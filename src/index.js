@@ -61,6 +61,21 @@ export class Log {
         } else {
             this.data.push(x);
         }
+        return this;
+    }
+
+   setHeader(x){ 
+        if (Array.isArray(x)){
+            this.header = x;
+            this.write(x);
+        }
+        return this;
+    }
+    
+    lastByKey(k){
+        if (this.header && this.header.length && this.last && this.last.length){
+            return this.last[this.header.indexOf(k)];
+        }
     }
 }
 
@@ -97,24 +112,18 @@ export class Simulation {
     initLogs(){
         const sim = this;
         sim.logs = {};
-
-        /* we do not need test coverage of whether specific logs are enabled */
-        /* provided all uses of each log are guarded by an if statement testing existance */
-        /* istanbul ignore next */
+        const headers = {
+            ohlc:  ['period','open','high','low','close'],
+            buyorder: ['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost'],
+            sellorder: ['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost'],
+            trade: ['period','t','tp','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit'],
+            volume: ['period','volume']
+        };
 
         ['trade','buyorder','sellorder','profit','ohlc','volume'].forEach(function(name){
-            sim.logs[name] = new Log("./"+name+".csv");
+            sim.logs[name] = new Log("./"+name+".csv").setHeader(headers[name]);
         });
-        if (sim.logs.ohlc)
-            sim.logs.ohlc.write(['period','open','high','low','close']);
-        if (sim.logs.buyorder)
-            sim.logs.buyorder.write(['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost']);
-        if (sim.logs.sellorder)
-            sim.logs.sellorder.write(['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost']);
-        if (sim.logs.trade)
-            sim.logs.trade.write(['period','t','tp','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit']);
-        if (sim.logs.volume)
-            sim.logs.volume.write(['period','volume']);
+        
     }
 
     initMarket(){
@@ -246,12 +255,12 @@ export class Simulation {
 
         if (A instanceof MarketAgents.KaplanSniperAgent){
             A.getJuicyBidPrice = function(){
-                if (sim.logs && sim.logs.ohlc && sim.logs.ohlc.last && sim.logs.ohlc.last.length)
-                    return sim.logs.ohlc.last[2];
+                if (sim.logs && sim.logs.ohlc)
+                    return sim.logs.ohlc.lastByKey('high');
             };
             A.getJuicyAskPrice = function(){
-                if (sim.logs && sim.logs.ohlc && sim.logs.ohlc.last && sim.logs.ohlc.last.length)
-                    return sim.logs.ohlc.last[3];
+                if (sim.logs && sim.logs.ohlc)
+                    return sim.logs.ohlc.lastByKey('low');
             };
         }
     }
