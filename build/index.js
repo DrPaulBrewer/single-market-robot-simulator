@@ -202,8 +202,8 @@ var Simulation = exports.Simulation = function () {
      * @param {Object} config
      * @param {number} config.periods number of periods in this simulation
      * @param {number} config.periodDuration duration of each period
-     * @param {string[]} config.buyerAgentType string array giving a rotation of types of agents to use when creating the buyer agents.
-     * @param {string[]} config.sellerAgentType string array giving a rotation of types of agents to use when creating the seller agents.
+     * @param {string[]} config.buyerAgentType string array (choose from "ZIAgent","UnitAgent","OneupmanshipAgent","KaplanSniperAgent" or types registered with agentRegister()) giving a rotation of types of agents to use when creating the buyer agents.
+     * @param {string[]} config.sellerAgentType string array (choose from "ZIAgent","UnitAgent","OneupmanshipAgent","KaplanSniperAgent" or types registered with agentRegister()) giving a rotation of types of agents to use when creating the seller agents.
      * @param {number} [config.buyerRate=1.0] poisson arrival rate in wakes/sec for each buyer agent, defaults to 1.0
      * @param {number} [config.sellerRate=1.0] poisson arrival rate in wakes/sec for each seller agent, defaults to 1.0
      * @param {number[]} config.buyerValues Numeric array giving aggregate market demand for X. Becomes agents' values for units. Each period a new set of these values is distributed among buyer agents.
