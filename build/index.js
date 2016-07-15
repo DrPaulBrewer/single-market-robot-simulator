@@ -68,7 +68,6 @@ function newAgentFactory(name, options) {
 /**
  * register new types of (customized) agents in AgentFactoryWarehouse for use in simulations
  * @param {Object} obj An object with agent type names for keys and constructor(options) functions for values 
- * @public
  */
 
 function agentRegister(obj) {
@@ -113,7 +112,7 @@ var Log = exports.Log = function () {
 
             /** 
              * data array for browser and test usage
-             * @type {Array} data
+             * @type {Array} this.data
              */
 
             this.data = [];
@@ -122,7 +121,7 @@ var Log = exports.Log = function () {
 
     /**
      * writes data to Log and sets .last
-     * @param {Array|number|string} s data to write to Log's log file or memory
+     * @param {Array|number|string} x data to write to Log's log file or memory
      * @return {Object} returns Log object, chainable
      */
 
@@ -130,7 +129,14 @@ var Log = exports.Log = function () {
         key: 'write',
         value: function write(x) {
             if (x === undefined) return;
+
+            /**
+             * last item written to log
+             * @type {Object} this.last
+             */
+
             this.last = x;
+
             if (this.useFS) {
                 if (Array.isArray(x)) {
                     fs.writeSync(this.fd, x.join(",") + "\n");
@@ -147,7 +153,7 @@ var Log = exports.Log = function () {
 
         /**
          * sets header row and writes it to Log for csv-style Log. 
-         * @param {Array} x Header array giving names of columns for future writes
+         * @param {string[]} x Header array giving names of columns for future writes
          * @return {Object} Returns this Log; chainable
          */
 
@@ -155,7 +161,14 @@ var Log = exports.Log = function () {
         key: 'setHeader',
         value: function setHeader(x) {
             if (Array.isArray(x)) {
+
+                /**
+                 * header array for Log, as set by setHeader(header)
+                 * @type {string[]}
+                 */
+
                 this.header = x;
+
                 this.write(x);
             }
             return this;
@@ -191,36 +204,47 @@ var Simulation = exports.Simulation = function () {
      * @param {number} config.periodDuration duration of each period
      * @param {string[]} config.buyerAgentType string array giving a rotation of types of agents to use when creating the buyer agents.
      * @param {string[]} config.sellerAgentType string array giving a rotation of types of agents to use when creating the seller agents.
-     * @param {number} [config.buyerRate=1.0] poisson arrival rate in wakes/sec for each buyer agent
-     * @param {number} [config.sellerRate=1.0] poisson arrival rate in wakes/sec for each seller agent
+     * @param {number} [config.buyerRate=1.0] poisson arrival rate in wakes/sec for each buyer agent, defaults to 1.0
+     * @param {number} [config.sellerRate=1.0] poisson arrival rate in wakes/sec for each seller agent, defaults to 1.0
      * @param {number[]} config.buyerValues Numeric array giving aggregate market demand for X. Becomes agents' values for units. Each period a new set of these values is distributed among buyer agents.
      * @param {number[]} config.sellerCosts Numeric array giving aggregate market supply for X. Becomes agents' costs for units.  Each period a new set of these costs is distributed among seller agents.
      * @param {number} [config.numberOfBuyers] number of buyers; if unprovided, assigns 1 buyer per entry in .buyerValues
      * @param {number} [config.numberOfSellers] number of sellers; if unprovided, assigns 1 seller per entry in .sellerCosts
      * @param {Object} config.xMarket configuration options for x Market forwarded to market-example-contingent constructor
-     * @param {boolean} config.integer Set true if agent prices should be integers. Sent to agent constructor. Used by some random agents, such as ZIAgent.
-     * @param {boolean} config.ignoreBudgetConstraint Set true if agents should ignore their values/costs and pretend they have maximum value or minimum cost.  Sent to agent constructors.
-     * @param {boolean} config.keepPreviousOrders
+     * @param {boolean} [config.integer] Set true if agent prices should be integers. Sent to agent constructor. Used by some random agents, such as ZIAgent.
+     * @param {boolean} [config.ignoreBudgetConstraint] Set true if agents should ignore their values/costs and pretend they have maximum value or minimum cost.  Sent to agent constructors.
+     * @param {boolean} [config.keepPreviousOrders] Set true if agents should not set cancelReplace flag on orders
      * @param {number} config.L Minimum suggested agent price.  Sets .minPrice in agent constructor options
      * @param {number} config.H Maximum suggested agent price.  Sets .maxPrice in agent constructor options
-     * @param {boolean} [config.silent=false] If true, suppress console.log messages providing total number of agents, etc.
+     * @param {boolean} [config.silent] If true, suppress console.log messages providing total number of agents, etc.
      */
 
     function Simulation(config) {
         _classCallCheck(this, Simulation);
 
+        /**
+         * copy of config as passed to constructor
+         * @type {Object} this.config
+         */
+
         this.config = config;
-        // expected options
-        // periods:  number of periods to run
-        // buyerValues array of one for each ZI buyer
-        // sellerCosts one for each ZI seller
-        // L is the lowest possible random bid price
-        // H is the highest possible random ask price
-        // maxTries -- maximum number of tries to generate order
+
         this.initLogs();
         this.initMarket();
         this.initAgents();
+
+        /**
+         * current period number when running simulation
+         * @type {number} this.period
+         */
+
         this.period = 0;
+
+        /**
+         * trade prices for current period
+         * @type {number[]} this.periodTradePrices
+         */
+
         this.periodTradePrices = [];
 
         /* istanbul ignore if */
@@ -519,8 +543,8 @@ var Simulation = exports.Simulation = function () {
 
         /**
          * run simulation synchronously with no parameters, or asynchronously calling done() callback at end of config.periods periods, and calling update() callback each period, pausing for optional delay ms between periods
-         * @param {function(boolean,Object)} [done] End of simulation callback function, called after this.period===this.periods, passed error boolean and simulation object 
-         * @param {function(boolean,Object)} [update] End of period callback function, called after each period, passed error boolean and simulation object.
+         * @param {function(error:boolean, sim:Object)} [done] End of simulation callback function, called after this.period===this.periods, passed error boolean and simulation object 
+         * @param {function(error:boolean, sim:Object)} [update] End of period callback function, called after each period, passed error boolean and simulation object.
          * @param {number} [delay=100] time in ms to pause between periods of simulation
          * @return {Object|undefined} returns simulation object if running synchronously, otherwise returns undefined immediately and runs asynchronously.
          */
