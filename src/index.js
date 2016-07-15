@@ -54,7 +54,7 @@ export class Log {
     /** 
      * Create Log with suggested file name in browser memory or on-disk in nodejs
      *
-     * @param fname Suggested file name
+     * @param {string} fname Suggested file name
      */
 
     constructor(fname){
@@ -93,7 +93,7 @@ export class Log {
 
     /**
      * writes data to Log and sets .last
-     * @param x {Array|number|string} data to write to Log's log file or memory
+     * @param {Array|number|string} s data to write to Log's log file or memory
      * @return {Object} returns Log object, chainable
      */
 
