@@ -372,9 +372,8 @@ export class Simulation {
                         '',
                         ''
                     ]);
-                market.inbox.push(order);
-                while(market.inbox.length>0)
-                    market.push(sim.xMarket.inbox.shift());
+                market.submit(order);
+                while(market.process()){} // eslint-disable-line no-empty
             }
         };
 
@@ -400,9 +399,8 @@ export class Simulation {
                         price, 
                         this.unitCostFunction('X',this.inventory) 
                     ]);
-                market.inbox.push(order);
-                while(market.inbox.length>0)
-                    market.push(sim.xMarket.inbox.shift());
+		market.submit(order);
+		while(market.process());
             }
         };
 

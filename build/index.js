@@ -403,10 +403,8 @@ var Simulation = exports.Simulation = function () {
                 });
                 if (market.goods === 'X') {
                     if (sim.logs.buyorder) sim.logs.buyorder.write([this.period.number, this.wakeTime, this.wakeTime - this.period.startTime, this.id, this.inventory.X, price, this.unitValueFunction('X', this.inventory), '', '']);
-                    market.inbox.push(order);
-                    while (market.inbox.length > 0) {
-                        market.push(sim.xMarket.inbox.shift());
-                    }
+                    market.submit(order);
+                    while (market.process()) {} // eslint-disable-line no-empty
                 }
             };
 
@@ -421,10 +419,8 @@ var Simulation = exports.Simulation = function () {
 
                 if (market.goods === 'X') {
                     if (sim.logs.sellorder) sim.logs.sellorder.write([this.period.number, this.wakeTime, this.wakeTime - this.period.startTime, this.id, this.inventory.X, '', '', price, this.unitCostFunction('X', this.inventory)]);
-                    market.inbox.push(order);
-                    while (market.inbox.length > 0) {
-                        market.push(sim.xMarket.inbox.shift());
-                    }
+                    market.submit(order);
+                    while (market.process()) {}
                 }
             };
 
