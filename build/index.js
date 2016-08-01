@@ -446,6 +446,25 @@ var Simulation = exports.Simulation = function () {
         key: 'runPeriod',
         value: function runPeriod(cb) {
             var sim = this;
+            function onEndOfPeriod() {
+                sim.pool.endPeriod();
+                sim.logPeriod();
+                cb(false, sim);
+            }
+            function onRealtimeWake(endTime) {
+                if (!endTime) throw new Error("period endTime required for onRealtimeWake, got: " + endTime);
+                return function () {
+                    var now = Date.now() / 1000.0 - sim.realtime;
+                    if (now >= endTime) {
+                        clearInterval(sim.realtimeIntervalId);
+                        delete sim.realtimeIntervalId;
+                        sim.pool.syncRun(endTime, 200);
+                        onEndOfPeriod();
+                    } else {
+                        sim.pool.syncRun(now, 200);
+                    }
+                };
+            }
             sim.period++;
 
             /* istanbul ignore if */
@@ -454,14 +473,27 @@ var Simulation = exports.Simulation = function () {
             sim.pool.initPeriod(sim.period);
             sim.xMarket.clear();
             if (typeof cb === 'function') {
+                if (sim.config.realtime) {
 
-                /* run asynchronously, call cb function at end */
+                    if (sim.realtimeIntervalId) {
+                        clearInterval(sim.realtimeIntervalId);
+                        throw new Error("sim has unexpected realtimeIntervalId");
+                    }
 
-                return sim.pool.run(sim.pool.endTime(), function () {
-                    this.endPeriod();
-                    sim.logPeriod();
-                    cb(false, sim);
-                }, 10);
+                    /* adjust realtime offset */
+
+                    sim.realtime = Date.now() / 1000.0 - sim.pool.agents[0].period.startTime;
+
+                    /* run asynchronously, and in realtime, endTime() is called immediately and onRealtimeWake returns actual handler */
+
+                    sim.realtimeIntervalId = setInterval(onRealtimeWake(sim.pool.endTime()), 50);
+
+                    return sim;
+                }
+
+                /* run asynchronously, but not realtime, run 10 agent events per burst, call cb function at end */
+
+                return sim.pool.run(sim.pool.endTime(), onEndOfPeriod, 10);
             }
 
             /* no callback; run synchronously */

@@ -567,9 +567,73 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
                 new Simulation(configB).run(callback);
                 new Simulation(configC).run(callback);
             });
+            it('should have distinct buyer agents for each simulation', function(){
+                states[0].S.buyersPool.agents[0].should.not.equal(states[1].S.buyersPool.agents[0]);
+                states[0].S.buyersPool.agents[0].should.not.equal(states[2].S.buyersPool.agents[0]);
+                states[1].S.buyersPool.agents[0].should.not.equal(states[2].S.buyersPool.agents[0]);
+            });
+            it('should have distinct seller agents for each simulation', function(){
+                states[0].S.sellersPool.agents[0].should.not.equal(states[1].S.sellersPool.agents[0]);
+                states[0].S.sellersPool.agents[0].should.not.equal(states[2].S.sellersPool.agents[0]);
+                states[1].S.sellersPool.agents[0].should.not.equal(states[2].S.sellersPool.agents[0]);
+            });
             testsForRunSimulationSingleTradeTenPeriods(states[0]);
             testsForRunSimulationSingleTradeTenPeriods(states[1]);
             testsForRunSimulationSingleTradeTenPeriods(states[2]);
         });
     });
+
+    describe('runSimulation with three simulations of 10 periods of single unit trade scenario, asynchronous, realtime 1.5 sec period', function(){
+        let rt = {
+            realtime:1,
+            periodDuration: 1.5,
+            buyerRate: 10,
+            sellerRate: 10
+        };
+        let configA = Object.assign({}, configSingleUnitTrade, {periods:10}, rt);
+        let configB = Object.assign({}, configSingleUnitTrade, {periods:10}, rt);
+        let configC = Object.assign({}, configSingleUnitTrade, {periods:10}, rt);
+        describe('when done should pass same tests as above ', function(){
+            let states=[{},{},{}];
+            let tInit = 0, tFinal = 0, countBefore=0;
+            // run the setup once before all the tests, not before each test
+            before(function(done){
+                tInit = Date.now();
+                countBefore++;
+                let count = 0;
+                function callback(e,S){
+                    states[count].S = S;
+                    count++;
+                    if (count===3){
+                        tFinal = Date.now();
+                        done();
+                    }
+                }
+                new Simulation(configA).run(callback);
+                new Simulation(configB).run(callback);
+                new Simulation(configC).run(callback);
+            });
+            it('should only run the before() function in the test one time', function(){
+                countBefore.should.equal(1);
+            });
+            it('should finish the real time simulations in about 15 sec', function(){
+                const tInterval = (tFinal - tInit)/1000.0;
+                tInterval.should.be.within(15,18);
+            });
+            it('should have distinct buyer agents for each simulation', function(){
+                states[0].S.buyersPool.agents[0].should.not.equal(states[1].S.buyersPool.agents[0]);
+                states[0].S.buyersPool.agents[0].should.not.equal(states[2].S.buyersPool.agents[0]);
+                states[1].S.buyersPool.agents[0].should.not.equal(states[2].S.buyersPool.agents[0]);
+            });
+            it('should have distinct seller agents for each simulation', function(){
+                states[0].S.sellersPool.agents[0].should.not.equal(states[1].S.sellersPool.agents[0]);
+                states[0].S.sellersPool.agents[0].should.not.equal(states[2].S.sellersPool.agents[0]);
+                states[1].S.sellersPool.agents[0].should.not.equal(states[2].S.sellersPool.agents[0]);
+            });
+            testsForRunSimulationSingleTradeTenPeriods(states[0]);
+            testsForRunSimulationSingleTradeTenPeriods(states[1]);
+            testsForRunSimulationSingleTradeTenPeriods(states[2]);
+        });
+    });
+   
 });
