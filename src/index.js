@@ -418,8 +418,8 @@ export class Simulation {
     }
 
     /**
-     * runs a periods of the simulation, synchronously without optional callback, and asynchonously with callback function
-     * @param {boolean} sync indicates call is synchronous, otherwise returns promise
+     * runs a periods of the simulation
+     * @param {boolean} sync true indicates call is synchronous, return value will be simulation object; false indicates async, return value is Promise
      * @return {Promise<Object,Error>} Resolves to simulation object when one period of simulation is complete.
      */
 
