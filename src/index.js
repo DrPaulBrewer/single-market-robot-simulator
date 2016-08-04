@@ -568,7 +568,7 @@ export class Simulation {
      * run simulation
      * @param {Object} [options]
      * @param {boolean} [options.sync=false] true to run synchronously, returns simulation object (not a Promise) 
-     * @param {function(error:boolean, sim:Object)} [options.update]  update Optional end of period function
+     * @param {function(sim:Object)} [options.update]  update Optional end of period function
      * @param {number} [options.delay=20] delay timeout between periods in ms.
      * @return {Promise<Object,Error>} resolves to simulation object
      */
