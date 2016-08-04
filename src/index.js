@@ -4,7 +4,6 @@
 
 /* eslint no-console: "off", no-sync:"off", consistent-this:"off" */
 
-import async from 'async';
 import * as MEC from 'market-example-contingent';
 import * as MarketAgents from 'market-agents';
 
@@ -420,31 +419,16 @@ export class Simulation {
 
     /**
      * runs a periods of the simulation, synchronously without optional callback, and asynchonously with callback function
-     * @param {function(error:boolean, sim:Object)} cb If present, calls this callback when done.  If absent, runs synchronously.
-     * @return {Object|undefined} Returns undefined immediately if callback parameter "cb" present, otherwise returns simulation object when 1 period of simulation is complete.
+     * @param {boolean} sync indicates call is synchronous, otherwise returns promise
+     * @return {Promise<Object,Error>} Resolves to simulation object when one period of simulation is complete.
      */
 
-    runPeriod(cb){
-        const sim = this;
-        function onEndOfPeriod(){
+    runPeriod(sync){
+        const sim=this;
+        function atEndOfPeriod(){
             sim.pool.endPeriod();
             sim.logPeriod();
-            cb(false, sim); 
-        }
-        function onRealtimeWake(endTime){
-            if (!endTime)
-                throw new Error("period endTime required for onRealtimeWake, got: "+endTime);
-            return function(){
-                const now = (Date.now()/1000.0)-sim.realtime;
-                if (now>=endTime){
-                    clearInterval(sim.realtimeIntervalId);
-                    delete sim.realtimeIntervalId;
-                    sim.pool.syncRun(endTime, 200);
-                    onEndOfPeriod();
-                } else {
-                    sim.pool.syncRun(now, 200);
-                }
-            };
+            return sim;
         }
         sim.period++;
 
@@ -452,41 +436,51 @@ export class Simulation {
 
         if (!sim.config.silent)
             console.log("period: "+sim.period);
+        
         sim.pool.initPeriod(sim.period);
         sim.xMarket.clear();
-        if (typeof(cb)==='function'){
-            if (sim.config.realtime){
-
-                if (sim.realtimeIntervalId){
-                    clearInterval(sim.realtimeIntervalId);
-                    throw new Error("sim has unexpected realtimeIntervalId");
-                }
-
-                /* adjust realtime offset */
-                
-                sim.realtime = (Date.now()/1000.0)-(sim.pool.agents[0].period.startTime);
-
-                /* run asynchronously, and in realtime, endTime() is called immediately and onRealtimeWake returns actual handler */
-
-                sim.realtimeIntervalId = setInterval(onRealtimeWake(sim.pool.endTime()), 50);
-
-                return sim;
-                
+        
+        if (sync){
+            sim.pool.syncRun(sim.pool.endTime());
+            return (atEndOfPeriod());
+        }
+        if (!(sim.config.realtime)){
+            return (sim
+                    .pool
+                    .runAsPromise(sim.pool.endTime(),10)
+                    .then(atEndOfPeriod)
+                   );
+        }           
+        return new Promise(function(resolve,reject){
+            function onRealtimeWake(endTime){
+                if (!endTime)
+                    return reject("period endTime required for onRealtimeWake, got: "+endTime);
+                return function(){
+                    const now = (Date.now()/1000.0)-sim.realtime;
+                    if (now>=endTime){
+                        clearInterval(sim.realtimeIntervalId);
+                        delete sim.realtimeIntervalId;
+                        sim.pool.syncRun(endTime);
+                        return resolve(atEndOfPeriod());
+                    } 
+                    sim.pool.syncRun(now);
+                };
             }
             
-            /* run asynchronously, but not realtime, run 10 agent events per burst, call cb function at end */
+            if (sim.realtimeIntervalId){
+                clearInterval(sim.realtimeIntervalId);
+                return reject("sim has unexpected realtimeIntervalId");
+            }
 
-            return sim.pool.run(sim.pool.endTime(),onEndOfPeriod,10);
+            /* adjust realtime offset */
             
+            sim.realtime = (Date.now()/1000.0)-(sim.pool.agents[0].period.startTime);
             
-        }
-
-        /* no callback; run synchronously */
-
-        sim.pool.syncRun(sim.pool.endTime());
-        sim.pool.endPeriod();
-        sim.logPeriod();
-        return(sim);
+            /* run asynchronously, and in realtime, endTime() is called immediately and onRealtimeWake(...) returns actual handler function */
+            
+            sim.realtimeIntervalId = setInterval(onRealtimeWake(sim.pool.endTime()), 40);
+                    
+        });     
     }
 
     /**
@@ -571,60 +565,48 @@ export class Simulation {
     }
 
     /**
-     * run simulation synchronously with no parameters, or asynchronously calling done() callback at end of config.periods periods, and calling update() callback each period, pausing for optional delay ms between periods
-     * @param {function(error:boolean, sim:Object)} [done] End of simulation callback function, called after this.period===this.periods, passed error boolean and simulation object 
-     * @param {function(error:boolean, sim:Object)} [update] End of period callback function, called after each period, passed error boolean and simulation object.
-     * @param {number} [delay=100] time in ms to pause between periods of simulation
-     * @return {Object|undefined} returns simulation object if running synchronously, otherwise returns undefined immediately and runs asynchronously.
+     * run simulation
+     * @param {sync:boolean,update:function(error:boolean, sim:Object), delay:number} param Optional sync run synchronously, update end of period function, and (async only) delay timeout between periods in ms.
+     * @return {Promise<Object,Error>} resolves to simulation object
      */
-    
-    run(done, update, delay){
 
-        const mySim = this;
+    run({sync,update, delay}={sync:false, update:((s)=>(s)), delay: 20}){  
+        const sim = this;
         const config = this.config;
-
+        
         /* istanbul ignore if */
-
+        
         if (!config.silent)
             console.log("Periods = "+config.periods);
-        if(typeof(done)==='function'){
-            async.whilst(
-                function(){
-                    return (mySim.period<config.periods); 
-                },
-                function(callback){
-                    setTimeout(function(){
-                        mySim.runPeriod(function(e,d){
-                            if (typeof(update)==='function') update(e,d);
-                            callback(e,d);
-                        });
-                    }, (delay || 100) );
-                },
-                function(){ 
-
-                    /* istanbul ignore if */
-
-                    if (!config.silent)
-                        console.log("done");
-                    done(false, mySim);
-                }
-            );
-        } else {
-
-            /* no done callback, run synchronously */
-
-            while(mySim.period<config.periods){
-                mySim.runPeriod();
+        
+        if (sync){
+            while(sim.period<config.periods){
+                sim.runPeriod({sync:true});
+                if (typeof update==='function') update(sim);
             }
 
             /* istanbul ignore if */
 
             if (!config.silent)
                 console.log("done");
+            
+            return sim;
         }
-        return mySim;
-    }
 
+        return new Promise(function(resolve,reject){
+            function loop(){
+                (sim
+                 .runPeriod()
+                 .then(update)
+                 .then(
+                     function(s){ return (s.period<config.periods)? setTimeout(loop,delay): resolve(s); },
+                     ((e)=>reject(e))
+                 )
+                );
+            }
+            loop();
+        });
+    }
 }
     
 /* the next comment tells the coverage tester that the main() function is not tested by the test suite */
@@ -643,7 +625,7 @@ function main(){
         fs.readFileSync('./config.json', 'utf8')
     );
 
-    new Simulation(config).run();
+    new Simulation(config).run({sync:true});
 
 }
 

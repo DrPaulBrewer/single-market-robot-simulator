@@ -7,8 +7,8 @@ exports.Simulation = exports.Log = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); // Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC                            
-// This is open source software. The MIT License applies to this software.                                 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); // Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC                             
+// This is open source software. The MIT License applies to this software.                                  
 // see https://opensource.org/licenses/MIT or included License.md file
 
 /* eslint no-console: "off", no-sync:"off", consistent-this:"off" */
@@ -20,10 +20,6 @@ var _createClass = function () { function defineProperties(target, props) { for 
  */
 
 exports.agentRegister = agentRegister;
-
-var _async = require('async');
-
-var _async2 = _interopRequireDefault(_async);
 
 var _marketExampleContingent = require('market-example-contingent');
 
@@ -38,8 +34,6 @@ var _fs = require('fs');
 var fs = _interopRequireWildcard(_fs);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
@@ -438,70 +432,63 @@ var Simulation = exports.Simulation = function () {
 
         /**
          * runs a periods of the simulation, synchronously without optional callback, and asynchonously with callback function
-         * @param {function(error:boolean, sim:Object)} cb If present, calls this callback when done.  If absent, runs synchronously.
-         * @return {Object|undefined} Returns undefined immediately if callback parameter "cb" present, otherwise returns simulation object when 1 period of simulation is complete.
+         * @param {boolean} sync indicates call is synchronous, otherwise returns promise
+         * @return {Promise<Object,Error>} Resolves to simulation object when one period of simulation is complete.
          */
 
     }, {
         key: 'runPeriod',
-        value: function runPeriod(cb) {
+        value: function runPeriod(sync) {
             var sim = this;
-            function onEndOfPeriod() {
+            function atEndOfPeriod() {
                 sim.pool.endPeriod();
                 sim.logPeriod();
-                cb(false, sim);
-            }
-            function onRealtimeWake(endTime) {
-                if (!endTime) throw new Error("period endTime required for onRealtimeWake, got: " + endTime);
-                return function () {
-                    var now = Date.now() / 1000.0 - sim.realtime;
-                    if (now >= endTime) {
-                        clearInterval(sim.realtimeIntervalId);
-                        delete sim.realtimeIntervalId;
-                        sim.pool.syncRun(endTime, 200);
-                        onEndOfPeriod();
-                    } else {
-                        sim.pool.syncRun(now, 200);
-                    }
-                };
+                return sim;
             }
             sim.period++;
 
             /* istanbul ignore if */
 
             if (!sim.config.silent) console.log("period: " + sim.period);
+
             sim.pool.initPeriod(sim.period);
             sim.xMarket.clear();
-            if (typeof cb === 'function') {
-                if (sim.config.realtime) {
 
-                    if (sim.realtimeIntervalId) {
-                        clearInterval(sim.realtimeIntervalId);
-                        throw new Error("sim has unexpected realtimeIntervalId");
-                    }
-
-                    /* adjust realtime offset */
-
-                    sim.realtime = Date.now() / 1000.0 - sim.pool.agents[0].period.startTime;
-
-                    /* run asynchronously, and in realtime, endTime() is called immediately and onRealtimeWake returns actual handler */
-
-                    sim.realtimeIntervalId = setInterval(onRealtimeWake(sim.pool.endTime()), 50);
-
-                    return sim;
+            if (sync) {
+                sim.pool.syncRun(sim.pool.endTime());
+                return atEndOfPeriod();
+            }
+            if (!sim.config.realtime) {
+                return sim.pool.runAsPromise(sim.pool.endTime(), 10).then(atEndOfPeriod);
+            }
+            return new Promise(function (resolve, reject) {
+                function onRealtimeWake(endTime) {
+                    if (!endTime) return reject("period endTime required for onRealtimeWake, got: " + endTime);
+                    return function () {
+                        var now = Date.now() / 1000.0 - sim.realtime;
+                        if (now >= endTime) {
+                            clearInterval(sim.realtimeIntervalId);
+                            delete sim.realtimeIntervalId;
+                            sim.pool.syncRun(endTime);
+                            return resolve(atEndOfPeriod());
+                        }
+                        sim.pool.syncRun(now);
+                    };
                 }
 
-                /* run asynchronously, but not realtime, run 10 agent events per burst, call cb function at end */
+                if (sim.realtimeIntervalId) {
+                    clearInterval(sim.realtimeIntervalId);
+                    return reject("sim has unexpected realtimeIntervalId");
+                }
 
-                return sim.pool.run(sim.pool.endTime(), onEndOfPeriod, 10);
-            }
+                /* adjust realtime offset */
 
-            /* no callback; run synchronously */
+                sim.realtime = Date.now() / 1000.0 - sim.pool.agents[0].period.startTime;
 
-            sim.pool.syncRun(sim.pool.endTime());
-            sim.pool.endPeriod();
-            sim.logPeriod();
-            return sim;
+                /* run asynchronously, and in realtime, endTime() is called immediately and onRealtimeWake(...) returns actual handler function */
+
+                sim.realtimeIntervalId = setInterval(onRealtimeWake(sim.pool.endTime()), 40);
+            });
         }
 
         /**
@@ -570,53 +557,52 @@ var Simulation = exports.Simulation = function () {
         }
 
         /**
-         * run simulation synchronously with no parameters, or asynchronously calling done() callback at end of config.periods periods, and calling update() callback each period, pausing for optional delay ms between periods
-         * @param {function(error:boolean, sim:Object)} [done] End of simulation callback function, called after this.period===this.periods, passed error boolean and simulation object 
-         * @param {function(error:boolean, sim:Object)} [update] End of period callback function, called after each period, passed error boolean and simulation object.
-         * @param {number} [delay=100] time in ms to pause between periods of simulation
-         * @return {Object|undefined} returns simulation object if running synchronously, otherwise returns undefined immediately and runs asynchronously.
+         * run simulation
+         * @param {sync:boolean,update:function(error:boolean, sim:Object), delay:number} param Optional sync run synchronously, update end of period function, and (async only) delay timeout between periods in ms.
+         * @return {Promise<Object,Error>} resolves to simulation object
          */
 
     }, {
         key: 'run',
-        value: function run(done, update, delay) {
+        value: function run() {
+            var _ref = arguments.length <= 0 || arguments[0] === undefined ? { sync: false, update: function update(s) {
+                    return s;
+                }, delay: 20 } : arguments[0];
 
-            var mySim = this;
+            var sync = _ref.sync;
+            var update = _ref.update;
+            var delay = _ref.delay;
+
+            var sim = this;
             var config = this.config;
 
             /* istanbul ignore if */
 
             if (!config.silent) console.log("Periods = " + config.periods);
-            if (typeof done === 'function') {
-                _async2.default.whilst(function () {
-                    return mySim.period < config.periods;
-                }, function (callback) {
-                    setTimeout(function () {
-                        mySim.runPeriod(function (e, d) {
-                            if (typeof update === 'function') update(e, d);
-                            callback(e, d);
-                        });
-                    }, delay || 100);
-                }, function () {
 
-                    /* istanbul ignore if */
-
-                    if (!config.silent) console.log("done");
-                    done(false, mySim);
-                });
-            } else {
-
-                /* no done callback, run synchronously */
-
-                while (mySim.period < config.periods) {
-                    mySim.runPeriod();
+            if (sync) {
+                while (sim.period < config.periods) {
+                    sim.runPeriod({ sync: true });
+                    if (typeof update === 'function') update(sim);
                 }
 
                 /* istanbul ignore if */
 
                 if (!config.silent) console.log("done");
+
+                return sim;
             }
-            return mySim;
+
+            return new Promise(function (resolve, reject) {
+                function loop() {
+                    sim.runPeriod().then(update).then(function (s) {
+                        return s.period < config.periods ? setTimeout(loop, delay) : resolve(s);
+                    }, function (e) {
+                        return reject(e);
+                    });
+                }
+                loop();
+            });
         }
     }]);
 
@@ -637,7 +623,7 @@ function main() {
 
     var config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
-    new Simulation(config).run();
+    new Simulation(config).run({ sync: true });
 }
 
 if ((typeof module === 'undefined' ? 'undefined' : _typeof(module)) === 'object') {

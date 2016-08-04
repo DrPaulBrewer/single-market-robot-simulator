@@ -1,5 +1,7 @@
 /* eslint-env node, mocha */
 
+/* eslint no-console: "off", newline-per-chained-call: "off" */
+
 import assert from 'assert';
 import 'should';
 import * as singleMarketRobotSimulator from '../src/index.js';
@@ -233,36 +235,50 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 
     }
 
-    describe('runPeriod()', function(){
+    describe('runPeriod({sync:true})', function(){
 
-        /* runPeriod() is synchronous */
+        /* runPeriod({sync:true}) is synchronous */
 
         let mySim = new Simulation(configCostsExceedValues);
-        let sim = mySim.runPeriod();
+        let sim = mySim.runPeriod({sync:true});
         it('should modify in place and return the original simulation object', function(){
             assert.ok(mySim===sim);
         });
         testsForConfigCostsExceedValues({S:mySim});
     });
 
-    describe('runPeriod(function(e,sim){...}) runs asynchronously', function(){
-        describe('because async runPeriod ', function(){
-            it('immediate inspection of order logs should only have length 1 from header row', function(done){
-                let mySim = new Simulation(configCostsExceedValues);
-                mySim.runPeriod(function(){ done(); });
-                mySim.logs.buyorder.data.length.should.equal(1);
-                mySim.logs.sellorder.data.length.should.equal(1);
-            });
+    describe('runPeriod() runs asynchronously', function(){
+        it('immediate inspection of order logs should only have length 1 from header row', function(done){
+            let mySim = new Simulation(configCostsExceedValues);
+            (mySim
+             .runPeriod()
+             .then(
+                 function(){ 
+                     done();
+                 })
+             .catch(
+                 function(e){ 
+                     assert.ok(false, e);
+                 })
+                 );
+            mySim.logs.buyorder.data.length.should.equal(1);
+            mySim.logs.sellorder.data.length.should.equal(1);
         });
-        describe('when done should pass same tests as runPeriod()', function(){
+        describe('when done should pass same tests', function(){
             let state = {};
             before(function(done){
                 let mySim = new Simulation(configCostsExceedValues);
-                function callback(e,S){
+                function callback(S){
                     state.S = S;
                     done();
                 }
-                mySim.runPeriod(callback);
+                (mySim
+                 .runPeriod()
+                 .then(callback, 
+                       function(e){ 
+                           throw e; 
+                       })
+                );
             });
             testsForConfigCostsExceedValues(state);
         });
@@ -419,21 +435,24 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 
     describe('runPeriod()', function(){
 
-        /* runPeriod() is synchronous */
+        /* runPeriod(true) is synchronous */
 
         let mySim = new Simulation(configSingleUnitTrade);
-        let sim = mySim.runPeriod();
+        let sim = mySim.runPeriod(true);
         it('should modify in place and return the original simulation object', function(){
             assert.ok(mySim===sim);
         });
         testsForConfigSingleUnitTrade({S:mySim});
     });
 
-    describe('runPeriod(function(e,sim){...}) runs asynchronously', function(){
-        describe('because async ', function(){
+    describe('runPeriod() runs asynchronously', function(){
+        describe('and returns a promise ', function(){
             it('order logs should have length 1 (header)', function(done){
                 let mySim = new Simulation(configSingleUnitTrade);
-                mySim.runPeriod(function(){ done(); });
+                (mySim
+                 .runPeriod()
+                 .then(()=>(done()))
+                );
                 mySim.logs.buyorder.data.length.should.equal(1);
                 mySim.logs.sellorder.data.length.should.equal(1);
             });
@@ -442,7 +461,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
             let state = {};
             beforeEach(function(done){
                 let mySim = new Simulation(configSingleUnitTrade);
-                mySim.runPeriod(function(e,S){
+                mySim.runPeriod().then(function(S){
                     state.S = S;
                     done();
                 });
@@ -522,15 +541,16 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 
     describe('runSimulation with 10 periods of single unit trade scenario, synchronous', function(){
         let config = Object.assign({}, configSingleUnitTrade, {periods:10});
-        let S = new Simulation(config).run();
+        let S = new Simulation(config).run({sync:true});
         testsForRunSimulationSingleTradeTenPeriods({S});
     }); 
 
-    describe('runSimulation with 10 periods of single unit trade scenario, asyncrhonous', function(){
+    describe('run Simulation with 10 periods of single unit trade scenario, asyncrhonous', function(){
         let config = Object.assign({}, configSingleUnitTrade, {periods:10});
-        describe(' -- because runSimulation(config,callback) returns immediately, order log should be header only', function(){
+        describe('order log should be header only', function(){
             it('order logs should have length 1', function(done){
-                let S = new Simulation(config).run(done);
+                let S = new Simulation(config);
+		S.run().then(function(){ done(); }).catch(function(e){ throw e;});
                 S.logs.buyorder.data.length.should.equal(1);
                 S.logs.sellorder.data.length.should.equal(1);
             });
@@ -538,10 +558,10 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
         describe('when done should pass same tests as above ', function(){
             let state = {};
             beforeEach(function(done){
-                new Simulation(config).run(function(e,S){
+                new Simulation(config).run().then(function(S){
                     state.S = S;
                     done();
-                });
+                }, function(e){ assert.ok(false, e); });
             });
             testsForRunSimulationSingleTradeTenPeriods(state);
         });
@@ -556,16 +576,16 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
             // run the setup once before all the tests, not before each test
             before(function(done){
                 let count = 0;
-                function callback(e,S){
+                function callback(S){
                     states[count].S = S;
                     count++;
                     if (count===3){
                         done();
                     }
                 }
-                new Simulation(configA).run(callback);
-                new Simulation(configB).run(callback);
-                new Simulation(configC).run(callback);
+                new Simulation(configA).run().then(callback);
+                new Simulation(configB).run().then(callback);
+                new Simulation(configC).run().then(callback);
             });
             it('should have distinct buyer agents for each simulation', function(){
                 states[0].S.buyersPool.agents[0].should.not.equal(states[1].S.buyersPool.agents[0]);
@@ -601,7 +621,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
                 tInit = Date.now();
                 countBefore++;
                 let count = 0;
-                function callback(e,S){
+                function callback(S){
                     states[count].S = S;
                     count++;
                     if (count===3){
@@ -609,9 +629,9 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
                         done();
                     }
                 }
-                new Simulation(configA).run(callback);
-                new Simulation(configB).run(callback);
-                new Simulation(configC).run(callback);
+                new Simulation(configA).run().then(callback);
+                new Simulation(configB).run().then(callback);
+                new Simulation(configC).run().then(callback);
             });
             it('should only run the before() function in the test one time', function(){
                 countBefore.should.equal(1);
