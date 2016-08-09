@@ -238,7 +238,13 @@ export class Simulation {
             volume: ['period','volume']
         };
 
-        ['trade','buyorder','sellorder','profit','ohlc','volume'].forEach(function(name){
+	const allLogs = ['trade','buyorder','sellorder','profit','ohlc','volume'];
+
+	const withoutOrderLogs = allLogs.filter(function(s){ return (s.indexOf('order')===-1);});
+
+	const actualLogs = (sim.config.withoutOrderLogs)? withoutOrderLogs: allLogs;
+
+	actualLogs.forEach(function(name){
             sim.logs[name] = new Log("./"+name+".csv").setHeader(headers[name]);
         });
         
@@ -624,11 +630,14 @@ function main(){
     /* suggested by Krumia's http://stackoverflow.com/users/1461424/krumia */
     /* posting at http://stackoverflow.com/a/25710749/103081 */
 
+    function mainPeriod(sim){
+	fs.writeFileSync('./period', sim.period);
+    }
     const config = JSON.parse(
         fs.readFileSync('./config.json', 'utf8')
     );
 
-    new Simulation(config).run({sync:true});
+    new Simulation(config).run({sync:true, update:mainPeriod });
 
 }
 
