@@ -235,16 +235,17 @@ export class Simulation {
             buyorder: ['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost'],
             sellorder: ['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost'],
             trade: ['period','t','tp','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit'],
-            volume: ['period','volume']
+            volume: ['period','volume'],
+            effalloc: ['period','efficiencyOfAllocation']
         };
 
-	const allLogs = ['trade','buyorder','sellorder','profit','ohlc','volume'];
+        const allLogs = ['trade','buyorder','sellorder','profit','ohlc','volume','effalloc'];
 
-	const withoutOrderLogs = allLogs.filter(function(s){ return (s.indexOf('order')===-1);});
+        const withoutOrderLogs = allLogs.filter(function(s){ return (s.indexOf('order')===-1);});
 
-	const actualLogs = (sim.config.withoutOrderLogs)? withoutOrderLogs: allLogs;
+        const actualLogs = (sim.config.withoutOrderLogs)? withoutOrderLogs: allLogs;
 
-	actualLogs.forEach(function(name){
+        actualLogs.forEach(function(name){
             sim.logs[name] = new Log("./"+name+".csv").setHeader(headers[name]);
         });
         
@@ -489,13 +490,40 @@ export class Simulation {
         });     
     }
 
+    /** 
+     * Calculate simple maxGainsFromTrade() from simulation configuration buyerValues and sellerCosts
+     * by sorting buyers' units high value first, and sellers' costs low value first, and adding profitable pairs
+     * Slice and sort first to be robust against values/costs being unsorted. 
+     * This is currently used only for logging purposes.  No market or agent behavior should typically depend on this function. 
+     * @private
+     */
+
+    getMaximumPossibleGainsFromTrade(){
+        const sim = this;
+        if (sim.maximumPossibleGainsFromTrade) return sim.maximumPossibleGainsFromTrade;
+        let result = 0;
+        if (Array.isArray(sim.config.buyerValues) && Array.isArray(sim.config.sellerCosts)){
+            const buyerV = sim.config.buyerValues.slice().sort(function(a,b){ return +b-a; });
+            const sellerC = sim.config.sellerCosts.slice().sort(function(a,b){ return +a-b;});
+            let i = 0;
+            let l = Math.min(buyerV.length,sellerC.length);
+            while ((i<l) && (buyerV[i]>sellerC[i])){
+                result += (buyerV[i]-sellerC[i]);
+                ++i;
+            }
+        }
+        sim.maximumPossibleGainsFromTrade = result;
+        return result;
+    }
+                
+
     /**
      * Perform end-of-period simulation logging of profits, open/high/low/close trade prices, etc.
      * called automatically
      * @private
      */
-
-
+   
+    
     logPeriod(){
         const sim = this;
         const finalMoney = sim.pool.agents.map(function(A){ return A.inventory.money; });
@@ -514,6 +542,13 @@ export class Simulation {
             sim.logs.ohlc.write(ohlc());
         if (sim.logs.volume)
             sim.logs.volume.write([sim.period,sim.periodTradePrices.length]);
+        if (sim.logs.effalloc){
+            let finalMoneySum = 0.0;
+            for(let i=0,l=finalMoney.length;i<l;++i) finalMoneySum+=finalMoney[i];
+            let maxPossible = sim.getMaximumPossibleGainsFromTrade();
+            if (maxPossible>0)
+                sim.logs.effalloc.write([sim.period, 100*(finalMoneySum/maxPossible)]);
+        }
         sim.periodTradePrices = [];
     }
 
@@ -631,7 +666,7 @@ function main(){
     /* posting at http://stackoverflow.com/a/25710749/103081 */
 
     function mainPeriod(sim){
-	fs.writeFileSync('./period', sim.period);
+        fs.writeFileSync('./period', sim.period);
     }
     const config = JSON.parse(
         fs.readFileSync('./config.json', 'utf8')

@@ -271,10 +271,11 @@ var Simulation = exports.Simulation = function () {
                 buyorder: ['period', 't', 'tp', 'id', 'x', 'buyLimitPrice', 'value', 'sellLimitPrice', 'cost'],
                 sellorder: ['period', 't', 'tp', 'id', 'x', 'buyLimitPrice', 'value', 'sellLimitPrice', 'cost'],
                 trade: ['period', 't', 'tp', 'price', 'buyerAgentId', 'buyerValue', 'buyerProfit', 'sellerAgentId', 'sellerCost', 'sellerProfit'],
-                volume: ['period', 'volume']
+                volume: ['period', 'volume'],
+                effalloc: ['period', 'efficiencyOfAllocation']
             };
 
-            var allLogs = ['trade', 'buyorder', 'sellorder', 'profit', 'ohlc', 'volume'];
+            var allLogs = ['trade', 'buyorder', 'sellorder', 'profit', 'ohlc', 'volume', 'effalloc'];
 
             var withoutOrderLogs = allLogs.filter(function (s) {
                 return s.indexOf('order') === -1;
@@ -499,6 +500,38 @@ var Simulation = exports.Simulation = function () {
             });
         }
 
+        /** 
+         * Calculate simple maxGainsFromTrade() from simulation configuration buyerValues and sellerCosts
+         * by sorting buyers' units high value first, and sellers' costs low value first, and adding profitable pairs
+         * Slice and sort first to be robust against values/costs being unsorted. 
+         * This is currently used only for logging purposes.  No market or agent behavior should typically depend on this function. 
+         * @private
+         */
+
+    }, {
+        key: 'getMaximumPossibleGainsFromTrade',
+        value: function getMaximumPossibleGainsFromTrade() {
+            var sim = this;
+            if (sim.maximumPossibleGainsFromTrade) return sim.maximumPossibleGainsFromTrade;
+            var result = 0;
+            if (Array.isArray(sim.config.buyerValues) && Array.isArray(sim.config.sellerCosts)) {
+                var buyerV = sim.config.buyerValues.slice().sort(function (a, b) {
+                    return +b - a;
+                });
+                var sellerC = sim.config.sellerCosts.slice().sort(function (a, b) {
+                    return +a - b;
+                });
+                var i = 0;
+                var l = Math.min(buyerV.length, sellerC.length);
+                while (i < l && buyerV[i] > sellerC[i]) {
+                    result += buyerV[i] - sellerC[i];
+                    ++i;
+                }
+            }
+            sim.maximumPossibleGainsFromTrade = result;
+            return result;
+        }
+
         /**
          * Perform end-of-period simulation logging of profits, open/high/low/close trade prices, etc.
          * called automatically
@@ -524,6 +557,13 @@ var Simulation = exports.Simulation = function () {
             if (sim.logs.profit) sim.logs.profit.write(finalMoney);
             if (sim.logs.ohlc) sim.logs.ohlc.write(ohlc());
             if (sim.logs.volume) sim.logs.volume.write([sim.period, sim.periodTradePrices.length]);
+            if (sim.logs.effalloc) {
+                var finalMoneySum = 0.0;
+                for (var i = 0, l = finalMoney.length; i < l; ++i) {
+                    finalMoneySum += finalMoney[i];
+                }var maxPossible = sim.getMaximumPossibleGainsFromTrade();
+                if (maxPossible > 0) sim.logs.effalloc.write([sim.period, 100 * (finalMoneySum / maxPossible)]);
+            }
             sim.periodTradePrices = [];
         }
 
