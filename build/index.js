@@ -211,6 +211,7 @@ var Simulation = exports.Simulation = function () {
      * @param {number} config.L Minimum suggested agent price.  Sets .minPrice in agent constructor options
      * @param {number} config.H Maximum suggested agent price.  Sets .maxPrice in agent constructor options
      * @param {boolean} [config.silent] If true, suppress console.log messages providing total number of agents, etc.
+     * @param {boolean} [config.withoutOrderLogs] If true, suppreses buyorderlog and sellorderlog
      */
 
     function Simulation(config) {
