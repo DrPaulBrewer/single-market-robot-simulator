@@ -29,9 +29,15 @@ var _marketAgents = require('market-agents');
 
 var MarketAgents = _interopRequireWildcard(_marketAgents);
 
+var _positiveNumberArray = require('positive-number-array');
+
+var _positiveNumberArray2 = _interopRequireDefault(_positiveNumberArray);
+
 var _fs = require('fs');
 
 var fs = _interopRequireWildcard(_fs);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -198,8 +204,8 @@ var Simulation = exports.Simulation = function () {
      * @param {number} config.periodDuration duration of each period
      * @param {string[]} config.buyerAgentType string array (choose from "ZIAgent","UnitAgent","OneupmanshipAgent","KaplanSniperAgent" or types registered with agentRegister()) giving a rotation of types of agents to use when creating the buyer agents.
      * @param {string[]} config.sellerAgentType string array (choose from "ZIAgent","UnitAgent","OneupmanshipAgent","KaplanSniperAgent" or types registered with agentRegister()) giving a rotation of types of agents to use when creating the seller agents.
-     * @param {number} [config.buyerRate=1.0] poisson arrival rate in wakes/sec for each buyer agent, defaults to 1.0
-     * @param {number} [config.sellerRate=1.0] poisson arrival rate in wakes/sec for each seller agent, defaults to 1.0
+     * @param {number[]} [config.buyerRate=1.0] poisson arrival rate in wakes/sec for each buyer agent, defaults to 1.0 for all agents
+     * @param {number[]} [config.sellerRate=1.0] poisson arrival rate in wakes/sec for each seller agent, defaults to 1.0 for all agents
      * @param {number[]} config.buyerValues Numeric array giving aggregate market demand for X. Becomes agents' values for units. Each period a new set of these values is distributed among buyer agents.
      * @param {number[]} config.sellerCosts Numeric array giving aggregate market supply for X. Becomes agents' costs for units.  Each period a new set of these costs is distributed among seller agents.
      * @param {number} [config.numberOfBuyers] number of buyers; if unprovided, assigns 1 buyer per entry in .buyerValues
@@ -326,6 +332,8 @@ var Simulation = exports.Simulation = function () {
             sim.sellersPool = new Pool();
             sim.numberOfBuyers = config.numberOfBuyers || config.buyerValues.length;
             sim.numberOfSellers = config.numberOfSellers || config.sellerCosts.length;
+            config.buyerRate = (0, _positiveNumberArray2.default)(config.buyerRate) || [1];
+            config.sellerRate = (0, _positiveNumberArray2.default)(config.sellerRate) || [1];
             if (!sim.numberOfBuyers || !sim.numberOfSellers) throw new Error("single-market-robot-simulation: can not determine numberOfBuyers and/or numberOfSellers ");
             sim.numberOfAgents = sim.numberOfBuyers + sim.numberOfSellers;
             var common = {
@@ -362,8 +370,9 @@ var Simulation = exports.Simulation = function () {
         key: 'newBuyerAgent',
         value: function newBuyerAgent(i, common) {
             var sim = this;
-            var l = sim.config.buyerAgentType.length;
-            var a = newAgentFactory(sim.config.buyerAgentType[i % l], Object.assign({}, common, { rate: sim.config.buyerRate || 1 }));
+            var lType = sim.config.buyerAgentType.length;
+            var lRate = sim.config.buyerRate.length;
+            var a = newAgentFactory(sim.config.buyerAgentType[i % lType], Object.assign({}, common, { rate: sim.config.buyerRate[i % lRate] }));
             sim.teachAgent(a);
             return a;
         }
@@ -380,8 +389,9 @@ var Simulation = exports.Simulation = function () {
         key: 'newSellerAgent',
         value: function newSellerAgent(i, common) {
             var sim = this;
-            var l = sim.config.sellerAgentType.length;
-            var a = newAgentFactory(sim.config.sellerAgentType[i % l], Object.assign({}, common, { rate: sim.config.sellerRate || 1 }));
+            var lType = sim.config.sellerAgentType.length;
+            var lRate = sim.config.sellerRate.length;
+            var a = newAgentFactory(sim.config.sellerAgentType[i % lType], Object.assign({}, common, { rate: sim.config.sellerRate[i % lRate] }));
             sim.teachAgent(a);
             return a;
         }

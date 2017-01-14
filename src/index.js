@@ -6,6 +6,7 @@
 
 import * as MEC from 'market-example-contingent';
 import * as MarketAgents from 'market-agents';
+import positiveNumberArray from 'positive-number-array';
 
 /* 
  *  on the browser, the jspm package manager can be programmed to set the
@@ -165,8 +166,8 @@ export class Simulation {
      * @param {number} config.periodDuration duration of each period
      * @param {string[]} config.buyerAgentType string array (choose from "ZIAgent","UnitAgent","OneupmanshipAgent","KaplanSniperAgent" or types registered with agentRegister()) giving a rotation of types of agents to use when creating the buyer agents.
      * @param {string[]} config.sellerAgentType string array (choose from "ZIAgent","UnitAgent","OneupmanshipAgent","KaplanSniperAgent" or types registered with agentRegister()) giving a rotation of types of agents to use when creating the seller agents.
-     * @param {number} [config.buyerRate=1.0] poisson arrival rate in wakes/sec for each buyer agent, defaults to 1.0
-     * @param {number} [config.sellerRate=1.0] poisson arrival rate in wakes/sec for each seller agent, defaults to 1.0
+     * @param {number[]} [config.buyerRate=1.0] poisson arrival rate in wakes/sec for each buyer agent, defaults to 1.0 for all agents
+     * @param {number[]} [config.sellerRate=1.0] poisson arrival rate in wakes/sec for each seller agent, defaults to 1.0 for all agents
      * @param {number[]} config.buyerValues Numeric array giving aggregate market demand for X. Becomes agents' values for units. Each period a new set of these values is distributed among buyer agents.
      * @param {number[]} config.sellerCosts Numeric array giving aggregate market supply for X. Becomes agents' costs for units.  Each period a new set of these costs is distributed among seller agents.
      * @param {number} [config.numberOfBuyers] number of buyers; if unprovided, assigns 1 buyer per entry in .buyerValues
@@ -285,6 +286,8 @@ export class Simulation {
         sim.sellersPool = new Pool();
         sim.numberOfBuyers  = config.numberOfBuyers  || config.buyerValues.length;
         sim.numberOfSellers = config.numberOfSellers || config.sellerCosts.length;
+	config.buyerRate  = positiveNumberArray(config.buyerRate) || [1];
+	config.sellerRate = positiveNumberArray(config.sellerRate) || [1];  
         if ( (!sim.numberOfBuyers) || (!sim.numberOfSellers) )
             throw new Error("single-market-robot-simulation: can not determine numberOfBuyers and/or numberOfSellers ");
         sim.numberOfAgents = sim.numberOfBuyers+sim.numberOfSellers;
@@ -320,10 +323,11 @@ export class Simulation {
 
     newBuyerAgent(i, common){
         const sim = this;
-        const l = sim.config.buyerAgentType.length;
+        const lType = sim.config.buyerAgentType.length;
+	const lRate = sim.config.buyerRate.length;
         const a = newAgentFactory(
-            sim.config.buyerAgentType[i%l],
-            Object.assign({}, common, {rate: (sim.config.buyerRate || 1)})
+            sim.config.buyerAgentType[i%lType],
+            Object.assign({}, common, {rate: sim.config.buyerRate[i%lRate]})
         );
         sim.teachAgent(a);
         return a;
@@ -339,10 +343,11 @@ export class Simulation {
 
     newSellerAgent(i, common){
         const sim = this;
-        const l = sim.config.sellerAgentType.length;
+        const lType = sim.config.sellerAgentType.length;
+	const lRate = sim.config.sellerRate.length;
         const a = newAgentFactory(
-            sim.config.sellerAgentType[i%l],
-            Object.assign({}, common, {rate: (sim.config.sellerRate || 1)})
+            sim.config.sellerAgentType[i%lType],
+            Object.assign({}, common, {rate: sim.config.sellerRate[i%lRate]})
         );
         sim.teachAgent(a);
         return a;
