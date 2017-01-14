@@ -122,6 +122,9 @@ describe('blank Simulation not allowed', function(){
 });
 
 describe('simulation with values [10,9,8] all below costs [20,40]', function(){
+
+    // buyerRate and sellerRate will default to [1.0] if absent and are coerced to positive number arrays by positiveNumberArray()
+    // setting buyerRate to [1.0,1.0] should detect if there is some problem using arrays without affecting math tests
     
     let configCostsExceedValues = {
         L:1,
@@ -130,6 +133,8 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
         sellerCosts: [20,40],
         buyerAgentType: ["ZIAgent"],
         sellerAgentType: ["ZIAgent"],
+	buyerRate: [1.0,1.0],
+	sellerRate: 1.0,
         silent: 1
     };
     describe('on new Simulation', function(){
