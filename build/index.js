@@ -601,10 +601,10 @@ var Simulation = exports.Simulation = function () {
             var buyLog = prefix + 'buyorder';
             var sellLog = prefix + 'sellorder';
             if (agent && order.buyPrice && sim.logs[buyLog]) {
-                sim.logs[buyLog].write([sim.period, order.t, order.t - sim.period * sim.periodDuration, order.id, agent.inventory.X, order.price, agent.unitValueFunction('X', agent.inventory), '', '']);
+                sim.logs[buyLog].write([sim.period, order.t, order.t - sim.period * sim.periodDuration, order.id, agent.inventory.X, order.buyPrice, agent.unitValueFunction('X', agent.inventory), '', '']);
             }
             if (agent && order.sellPrice && sim.logs[sellLog]) {
-                sim.logs[sellLog].write([sim.period, order.t, order.t - sim.period * sim.periodDuration, order.id, agent.inventory.X, '', '', order.price, agent.unitCostFunction('X', agent.inventory)]);
+                sim.logs[sellLog].write([sim.period, order.t, order.t - sim.period * sim.periodDuration, order.id, agent.inventory.X, '', '', order.sellPrice, agent.unitCostFunction('X', agent.inventory)]);
             }
         }
 

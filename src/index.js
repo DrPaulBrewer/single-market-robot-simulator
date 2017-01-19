@@ -563,7 +563,7 @@ export class Simulation {
                 order.t-(sim.period*sim.periodDuration),
                 order.id,
                 agent.inventory.X,
-                order.price, 
+                order.buyPrice, 
                 agent.unitValueFunction('X',agent.inventory), 
                 '',
                 ''
@@ -579,7 +579,7 @@ export class Simulation {
                 agent.inventory.X,
                 '',
                 '',
-                order.price,
+                order.sellPrice,
                 agent.unitCostFunction('X',agent.inventory)
             ]);     
         }

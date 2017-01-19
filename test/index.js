@@ -133,8 +133,8 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
         sellerCosts: [20,40],
         buyerAgentType: ["ZIAgent"],
         sellerAgentType: ["ZIAgent"],
-	buyerRate: [1.0,1.0],
-	sellerRate: 1.0,
+        buyerRate: [1.0,1.0],
+        sellerRate: 1.0,
         silent: 1
     };
     describe('on new Simulation', function(){
@@ -165,7 +165,7 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
         it('should set .numberOfAgents to 5', function(){
             S.numberOfAgents.should.equal(5);
         });
-        let logsProps = ['trade','buyorder','sellorder','profit','ohlc','volume','effalloc'];
+        let logsProps = ['trade','buyorder','sellorder','rejectbuyorder','rejectsellorder','profit','ohlc','volume','effalloc'];
         it('.logs should have properties '+logsProps.join(',')+' -- all instances of Log', function(){
             S.logs.should.have.properties(logsProps);
             logsProps.forEach(function(prop){ S.logs[prop].should.be.an.instanceOf(Log); });
@@ -176,6 +176,8 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
             S.logs.trade.data[0].should.deepEqual(tradeLogHeader);
             S.logs.buyorder.data[0].should.deepEqual(combinedOrderLogHeader);
             S.logs.sellorder.data[0].should.deepEqual(combinedOrderLogHeader);
+            S.logs.rejectbuyorder.data[0].should.deepEqual(combinedOrderLogHeader);
+            S.logs.rejectsellorder.data[0].should.deepEqual(combinedOrderLogHeader);
             S.logs.profit.data.length.should.equal(0);
         });
 
@@ -222,6 +224,23 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
             state.S.logs.sellorder.data[0].should.deepEqual(combinedOrderLogHeader);
             state.S.logs.sellorder.data.length.should.be.within(1750,2250);
         });
+	it('buy order log defines all fields on every row', function(){
+            state.S.logs.buyorder.data.forEach((row)=>{
+		row.length.should.equal(combinedOrderLogHeader.length);
+                row.forEach((cell)=>{
+                    assert.ok(typeof(cell)!=='undefined');
+                });
+            });
+        });
+
+        it('sell order log defines all fields on every row', function(){
+            state.S.logs.sellorder.data.forEach((row)=>{
+		row.length.should.equal(combinedOrderLogHeader.length);
+                row.forEach((cell)=>{
+                    assert.ok(typeof(cell)!=='undefined');
+                });
+            });
+        });        
         it('the trade log should have one entry, the header row', function(){
             state.S.logs.trade.data.length.should.be.equal(1);
             state.S.logs.trade.data[0].should.deepEqual(tradeLogHeader);                
