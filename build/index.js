@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.Simulation = exports.Log = undefined;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); // Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC                             
 // This is open source software. The MIT License applies to this software.                                  
@@ -627,13 +627,12 @@ var Simulation = exports.Simulation = function () {
     }, {
         key: 'run',
         value: function run() {
-            var _ref = arguments.length <= 0 || arguments[0] === undefined ? { sync: false, update: function update(s) {
+            var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { sync: false, update: function update(s) {
                     return s;
-                }, delay: 20 } : arguments[0];
-
-            var sync = _ref.sync;
-            var update = _ref.update;
-            var delay = _ref.delay;
+                }, delay: 20 },
+                sync = _ref.sync,
+                update = _ref.update,
+                delay = _ref.delay;
 
             var sim = this;
             var config = this.config;
