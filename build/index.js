@@ -273,16 +273,19 @@ var Simulation = exports.Simulation = function () {
         value: function initLogs() {
             var sim = this;
             sim.logs = {};
+            var orderHeader = ['period', 't', 'tp', 'id', 'x', 'buyLimitPrice', 'value', 'sellLimitPrice', 'cost'];
             var headers = {
                 ohlc: ['period', 'open', 'high', 'low', 'close'],
-                buyorder: ['period', 't', 'tp', 'id', 'x', 'buyLimitPrice', 'value', 'sellLimitPrice', 'cost'],
-                sellorder: ['period', 't', 'tp', 'id', 'x', 'buyLimitPrice', 'value', 'sellLimitPrice', 'cost'],
+                buyorder: orderHeader,
+                sellorder: orderHeader,
+                rejectbuyorder: orderHeader,
+                rejectsellorder: orderHeader,
                 trade: ['period', 't', 'tp', 'price', 'buyerAgentId', 'buyerValue', 'buyerProfit', 'sellerAgentId', 'sellerCost', 'sellerProfit'],
                 volume: ['period', 'volume'],
                 effalloc: ['period', 'efficiencyOfAllocation']
             };
 
-            var allLogs = ['trade', 'buyorder', 'sellorder', 'profit', 'ohlc', 'volume', 'effalloc'];
+            var allLogs = ['trade', 'buyorder', 'sellorder', 'rejectbuyorder', 'rejectsellorder', 'profit', 'ohlc', 'volume', 'effalloc'];
 
             var withoutOrderLogs = allLogs.filter(function (s) {
                 return s.indexOf('order') === -1;
@@ -314,6 +317,14 @@ var Simulation = exports.Simulation = function () {
                 sim.logTrade(tradespec);
                 sim.pool.trade(tradespec);
             });
+            if (!sim.config.withoutOrderLogs) {
+                sim.xMarket.on('preorder', function (myorder) {
+                    sim.logOrder('', myorder);
+                });
+                sim.xMarket.on('reject', function (myorder) {
+                    sim.logOrder('reject', myorder);
+                });
+            }
         }
 
         /**
@@ -416,7 +427,6 @@ var Simulation = exports.Simulation = function () {
                     buyPrice: price
                 });
                 if (market.goods === 'X') {
-                    if (sim.logs.buyorder) sim.logs.buyorder.write([this.period.number, this.wakeTime, this.wakeTime - this.period.startTime, this.id, this.inventory.X, price, this.unitValueFunction('X', this.inventory), '', '']);
                     market.submit(order);
                     while (market.process()) {} // eslint-disable-line no-empty
                 }
@@ -430,9 +440,7 @@ var Simulation = exports.Simulation = function () {
                     q: 1,
                     sellPrice: price
                 });
-
                 if (market.goods === 'X') {
-                    if (sim.logs.sellorder) sim.logs.sellorder.write([this.period.number, this.wakeTime, this.wakeTime - this.period.startTime, this.id, this.inventory.X, '', '', price, this.unitCostFunction('X', this.inventory)]);
                     market.submit(order);
                     while (market.process()) {}
                 }
@@ -576,6 +584,28 @@ var Simulation = exports.Simulation = function () {
                 if (maxPossible > 0) sim.logs.effalloc.write([sim.period, 100 * (finalMoneySum / maxPossible)]);
             }
             sim.periodTradePrices = [];
+        }
+
+        /**
+         * called to log each compliant order
+         *
+         * @private
+         */
+
+    }, {
+        key: 'logOrder',
+        value: function logOrder(prefix, orderArray) {
+            var sim = this;
+            var order = MEC.ao(orderArray);
+            var agent = sim.pool.agentsById[order.id];
+            var buyLog = prefix + 'buyorder';
+            var sellLog = prefix + 'sellorder';
+            if (agent && order.buyPrice && sim.logs[buyLog]) {
+                sim.logs[buyLog].write([sim.period, order.t, order.t - sim.period * sim.periodDuration, order.id, agent.inventory.X, order.price, agent.unitValueFunction('X', agent.inventory), '', '']);
+            }
+            if (agent && order.sellPrice && sim.logs[sellLog]) {
+                sim.logs[sellLog].write([sim.period, order.t, order.t - sim.period * sim.periodDuration, order.id, agent.inventory.X, '', '', order.price, agent.unitCostFunction('X', agent.inventory)]);
+            }
         }
 
         /**

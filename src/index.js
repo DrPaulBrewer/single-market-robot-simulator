@@ -232,16 +232,19 @@ export class Simulation {
     initLogs(){
         const sim = this;
         sim.logs = {};
+        const orderHeader = ['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost'];
         const headers = {
             ohlc:  ['period','open','high','low','close'],
-            buyorder: ['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost'],
-            sellorder: ['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost'],
+            buyorder:  orderHeader,
+            sellorder: orderHeader,
+            rejectbuyorder: orderHeader,
+            rejectsellorder: orderHeader,
             trade: ['period','t','tp','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit'],
             volume: ['period','volume'],
             effalloc: ['period','efficiencyOfAllocation']
         };
 
-        const allLogs = ['trade','buyorder','sellorder','profit','ohlc','volume','effalloc'];
+        const allLogs = ['trade','buyorder','sellorder','rejectbuyorder','rejectsellorder','profit','ohlc','volume','effalloc'];
 
         const withoutOrderLogs = allLogs.filter(function(s){ return (s.indexOf('order')===-1);});
 
@@ -269,7 +272,15 @@ export class Simulation {
         sim.xMarket.on('trade', function(tradespec){ 
             sim.logTrade(tradespec);
             sim.pool.trade(tradespec);
-        });     
+        });
+        if (!sim.config.withoutOrderLogs){
+            sim.xMarket.on('preorder', function(myorder){
+                sim.logOrder('',myorder);
+            });
+            sim.xMarket.on('reject', function(myorder){
+                sim.logOrder('reject',myorder);
+            });
+        }
     }
     
     /**
@@ -286,8 +297,8 @@ export class Simulation {
         sim.sellersPool = new Pool();
         sim.numberOfBuyers  = config.numberOfBuyers  || config.buyerValues.length;
         sim.numberOfSellers = config.numberOfSellers || config.sellerCosts.length;
-	config.buyerRate  = positiveNumberArray(config.buyerRate) || [1];
-	config.sellerRate = positiveNumberArray(config.sellerRate) || [1];  
+        config.buyerRate  = positiveNumberArray(config.buyerRate) || [1];
+        config.sellerRate = positiveNumberArray(config.sellerRate) || [1];  
         if ( (!sim.numberOfBuyers) || (!sim.numberOfSellers) )
             throw new Error("single-market-robot-simulation: can not determine numberOfBuyers and/or numberOfSellers ");
         sim.numberOfAgents = sim.numberOfBuyers+sim.numberOfSellers;
@@ -324,7 +335,7 @@ export class Simulation {
     newBuyerAgent(i, common){
         const sim = this;
         const lType = sim.config.buyerAgentType.length;
-	const lRate = sim.config.buyerRate.length;
+        const lRate = sim.config.buyerRate.length;
         const a = newAgentFactory(
             sim.config.buyerAgentType[i%lType],
             Object.assign({}, common, {rate: sim.config.buyerRate[i%lRate]})
@@ -344,7 +355,7 @@ export class Simulation {
     newSellerAgent(i, common){
         const sim = this;
         const lType = sim.config.sellerAgentType.length;
-	const lRate = sim.config.sellerRate.length;
+        const lRate = sim.config.sellerRate.length;
         const a = newAgentFactory(
             sim.config.sellerAgentType[i%lType],
             Object.assign({}, common, {rate: sim.config.sellerRate[i%lRate]})
@@ -372,18 +383,6 @@ export class Simulation {
                 buyPrice: price
             });
             if (market.goods === 'X'){
-                if (sim.logs.buyorder)
-                    sim.logs.buyorder.write([
-                        this.period.number, 
-                        this.wakeTime, 
-                        this.wakeTime-this.period.startTime,
-                        this.id, 
-                        this.inventory.X,
-                        price, 
-                        this.unitValueFunction('X',this.inventory), 
-                        '',
-                        ''
-                    ]);
                 market.submit(order);
                 while(market.process()){} // eslint-disable-line no-empty
             }
@@ -397,20 +396,7 @@ export class Simulation {
                 q: 1,
                 sellPrice: price
             });
-
             if (market.goods === 'X'){
-                if (sim.logs.sellorder)
-                    sim.logs.sellorder.write([
-                        this.period.number, 
-                        this.wakeTime, 
-                        this.wakeTime-this.period.startTime,
-                        this.id, 
-                        this.inventory.X,
-                        '',
-                        '',
-                        price, 
-                        this.unitCostFunction('X',this.inventory) 
-                    ]);
                 market.submit(order);
                 while(market.process());
             }
@@ -556,6 +542,47 @@ export class Simulation {
                 sim.logs.effalloc.write([sim.period, 100*(finalMoneySum/maxPossible)]);
         }
         sim.periodTradePrices = [];
+    }
+
+    /**
+     * called to log each compliant order
+     *
+     * @private
+     */
+
+    logOrder(prefix, orderArray){
+        const sim = this;
+        const order = MEC.ao(orderArray);
+        const agent = sim.pool.agentsById[order.id];
+        const buyLog = prefix+'buyorder';
+        const sellLog = prefix+'sellorder'; 
+        if ((agent) && (order.buyPrice) && (sim.logs[buyLog])){
+            sim.logs[buyLog].write([
+                sim.period,
+                order.t,
+                order.t-(sim.period*sim.periodDuration),
+                order.id,
+                agent.inventory.X,
+                order.price, 
+                agent.unitValueFunction('X',agent.inventory), 
+                '',
+                ''
+            ]);
+            
+        }
+        if ((agent) && (order.sellPrice) && (sim.logs[sellLog])){
+            sim.logs[sellLog].write([
+                sim.period, 
+                order.t,
+                order.t-(sim.period*sim.periodDuration),
+                order.id, 
+                agent.inventory.X,
+                '',
+                '',
+                order.price,
+                agent.unitCostFunction('X',agent.inventory)
+            ]);     
+        }
     }
 
     /**
