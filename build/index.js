@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.Simulation = exports.Log = undefined;
+exports.Simulation = exports.logNames = exports.logHeaders = exports.Log = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -191,6 +191,21 @@ var Log = exports.Log = function () {
     return Log;
 }();
 
+var orderHeader = ['period', 't', 'tp', 'id', 'x', 'buyLimitPrice', 'value', 'sellLimitPrice', 'cost'];
+
+var logHeaders = exports.logHeaders = {
+    ohlc: ['period', 'open', 'high', 'low', 'close'],
+    buyorder: orderHeader,
+    sellorder: orderHeader,
+    rejectbuyorder: orderHeader,
+    rejectsellorder: orderHeader,
+    trade: ['period', 't', 'tp', 'price', 'buyerAgentId', 'buyerValue', 'buyerProfit', 'sellerAgentId', 'sellerCost', 'sellerProfit'],
+    volume: ['period', 'volume'],
+    effalloc: ['period', 'efficiencyOfAllocation']
+};
+
+var logNames = exports.logNames = ['trade', 'buyorder', 'sellorder', 'rejectbuyorder', 'rejectsellorder', 'profit', 'ohlc', 'volume', 'effalloc'];
+
 /**
  * single-market-robot-simulation Simulation 
  */
@@ -273,28 +288,12 @@ var Simulation = exports.Simulation = function () {
         value: function initLogs() {
             var sim = this;
             sim.logs = {};
-            var orderHeader = ['period', 't', 'tp', 'id', 'x', 'buyLimitPrice', 'value', 'sellLimitPrice', 'cost'];
-            var headers = {
-                ohlc: ['period', 'open', 'high', 'low', 'close'],
-                buyorder: orderHeader,
-                sellorder: orderHeader,
-                rejectbuyorder: orderHeader,
-                rejectsellorder: orderHeader,
-                trade: ['period', 't', 'tp', 'price', 'buyerAgentId', 'buyerValue', 'buyerProfit', 'sellerAgentId', 'sellerCost', 'sellerProfit'],
-                volume: ['period', 'volume'],
-                effalloc: ['period', 'efficiencyOfAllocation']
-            };
-
-            var allLogs = ['trade', 'buyorder', 'sellorder', 'rejectbuyorder', 'rejectsellorder', 'profit', 'ohlc', 'volume', 'effalloc'];
-
-            var withoutOrderLogs = allLogs.filter(function (s) {
+            var withoutOrderLogs = logNames.filter(function (s) {
                 return s.indexOf('order') === -1;
             });
-
-            var actualLogs = sim.config.withoutOrderLogs ? withoutOrderLogs : allLogs;
-
+            var actualLogs = sim.config.withoutOrderLogs ? withoutOrderLogs : logNames;
             actualLogs.forEach(function (name) {
-                sim.logs[name] = new Log("./" + name + ".csv").setHeader(headers[name]);
+                sim.logs[name] = new Log("./" + name + ".csv").setHeader(logHeaders[name]);
             });
         }
 

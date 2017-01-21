@@ -36,6 +36,39 @@ const combinedOrderLogHeader = [
     'cost'
 ];
 
+describe('logNames ', function(){
+    it('should be defined', function(){
+        singleMarketRobotSimulator.logNames.length.should.be.above(0);
+    });
+    it('should contain at least every key of logHeaders', function(){
+        Object.keys(singleMarketRobotSimulator.logHeaders).forEach((k)=>(assert.ok(singleMarketRobotSimulator.logNames.indexOf(k)>=0)));
+    });
+});
+
+describe('logHeaders ', function(){
+    it('should be defined', function(){
+        Object.keys(singleMarketRobotSimulator.logHeaders).length.should.be.above(0);
+    });
+});
+
+describe('trade log header ', function(){
+    it('should contain expected fields', function(){
+        singleMarketRobotSimulator.logHeaders.trade.should.deepEqual(tradeLogHeader);
+    });
+});
+
+describe('order log headers ',  function(){
+    it('should contain expected fields', function(){
+        (singleMarketRobotSimulator
+         .logNames
+         .filter((n)=>(n.indexOf("order")>=0))
+         .map((n)=>(singleMarketRobotSimulator.logHeaders[n]))
+         .forEach((h)=>(h.should.deepEqual(combinedOrderLogHeader)))
+        );
+    });
+});
+
+
 describe('new Log() to data array', function(){
     
     it('should have an empty data array', function(){   
@@ -224,9 +257,9 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
             state.S.logs.sellorder.data[0].should.deepEqual(combinedOrderLogHeader);
             state.S.logs.sellorder.data.length.should.be.within(1750,2250);
         });
-	it('buy order log defines all fields on every row', function(){
+        it('buy order log defines all fields on every row', function(){
             state.S.logs.buyorder.data.forEach((row)=>{
-		row.length.should.equal(combinedOrderLogHeader.length);
+                row.length.should.equal(combinedOrderLogHeader.length);
                 row.forEach((cell)=>{
                     assert.ok(typeof(cell)!=='undefined');
                 });
@@ -235,7 +268,7 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
 
         it('sell order log defines all fields on every row', function(){
             state.S.logs.sellorder.data.forEach((row)=>{
-		row.length.should.equal(combinedOrderLogHeader.length);
+                row.length.should.equal(combinedOrderLogHeader.length);
                 row.forEach((cell)=>{
                     assert.ok(typeof(cell)!=='undefined');
                 });

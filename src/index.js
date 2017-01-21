@@ -153,6 +153,21 @@ export class Log {
     }
 }
 
+const orderHeader = ['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost'];
+
+export const logHeaders = {
+    ohlc:  ['period','open','high','low','close'],
+    buyorder:  orderHeader,
+    sellorder: orderHeader,
+    rejectbuyorder: orderHeader,
+    rejectsellorder: orderHeader,
+    trade: ['period','t','tp','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit'],
+    volume: ['period','volume'],
+    effalloc: ['period','efficiencyOfAllocation']
+};
+
+export const logNames = ['trade','buyorder','sellorder','rejectbuyorder','rejectsellorder','profit','ohlc','volume','effalloc'];
+
 /**
  * single-market-robot-simulation Simulation 
  */
@@ -232,28 +247,11 @@ export class Simulation {
     initLogs(){
         const sim = this;
         sim.logs = {};
-        const orderHeader = ['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost'];
-        const headers = {
-            ohlc:  ['period','open','high','low','close'],
-            buyorder:  orderHeader,
-            sellorder: orderHeader,
-            rejectbuyorder: orderHeader,
-            rejectsellorder: orderHeader,
-            trade: ['period','t','tp','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit'],
-            volume: ['period','volume'],
-            effalloc: ['period','efficiencyOfAllocation']
-        };
-
-        const allLogs = ['trade','buyorder','sellorder','rejectbuyorder','rejectsellorder','profit','ohlc','volume','effalloc'];
-
-        const withoutOrderLogs = allLogs.filter(function(s){ return (s.indexOf('order')===-1);});
-
-        const actualLogs = (sim.config.withoutOrderLogs)? withoutOrderLogs: allLogs;
-
+        const withoutOrderLogs = logNames.filter(function(s){ return (s.indexOf('order')===-1);});
+        const actualLogs = (sim.config.withoutOrderLogs)? withoutOrderLogs: logNames;
         actualLogs.forEach(function(name){
-            sim.logs[name] = new Log("./"+name+".csv").setHeader(headers[name]);
+            sim.logs[name] = new Log("./"+name+".csv").setHeader(logHeaders[name]);
         });
-        
     }
 
     /** 
