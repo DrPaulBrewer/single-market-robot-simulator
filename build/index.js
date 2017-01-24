@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.Simulation = exports.logNames = exports.logHeaders = exports.Log = undefined;
+exports.Simulation = exports.logNames = exports.logHeaders = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -21,6 +21,10 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 exports.agentRegister = agentRegister;
 
+var _simpleIsomorphicLogger = require('simple-isomorphic-logger');
+
+var _simpleIsomorphicLogger2 = _interopRequireDefault(_simpleIsomorphicLogger);
+
 var _marketExampleContingent = require('market-example-contingent');
 
 var MEC = _interopRequireWildcard(_marketExampleContingent);
@@ -37,9 +41,9 @@ var _fs = require('fs');
 
 var fs = _interopRequireWildcard(_fs);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
@@ -75,121 +79,6 @@ function agentRegister(obj) {
 }
 
 agentRegister(MarketAgents); // a bit overbroad but gets all of them
-
-/**
- * Isomorphic javascript logger, logs data rows to memory for browser and test simulations, logs data rows to .csv disk files for node server-based simulations
- */
-
-var Log = exports.Log = function () {
-
-    /** 
-     * Create Log with suggested file name in browser memory or on-disk in nodejs
-     *
-     * @param {string} fname Suggested file name
-     */
-
-    function Log(fname) {
-        _classCallCheck(this, Log);
-
-        /**
-         * if true, uses nodejs fs calls
-         * @type {boolean} this.useFS
-         */
-
-        this.useFS = false;
-        try {
-            this.useFS = typeof fname === 'string' && fs && fs.openSync && fs.writeSync && !fs.should;
-        } catch (e) {} // eslint-disable-line no-empty
-        if (this.useFS) {
-
-            /**
-             * log file descriptor from open call
-             * @type {number} this.fd
-             */
-
-            this.fd = fs.openSync(fname, 'w');
-        } else {
-
-            /** 
-             * data array for browser and test usage
-             * @type {Array} this.data
-             */
-
-            this.data = [];
-        }
-    }
-
-    /**
-     * writes data to Log and sets .last
-     * @param {Array|number|string} x data to write to Log's log file or memory
-     * @return {Object} returns Log object, chainable
-     */
-
-    _createClass(Log, [{
-        key: 'write',
-        value: function write(x) {
-            if (x === undefined) return;
-
-            /**
-             * last item written to log
-             * @type {Object} this.last
-             */
-
-            this.last = x;
-
-            if (this.useFS) {
-                if (Array.isArray(x)) {
-                    fs.writeSync(this.fd, x.join(",") + "\n");
-                } else if (typeof x === 'number' || typeof x === 'string') {
-                    fs.writeSync(this.fd, x + "\n");
-                } else {
-                    fs.writeSync(this.fd, JSON.stringify(x) + "\n");
-                }
-            } else {
-                this.data.push(x);
-            }
-            return this;
-        }
-
-        /**
-         * sets header row and writes it to Log for csv-style Log. 
-         * @param {string[]} x Header array giving names of columns for future writes
-         * @return {Object} Returns this Log; chainable
-         */
-
-    }, {
-        key: 'setHeader',
-        value: function setHeader(x) {
-            if (Array.isArray(x)) {
-
-                /**
-                 * header array for Log, as set by setHeader(header)
-                 * @type {string[]}
-                 */
-
-                this.header = x;
-
-                this.write(x);
-            }
-            return this;
-        }
-
-        /**
-         * last value for some column recorded in Log 
-         * @return {number|string|undefined} value from last write at column position matching header for given key
-         */
-
-    }, {
-        key: 'lastByKey',
-        value: function lastByKey(k) {
-            if (this.header && this.header.length && this.last && this.last.length) {
-                return this.last[this.header.indexOf(k)];
-            }
-        }
-    }]);
-
-    return Log;
-}();
 
 var orderHeader = ['period', 't', 'tp', 'id', 'x', 'buyLimitPrice', 'value', 'sellLimitPrice', 'cost'];
 
@@ -293,7 +182,7 @@ var Simulation = exports.Simulation = function () {
             });
             var actualLogs = sim.config.withoutOrderLogs ? withoutOrderLogs : logNames;
             actualLogs.forEach(function (name) {
-                sim.logs[name] = new Log("./" + name + ".csv").setHeader(logHeaders[name]);
+                sim.logs[name] = new _simpleIsomorphicLogger2.default("./" + name + ".csv").setHeader(logHeaders[name]);
             });
         }
 

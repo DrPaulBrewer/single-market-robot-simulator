@@ -28,7 +28,8 @@
   "dependencies": {
     "market-agents": "^0.31.0",
     "market-example-contingent": "^0.18.0",
-    "positive-number-array": "^1.2.0"
+    "positive-number-array": "^1.2.0",
+    "simple-isomorphic-logger": "^1.0.1"
   },
   "devDependencies": {
     "babel": "^6.5.2",

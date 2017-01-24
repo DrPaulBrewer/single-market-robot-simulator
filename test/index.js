@@ -8,7 +8,7 @@ import * as singleMarketRobotSimulator from '../src/index.js';
 import * as MEC from 'market-example-contingent';
 import * as MarketAgents from 'market-agents';
 
-const {Log, Simulation} = singleMarketRobotSimulator;
+const {Simulation} = singleMarketRobotSimulator;
 const {Pool, ZIAgent} = MarketAgents;
 
 const tradeLogHeader = [
@@ -68,81 +68,6 @@ describe('order log headers ',  function(){
     });
 });
 
-
-describe('new Log() to data array', function(){
-    
-    it('should have an empty data array', function(){   
-        let L = new Log();
-        L.should.have.property('data');
-        assert.ok(Array.isArray(L.data));
-        L.data.length.should.equal(0);
-    });
-    it('should have .useFS false', function(){
-        let L = new Log();
-        assert.ok(!L.useFS);
-    });
-    it('should have .fd undefined', function(){
-        let L = new Log();
-        assert.ok(typeof(L.fd)==='undefined');
-    });
-});
-
-
-describe('Log.write([1,2,3,4,5]) to data array ', function(){
-    
-    let L = new Log();
-    L.data.length.should.equal(0);
-    L.write([1,2,3,4,5]);
-
-    it('should add the array [1,2,3,4,5] to the data array', function(){
-        L.data.length.should.equal(1);
-        L.data.should.deepEqual([[1,2,3,4,5]]);
-    });
-    it('should set .last to [1,2,3,4,5]', function(){
-        L.last.should.deepEqual([1,2,3,4,5]);
-    });
-});
-
-describe('Log.write(23) to data array', function(){
-    
-    let L = new Log();
-    L.data.length.should.equal(0);
-    L.write(23);
-
-    it('should add the number 23 to the data array', function(){
-        L.data.length.should.equal(1);
-        L.data.should.deepEqual([23]);
-    });
-    
-    it('should set .last to 23', function(){
-        L.last.should.equal(23);
-    });
-});
-
-describe('Log.write({a:23}) to data array', function(){
-    
-    it('should add the object {a:23} to the data array', function(){
-        let L = new Log();
-        L.data.length.should.equal(0);
-        L.write({a:23});
-        L.last.should.deepEqual({a:23});
-        L.data.length.should.equal(1);
-        L.data.should.deepEqual([{a:23}]);
-    });
-});
-
-describe('Log.write(undefined) to data array', function(){
-    
-    it('should leave the data array unchanged', function(){
-        let L = new Log();
-        L.data.length.should.equal(0);
-        L.write();
-        L.write(undefined);
-        L.data.length.should.equal(0);
-        assert.ok(typeof(L.last)==='undefined');
-    });
-});
-
 describe('blank Simulation not allowed', function(){
     
     delete global.fs;
@@ -199,9 +124,8 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
             S.numberOfAgents.should.equal(5);
         });
         let logsProps = ['trade','buyorder','sellorder','rejectbuyorder','rejectsellorder','profit','ohlc','volume','effalloc'];
-        it('.logs should have properties '+logsProps.join(',')+' -- all instances of Log', function(){
+        it('.logs should have properties '+logsProps.join(','), function(){
             S.logs.should.have.properties(logsProps);
-            logsProps.forEach(function(prop){ S.logs[prop].should.be.an.instanceOf(Log); });
         });
         it('trade, buyorder, sellorder, ohlc, volume logs have header rows; profit log is empty', function(){
             let withHeaderRow = ['trade','buyorder','sellorder','ohlc','volume','effalloc'];
@@ -389,9 +313,8 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
             S.numberOfAgents.should.equal(2);
         });
         let logsProps = ['trade','buyorder','sellorder','profit','ohlc','volume'];
-        it('.logs should have properties '+logsProps.join(',')+' -- all instances of Log', function(){
+        it('.logs should have properties '+logsProps.join(','), function(){
             S.logs.should.have.properties(logsProps);
-            logsProps.forEach(function(prop){ S.logs[prop].should.be.an.instanceOf(Log); });
         });
         it('.pool should be an instance of Pool containing 2 (ZI) agents with .bidPrice and .askPrice functions',function(){
             S.pool.should.be.an.instanceOf(Pool);
