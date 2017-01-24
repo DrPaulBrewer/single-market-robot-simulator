@@ -600,6 +600,8 @@ function main() {
     /* suggested by Krumia's http://stackoverflow.com/users/1461424/krumia */
     /* posting at http://stackoverflow.com/a/25710749/103081 */
 
+    global.fs = fs;
+
     function mainPeriod(sim) {
         fs.writeFileSync('./period', sim.period);
     }
