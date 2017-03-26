@@ -181,8 +181,10 @@ var Simulation = exports.Simulation = function () {
                 return s.indexOf('order') === -1;
             });
             var actualLogs = sim.config.withoutOrderLogs ? withoutOrderLogs : logNames;
+            var logDir = sim.config.logDir || ".";
+            var logToFS = sim.config.logToFileSystem;
             actualLogs.forEach(function (name) {
-                sim.logs[name] = new _simpleIsomorphicLogger2.default("./" + name + ".csv").setHeader(logHeaders[name]);
+                sim.logs[name] = new _simpleIsomorphicLogger2.default(logDir + "/" + name + ".csv", logToFS).setHeader(logHeaders[name]);
             });
         }
 

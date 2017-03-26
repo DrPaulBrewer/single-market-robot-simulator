@@ -141,8 +141,10 @@ export class Simulation {
         sim.logs = {};
         const withoutOrderLogs = logNames.filter(function(s){ return (s.indexOf('order')===-1);});
         const actualLogs = (sim.config.withoutOrderLogs)? withoutOrderLogs: logNames;
+	const logDir = sim.config.logDir || ".";
+	const logToFS = sim.config.logToFileSystem;
         actualLogs.forEach(function(name){
-            sim.logs[name] = new Log("./"+name+".csv").setHeader(logHeaders[name]);
+            sim.logs[name] = new Log(logDir+"/"+name+".csv", logToFS).setHeader(logHeaders[name]);
         });
     }
 
