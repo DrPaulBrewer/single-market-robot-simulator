@@ -26,22 +26,22 @@
   "author": "drpaulbrewer@eaftc.com",
   "license": "MIT",
   "dependencies": {
-    "market-agents": "^0.91.0",
-    "market-example-contingent": "^0.18.0",
+    "market-agents": "^1.0.0",
+    "market-example-contingent": "^1.0.0",
     "positive-number-array": "^1.2.0",
     "simple-isomorphic-logger": "^1"
   },
   "devDependencies": {
-    "babel": "^6.5.2",
-    "babel-cli": "^6.10.1",
-    "babel-core": "^6.10.4",
-    "babel-preset-es2015": "^6.9.0",
-    "coveralls": "^2.11.9",
-    "esdoc": "^0.4.7",
-    "eslint": "^3.14.0",
+    "babel": "^6.23.0",
+    "babel-cli": "^6.24.1",
+    "babel-core": "^6.24.1",
+    "babel-preset-es2015": "^6.24.1",
+    "coveralls": "^2.13.0",
+    "esdoc": "^0.5.2",
+    "eslint": "^3.19.0",
     "istanbul": "^1.0.0-alpha.2",
-    "mocha": "^2.5.3",
-    "should": "^8.3.1"
+    "mocha": "^3.2.0",
+    "should": "^11.2.1"
   },
   "directories": {
     "test": "test"
