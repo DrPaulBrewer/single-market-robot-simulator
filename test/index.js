@@ -41,7 +41,7 @@ describe('logNames ', function(){
         singleMarketRobotSimulator.logNames.length.should.be.above(0);
     });
     it('should contain at least every key of logHeaders', function(){
-        Object.keys(singleMarketRobotSimulator.logHeaders).forEach((k)=>(assert.ok(singleMarketRobotSimulator.logNames.indexOf(k)>=0)));
+        Object.keys(singleMarketRobotSimulator.logHeaders).forEach((k)=>(assert.ok(singleMarketRobotSimulator.logNames.includes(k))));
     });
 });
 
@@ -61,7 +61,7 @@ describe('order log headers ',  function(){
     it('should contain expected fields', function(){
         (singleMarketRobotSimulator
          .logNames
-         .filter((n)=>(n.indexOf("order")>=0))
+         .filter((n)=>(n.includes("order")))
          .map((n)=>(singleMarketRobotSimulator.logHeaders[n]))
          .forEach((h)=>(h.should.deepEqual(combinedOrderLogHeader)))
         );
@@ -303,13 +303,13 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
         it('should set .config properly', function(){
             assert.ok(S.config===configSingleUnitTrade);
         });
-        it('should set .numberOfBuyers to 3', function(){
+        it('should set .numberOfBuyers to 1', function(){
             S.numberOfBuyers.should.equal(1);
         });
-        it('should set .numberOfSellers to 2', function(){
+        it('should set .numberOfSellers to 1', function(){
             S.numberOfSellers.should.equal(1);
         });
-        it('should set .numberOfAgents to 5', function(){
+        it('should set .numberOfAgents to 2', function(){
             S.numberOfAgents.should.equal(2);
         });
         let logsProps = ['trade','buyorder','sellorder','profit','ohlc','volume'];
@@ -483,7 +483,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
              .keys(state.S.logs)
              .filter(function(log){ 
                  let header = state.S.logs[log].data[0];
-                 return (header.indexOf('t')>=0) && (header.indexOf('tp')>=0);
+                 return (header.includes('t')) && (header.includes('tp'));
              })
              .forEach(function(log){
                  let data = state.S.logs[log].data;

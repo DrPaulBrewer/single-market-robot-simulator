@@ -178,7 +178,7 @@ var Simulation = exports.Simulation = function () {
             var sim = this;
             sim.logs = {};
             var withoutOrderLogs = logNames.filter(function (s) {
-                return s.indexOf('order') === -1;
+                return !s.includes('order');
             });
             var actualLogs = sim.config.withoutOrderLogs ? withoutOrderLogs : logNames;
             var logDir = sim.config.logDir || ".";

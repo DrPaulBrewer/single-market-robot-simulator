@@ -139,7 +139,7 @@ export class Simulation {
     initLogs(){
         const sim = this;
         sim.logs = {};
-        const withoutOrderLogs = logNames.filter(function(s){ return (s.indexOf('order')===-1);});
+        const withoutOrderLogs = logNames.filter(function(s){ return !(s.includes('order'));});
         const actualLogs = (sim.config.withoutOrderLogs)? withoutOrderLogs: logNames;
         const logDir = sim.config.logDir || ".";
         const logToFS = sim.config.logToFileSystem;
