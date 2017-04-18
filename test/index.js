@@ -181,6 +181,12 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
             state.S.logs.sellorder.data[0].should.deepEqual(combinedOrderLogHeader);
             state.S.logs.sellorder.data.length.should.be.within(1750,2250);
         });
+        
+        /*
+         * Buy order log and sell order log need to have no "undefined" values.  Blank string is OK for "not applicable"
+         *
+         */
+         
         it('buy order log defines all fields on every row', function(){
             state.S.logs.buyorder.data.forEach((row)=>{
                 row.length.should.equal(combinedOrderLogHeader.length);
@@ -462,6 +468,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
             testsForConfigSingleUnitTrade(state);
         });
     });
+    
     function testsForRunSimulationSingleTradeTenPeriods(state){
         it('.period should be 10', function(){
             state.S.period.should.equal(10);
@@ -564,6 +571,32 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
         });
     });
 
+    describe('deadline: run Simulation sync:true with immediate deadline, request 10 periods of single unit trade scenario only yields one period', function(){
+        let config = Object.assign({}, configSingleUnitTrade, {periods:10});
+        let S = new Simulation(config).run({sync:true, deadline: Date.now()});
+        it("sim.config.periods should be reduced to 1 period", function(){
+            S.config.periods.should.equal(1);
+        });
+        it('sim.config.periodsRequested should equal 10', function(){
+            S.config.periodsRequested.should.equal(10);
+        });
+    });
+
+    describe('deadline: run Simulation sync:false with immediate deadline, request 10 periods also runs one period', function(){
+        let config = Object.assign({}, configSingleUnitTrade, {periods:10});
+        let S;
+        before(function(done){
+            S = new Simulation(config);
+            S.run({sync:false, deadline: Date.now()}).then(()=>(done()), (e)=>(done(e)));
+        });
+        it("sim.config.periods should be reduced to 1 period", function(){
+            S.config.periods.should.equal(1);
+        });
+        it('sim.config.periodsRequested should equal 10', function(){
+            S.config.periodsRequested.should.equal(10);
+        });
+    });
+    
     describe('runSimulation with three simulations of 10 periods of single unit trade scenario, asynchronous', function(){
         let configA = Object.assign({}, configSingleUnitTrade, {periods:10});
         let configB = Object.assign({}, configSingleUnitTrade, {periods:10});
