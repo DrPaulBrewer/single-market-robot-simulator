@@ -141,8 +141,8 @@ export class Simulation {
         sim.logs = {};
         const withoutOrderLogs = logNames.filter(function(s){ return (s.indexOf('order')===-1);});
         const actualLogs = (sim.config.withoutOrderLogs)? withoutOrderLogs: logNames;
-	const logDir = sim.config.logDir || ".";
-	const logToFS = sim.config.logToFileSystem;
+        const logDir = sim.config.logDir || ".";
+        const logToFS = sim.config.logToFileSystem;
         actualLogs.forEach(function(name){
             sim.logs[name] = new Log(logDir+"/"+name+".csv", logToFS).setHeader(logHeaders[name]);
         });
@@ -535,13 +535,23 @@ export class Simulation {
      * @param {Object} [options]
      * @param {boolean} [options.sync=false] true to run synchronously, returns simulation object (not a Promise) 
      * @param {function(sim:Object)} [options.update]  update Optional end of period function
-     * @param {number} [options.delay=20] delay timeout between periods in ms.
+     * @param {number} [options.delay=20] delay timeout between periods in ms. Only effective in asynchronous mode.
+     * @param {number} [options.deadline=0] deadline to compare with Date.now() -- If over deadline, return available data.  0 disables.
      * @return {Promise<Object,Error>} resolves to simulation object
      */
 
-    run({sync,update, delay}={sync:false, update:((s)=>(s)), delay: 20}){  
+    run(options){
+	const defaults = {sync:false, update:((s)=>(s)), delay: 20, deadline:0};
+	const { sync, update, delay, deadline } = Object.assign({}, defaults, options);
         const sim = this;
         const config = this.config;
+        if (typeof(update)!=='function')
+            throw new Error("expected 'update' to be a function, got: "+typeof(update));
+
+        function forceFinish(){
+            config.periodsRequested = config.periods;
+            config.periods = sim.period;
+        }
         
         /* istanbul ignore if */
         
@@ -550,8 +560,9 @@ export class Simulation {
         
         if (sync){
             while(sim.period<config.periods){
-                sim.runPeriod({sync:true});
-                if (typeof update==='function') update(sim);
+                sim.runPeriod(true);  // pass true to .runPeriod to run synchronously
+                update(sim);
+                if ((deadline) && (Date.now()>deadline)) forceFinish();
             }
 
             /* istanbul ignore if */
@@ -568,7 +579,10 @@ export class Simulation {
                  .runPeriod()
                  .then(update)
                  .then(
-                     function(s){ return (s.period<config.periods)? setTimeout(loop,delay): resolve(s); },
+                     function(s){
+                         if ((deadline) && (Date.now()>deadline)) forceFinish();
+                         return (s.period<config.periods)? setTimeout(loop,delay): resolve(s);
+                     },
                      ((e)=>reject(e))
                  )
                 );

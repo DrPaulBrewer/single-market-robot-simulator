@@ -540,22 +540,32 @@ var Simulation = exports.Simulation = function () {
          * @param {Object} [options]
          * @param {boolean} [options.sync=false] true to run synchronously, returns simulation object (not a Promise) 
          * @param {function(sim:Object)} [options.update]  update Optional end of period function
-         * @param {number} [options.delay=20] delay timeout between periods in ms.
+         * @param {number} [options.delay=20] delay timeout between periods in ms. Only effective in asynchronous mode.
+         * @param {number} [options.deadline=0] deadline to compare with Date.now() -- If over deadline, return available data.  0 disables.
          * @return {Promise<Object,Error>} resolves to simulation object
          */
 
     }, {
         key: 'run',
-        value: function run() {
-            var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { sync: false, update: function update(s) {
+        value: function run(options) {
+            var defaults = { sync: false, update: function update(s) {
                     return s;
-                }, delay: 20 },
-                sync = _ref.sync,
-                update = _ref.update,
-                delay = _ref.delay;
+                }, delay: 20, deadline: 0 };
+
+            var _Object$assign = Object.assign({}, defaults, options),
+                sync = _Object$assign.sync,
+                update = _Object$assign.update,
+                delay = _Object$assign.delay,
+                deadline = _Object$assign.deadline;
 
             var sim = this;
             var config = this.config;
+            if (typeof update !== 'function') throw new Error("expected 'update' to be a function, got: " + (typeof update === 'undefined' ? 'undefined' : _typeof(update)));
+
+            function forceFinish() {
+                config.periodsRequested = config.periods;
+                config.periods = sim.period;
+            }
 
             /* istanbul ignore if */
 
@@ -563,8 +573,9 @@ var Simulation = exports.Simulation = function () {
 
             if (sync) {
                 while (sim.period < config.periods) {
-                    sim.runPeriod({ sync: true });
-                    if (typeof update === 'function') update(sim);
+                    sim.runPeriod(true); // pass true to .runPeriod to run synchronously
+                    update(sim);
+                    if (deadline && Date.now() > deadline) forceFinish();
                 }
 
                 /* istanbul ignore if */
@@ -577,6 +588,7 @@ var Simulation = exports.Simulation = function () {
             return new Promise(function (resolve, reject) {
                 function loop() {
                     sim.runPeriod().then(update).then(function (s) {
+                        if (deadline && Date.now() > deadline) forceFinish();
                         return s.period < config.periods ? setTimeout(loop, delay) : resolve(s);
                     }, function (e) {
                         return reject(e);
