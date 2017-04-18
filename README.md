@@ -8,11 +8,11 @@ A stand alone nodejs app or module for creating robot trading simulations in a s
 
 By default uses my implementation of Gode and Sunder's Zero Intelligence Robots, but you can use other robot types or also write and register your own robots.
 
-##Programmer's Documentation on ESDoc
+## Programmer's Documentation on ESDoc
 
 The [ESDoc site for single-market-robot-simulator](https://doc.esdoc.org/github.com/DrPaulBrewer/single-market-robot-simulator/) contains documentation prepared from source code of this module.
 
-##Installation
+## Installation
 
 To run as a nodejs command-line program, clone this repository and run `npm install` from the cloned
 directory to install the dependencies:
@@ -28,7 +28,7 @@ If, instead, you want to use it as a library in another program from npm, simply
 To use this as a library on the browser with jspm, you should set an override option on install forcing dependency `fs` to `@empty`.
 This is done in the [robot-trading-webapp](http://github.com/DrPaulBrewer/robot-trading-webapp) example app that uses this code as a dependency.
     
-##Configuration
+## Configuration
 
 Configuration in the stand alone app occurs in the file `config.json` which is read by `main()` in stand-alone app mode.
 
@@ -36,7 +36,7 @@ When used as a software module, the configuration object is passed to `runSimula
     
 Format for config.json is given in configSchema.json as a JSON Schema.
 
-##Usage 
+## Usage 
 
 ###Stand Alone App
 
@@ -46,7 +46,7 @@ outputting log files: `buyorders.csv`, `sellorders.csv`, `ohlc.csv`, `trades.csv
 With the exception of `profits.csv` these logs have header rows and are in comma-separated value format, compatible with
 Excel and other spreadsheets and most analysis software that accepts  a`.csv` file as data input.
 
-###As a module
+### As a module
     
     import * as SMRS from 'single-market-robot-simulator'; // ES6
 
@@ -70,17 +70,17 @@ and the resulting simulator web app is at
 
 http://drpaulbrewer.github.io/robot-trading-webapp/
 
-##Tests
+## Tests
 
     npm test
     
 will run the tests, if you have node 6 or later and mocha installed.  You can also click on the build or coverage badges to view public test reports.
 
-##Copyright 
+## Copyright 
 
 Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC
 
-##License: 
+## License: 
 
 [The MIT License](./LICENSE.md)
 
