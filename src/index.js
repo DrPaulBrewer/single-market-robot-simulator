@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC                             
 // This is open source software. The MIT License applies to this software.                                  
 // see https://opensource.org/licenses/MIT or included License.md file
@@ -606,11 +608,13 @@ function main(){
 
     global.fs = fs;
 
+    const simConfigFileName = ( process.argv.find((s)=>(s.endsWith(".json"))) ) || "./config.json";
+
     function mainPeriod(sim){
         fs.writeFileSync('./period', sim.period);
     }
     const config = JSON.parse(
-        fs.readFileSync('./config.json', 'utf8')
+        fs.readFileSync(simConfigFileName, 'utf8')
     );
 
     new Simulation(config).run({sync:true, update:mainPeriod });
