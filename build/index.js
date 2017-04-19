@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -7,7 +8,9 @@ exports.Simulation = exports.logNames = exports.logHeaders = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); // Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC                             
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+// Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC                             
 // This is open source software. The MIT License applies to this software.                                  
 // see https://opensource.org/licenses/MIT or included License.md file
 
@@ -616,10 +619,14 @@ function main() {
 
     global.fs = fs;
 
+    var simConfigFileName = process.argv.find(function (s) {
+        return s.endsWith(".json");
+    }) || "./config.json";
+
     function mainPeriod(sim) {
         fs.writeFileSync('./period', sim.period);
     }
-    var config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
+    var config = JSON.parse(fs.readFileSync(simConfigFileName, 'utf8'));
 
     new Simulation(config).run({ sync: true, update: mainPeriod });
 }
