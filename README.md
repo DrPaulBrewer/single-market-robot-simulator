@@ -72,7 +72,8 @@ Among the choices are:
 * a "oneupmanship" algorithm that increases the bid or decreases the ask by 1 unit if profitable to do so
 * others, and a base class for writing your own algorithm
 
-[1] 
+[1] Allocative Efficiency of Markets with Zero-Intelligence Traders: Market as a Partial Substitute for Individual Rationality
+Dhananjay K. Gode and Shyam Sunder, Journal of Political Economy, Vol. 101, No. 1 (Feb., 1993), pp. 119-137
 
 ## Usage 
 
