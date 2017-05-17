@@ -77,9 +77,9 @@ Dhananjay K. Gode and Shyam Sunder, Journal of Political Economy, Vol. 101, No. 
 
 ## Usage 
 
-###Stand Alone App
+### Stand Alone App
 
-When used as a stand alone app `node index.js` or `npm run` will run the simulation, reading the `config.json` file and
+When used as a stand alone nodejs app `node index.js` or `npm run` will run the simulation, reading the `config.json` file and
 outputting various log files, including: `buyorders.csv`, `sellorders.csv`, `ohlc.csv`, `trades.csv`, `profits.csv`, and `volume.csv`. 
 
 With the exception of `profits.csv` these logs have header rows and are in comma-separated value format, compatible with
@@ -91,7 +91,7 @@ Excel and other spreadsheets and most analysis software that accepts  a`.csv` fi
 
     const SMRS = require("single-market-robot-simulator"); // CJS
 
-returns an object containing constructors for `Log`, `Simulation` and function `runSimulation`.  Simulation functionality
+returns an object containing constructors for `Log`, `Simulation` and function `runSimulation`.  Functionality
 will run either in the browser or nodejs without modification ("isomorphic javascript").  On the browser, security policies
 require different procedures for writing out files.  Therefore, the log files are not immediately written out to .csv files
 (as with the stand alone app) but are maintained in memory for use with browser-based plotting software.  It is the 
