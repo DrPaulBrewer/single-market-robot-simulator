@@ -35,6 +35,45 @@ When used as a software module, the configuration object is passed to the functi
     
 Format for config.json is given in configSchema.json as a JSON Schema.
 
+### Configurable supply and demand
+
+The values and costs to be distributed among the trading robots are 
+configured in the properties `buyerValues` and `sellerCosts`, each an array that is distributed round-robin style to
+the buyer robots and seller robots respectively.  Each of these values and costs will be distributed exactly once at the
+beginning of each period of the market. To be clear, if the `numberOfBuyers` exceeds the length of `buyerValues`, then some
+buyers will not receive a value. This form of specification is not convenient for every imaginable use, but it is 
+convenient for setting a particular aggregate supply and demand and keeping it constant while tinkering with the number
+of buyers, sellers or other parameters.
+
+The descending sorted `buyerValues` can be used to form a step function that is the aggregate demand function for the market.
+
+Similarly the ascending sorted `sellerCosts` can be used to form a step function that is the aggregate supply function for the market. 
+
+### Robot Trading agents
+
+The types of buyers and sellers are set in configration properties `buyerAgentType` and `sellerAgentType` and the buyers and sellers configured round-robin from these types.  
+For example, if there is only one type of buyer, then all buyers are that type.  If there are two types of buyers configured
+then half the buyers will be the first type, and half the buyers will be the second type if the number of buyers is even but
+if the number of buyers is odd then there will be an extra buyer of the first type. Perhaps a good practice is to have
+the buyerAgentType and sellerAgentType arrays have an entry for each buyer and seller, but for convenience in simple
+cases the round robin is used.  
+
+The module [market-agents](https://github.com/DrPaulBrewer/market-agents) is imported to provide the robot trading agents.  
+
+The algorithms provided are intentionally fairly simple when compared to Neural Networks and some other approaches
+to machine learning. Several of the algorithms chosen have been the topics of papers in the economics literature.
+
+Among the choices are:
+
+* The [Zero Intelligence trader](https://en.wikipedia.org/wiki/Zero-intelligence_trader) of Gode and Sunder[1] that bids/asks randomly for non-zero profit.
+* Kaplan's Sniper algorithm
+* a "truthful" or identity-function algorithm that always bids the value
+* a bisection algorithm that bids or asks halfway between the current bid/current ask if profitable to do so, and initially bids/asks an extreme value when no bid/ask is present
+* a "oneupmanship" algorithm that increases the bid or decreases the ask by 1 unit if profitable to do so
+* others, and a base class for writing your own algorithm
+
+[1] 
+
 ## Usage 
 
 ###Stand Alone App
