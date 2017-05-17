@@ -4,9 +4,8 @@ single-market-robot-simulator
 [![Coverage Status](https://coveralls.io/repos/github/DrPaulBrewer/single-market-robot-simulator/badge.svg?branch=master)](https://coveralls.io/github/DrPaulBrewer/single-market-robot-simulator?branch=master)
 
 
-A stand alone nodejs app or module for creating robot trading simulations in a single market with configurable supply and demand. 
-
-By default uses my implementation of Gode and Sunder's Zero Intelligence Robots, but you can use other robot types or also write and register your own robots.
+A stand alone nodejs app and software module for creating numerical experiments with a single market.
+The induced supply and demand is configurable, as are the types of trading robots populating the market.
 
 ## Programmer's Documentation on ESDoc
 
@@ -25,14 +24,14 @@ If, instead, you want to use it as a library in another program from npm, simply
 
      npm i single-robot-market-simulator -S
 
-To use this as a library on the browser with jspm, you should set an override option on install forcing dependency `fs` to `@empty`.
+To use this as a library on the browser with `jspm`, you should set an override option on install forcing dependency `fs` to `@empty`. 
 This is done in the [robot-trading-webapp](http://github.com/DrPaulBrewer/robot-trading-webapp) example app that uses this code as a dependency.
     
 ## Configuration
 
 Configuration in the stand alone app occurs in the file `config.json` which is read by `main()` in stand-alone app mode.
 
-When used as a software module, the configuration object is passed to `runSimulation` or `new Simulation`.
+When used as a software module, the configuration object is passed to the function `runSimulation()` or the constructor `new Simulation()`.
     
 Format for config.json is given in configSchema.json as a JSON Schema.
 
@@ -41,7 +40,7 @@ Format for config.json is given in configSchema.json as a JSON Schema.
 ###Stand Alone App
 
 When used as a stand alone app `node index.js` or `npm run` will run the simulation, reading the `config.json` file and
-outputting log files: `buyorders.csv`, `sellorders.csv`, `ohlc.csv`, `trades.csv`, `profits.csv`, and `volume.csv`. 
+outputting various log files, including: `buyorders.csv`, `sellorders.csv`, `ohlc.csv`, `trades.csv`, `profits.csv`, and `volume.csv`. 
 
 With the exception of `profits.csv` these logs have header rows and are in comma-separated value format, compatible with
 Excel and other spreadsheets and most analysis software that accepts  a`.csv` file as data input.
@@ -78,7 +77,7 @@ will run the tests, if you have node 6 or later and mocha installed.  You can al
 
 ## Copyright 
 
-Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC
+Copyright 2016- Paul Brewer, Economic and Financial Technology Consulting LLC
 
 ## License: 
 
