@@ -123,12 +123,12 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
         it('should set .numberOfAgents to 5', function(){
             S.numberOfAgents.should.equal(5);
         });
-        let logsProps = ['trade','buyorder','sellorder','rejectbuyorder','rejectsellorder','profit','ohlc','volume','effalloc'];
+        let logsProps = ['trade','buyorder','sellorder','rejectbuyorder','rejectsellorder','profit','ohlc','effalloc'];
         it('.logs should have properties '+logsProps.join(','), function(){
             S.logs.should.have.properties(logsProps);
         });
-        it('trade, buyorder, sellorder, ohlc, volume logs have header rows; profit log is empty', function(){
-            let withHeaderRow = ['trade','buyorder','sellorder','ohlc','volume','effalloc'];
+        it('trade, buyorder, sellorder, ohlc logs have header rows; profit log is empty', function(){
+            let withHeaderRow = ['trade','buyorder','sellorder','ohlc','effalloc'];
             withHeaderRow.forEach(function(prop){ S.logs[prop].data.length.should.equal(1); });
             S.logs.trade.data[0].should.deepEqual(tradeLogHeader);
             S.logs.buyorder.data[0].should.deepEqual(combinedOrderLogHeader);
@@ -214,10 +214,6 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
         }); 
         it('the ohlc log should have header row', function(){
             state.S.logs.ohlc.data.length.should.equal(1);
-        });
-        it('the volume log should header row and one entry equal to [1,0]', function(){
-            state.S.logs.volume.data.length.should.equal(2);
-            state.S.logs.volume.data.should.deepEqual([['period','volume'],[1,0]]);
         });
         it('the effalloc log should have only the header row and no entries, because 0/0 is not reported', function(){
             state.S.logs.effalloc.data.length.should.equal(1);
@@ -318,7 +314,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
         it('should set .numberOfAgents to 2', function(){
             S.numberOfAgents.should.equal(2);
         });
-        let logsProps = ['trade','buyorder','sellorder','profit','ohlc','volume'];
+        let logsProps = ['trade','buyorder','sellorder','profit','ohlc'];
         it('.logs should have properties '+logsProps.join(','), function(){
             S.logs.should.have.properties(logsProps);
         });
@@ -416,15 +412,11 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
             state.S.logs.profit.data.length.should.be.equal(1);
             state.S.logs.profit.data.should.deepEqual([correctProfits]);
         }); 
-        it('the ohlc log should have header plus one entry, with all 4 o,h,l,c elements equal to the trade price', function(){
+        it('the ohlc log should have header plus one entry, with all price stats equal to single trade price', function(){
             let p = state.S.logs.trade.data[1][tradeLogHeader.indexOf("price")];
-            let correctOHLC = [state.S.period,p,p,p,p];
+            let correctOHLC = [state.S.period,p,p,p,p,1,p,p,0];
             state.S.logs.ohlc.data.length.should.equal(2);
             state.S.logs.ohlc.data[1].should.deepEqual(correctOHLC);
-        });
-        it('the volume log should have header plus one entry, [1,1]', function(){
-            state.S.logs.volume.data.length.should.equal(2);
-            state.S.logs.volume.data[1].should.deepEqual([1,1]);
         });
         it('the effalloc log should have header plus one entry, [1,100]', function(){
             state.S.logs.effalloc.data.length.should.equal(2);
@@ -528,14 +520,11 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
                     let period = row[periodCol];
                     let price  = row[priceCol];
                     // o,h,l,c equal because it is a single unit trade scenario
-                    return [period,price,price,price,price];
+                    // o,h,l,c,volume,median,mean,sdev
+                    return [period,price,price,price,price,1,price,price,0];
                 });
             state.S.logs.ohlc.data.length.should.equal(11);
             state.S.logs.ohlc.data.slice(1).should.deepEqual(altOHLC);          
-        });
-        it('the volume log should have 11 entries, header + 1 per period, showing 1 unit traded', function(){
-            state.S.logs.volume.data.length.should.equal(11);
-            state.S.logs.volume.data.slice(1).should.deepEqual([[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[8,1],[9,1],[10,1]]);
         });
         it('the effalloc log should have 11 entries, header + 1 per period, showing eff=100 percent', function(){
             state.S.logs.effalloc.data.length.should.equal(11);

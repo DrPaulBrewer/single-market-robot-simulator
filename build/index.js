@@ -10,7 +10,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-// Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC                             
+// Copyright 2016- Paul Brewer, Economic and Financial Technology Consulting LLC                             
 // This is open source software. The MIT License applies to this software.                                  
 // see https://opensource.org/licenses/MIT or included License.md file
 
@@ -35,6 +35,10 @@ var MEC = _interopRequireWildcard(_marketExampleContingent);
 var _marketAgents = require('market-agents');
 
 var MarketAgents = _interopRequireWildcard(_marketAgents);
+
+var _statsLite = require('stats-lite');
+
+var stats = _interopRequireWildcard(_statsLite);
 
 var _positiveNumberArray = require('positive-number-array');
 
@@ -86,17 +90,16 @@ agentRegister(MarketAgents); // a bit overbroad but gets all of them
 var orderHeader = ['period', 't', 'tp', 'id', 'x', 'buyLimitPrice', 'value', 'sellLimitPrice', 'cost'];
 
 var logHeaders = exports.logHeaders = {
-    ohlc: ['period', 'open', 'high', 'low', 'close'],
+    ohlc: ['period', 'open', 'high', 'low', 'close', 'volume', 'median', 'mean', 'sd'],
     buyorder: orderHeader,
     sellorder: orderHeader,
     rejectbuyorder: orderHeader,
     rejectsellorder: orderHeader,
     trade: ['period', 't', 'tp', 'price', 'buyerAgentId', 'buyerValue', 'buyerProfit', 'sellerAgentId', 'sellerCost', 'sellerProfit'],
-    volume: ['period', 'volume'],
     effalloc: ['period', 'efficiencyOfAllocation']
 };
 
-var logNames = exports.logNames = ['trade', 'buyorder', 'sellorder', 'rejectbuyorder', 'rejectsellorder', 'profit', 'ohlc', 'volume', 'effalloc'];
+var logNames = exports.logNames = ['trade', 'buyorder', 'sellorder', 'rejectbuyorder', 'rejectsellorder', 'profit', 'ohlc', 'effalloc'];
 
 /**
  * single-market-robot-simulation Simulation 
@@ -460,15 +463,18 @@ var Simulation = exports.Simulation = function () {
             function ohlc() {
                 if (sim.periodTradePrices.length > 0) {
                     var o = sim.periodTradePrices[0];
-                    var c = sim.periodTradePrices[sim.periodTradePrices.length - 1];
                     var h = Math.max.apply(Math, _toConsumableArray(sim.periodTradePrices));
                     var l = Math.min.apply(Math, _toConsumableArray(sim.periodTradePrices));
-                    return [sim.period, o, h, l, c];
+                    var c = sim.periodTradePrices[sim.periodTradePrices.length - 1];
+                    var volume = sim.periodTradePrices.length;
+                    var median = stats.median(sim.periodTradePrices);
+                    var mean = stats.mean(sim.periodTradePrices);
+                    var sd = stats.stdev(sim.periodTradePrices);
+                    return [sim.period, o, h, l, c, volume, median, mean, sd];
                 }
             }
             if (sim.logs.profit) sim.logs.profit.write(finalMoney);
             if (sim.logs.ohlc) sim.logs.ohlc.write(ohlc());
-            if (sim.logs.volume) sim.logs.volume.write([sim.period, sim.periodTradePrices.length]);
             if (sim.logs.effalloc) {
                 var finalMoneySum = 0.0;
                 for (var i = 0, l = finalMoney.length; i < l; ++i) {

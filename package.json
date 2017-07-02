@@ -30,7 +30,8 @@
     "market-agents": "^1.0.0",
     "market-example-contingent": "^1.0.0",
     "positive-number-array": "^1.2.0",
-    "simple-isomorphic-logger": "^1"
+    "simple-isomorphic-logger": "^1",
+    "stats-lite": "^2.0.4"
   },
   "devDependencies": {
     "babel": "^6.23.0",

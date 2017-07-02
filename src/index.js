@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Copyright 2016 Paul Brewer, Economic and Financial Technology Consulting LLC                             
+// Copyright 2016- Paul Brewer, Economic and Financial Technology Consulting LLC                             
 // This is open source software. The MIT License applies to this software.                                  
 // see https://opensource.org/licenses/MIT or included License.md file
 
@@ -9,6 +9,7 @@
 import Log from 'simple-isomorphic-logger';
 import * as MEC from 'market-example-contingent';
 import * as MarketAgents from 'market-agents';
+import * as stats from 'stats-lite';
 import positiveNumberArray from 'positive-number-array';
 
 /* 
@@ -50,17 +51,16 @@ agentRegister(MarketAgents); // a bit overbroad but gets all of them
 const orderHeader = ['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost'];
 
 export const logHeaders = {
-    ohlc:  ['period','open','high','low','close'],
+    ohlc:  ['period','open','high','low','close','volume','median','mean','sd'],
     buyorder:  orderHeader,
     sellorder: orderHeader,
     rejectbuyorder: orderHeader,
     rejectsellorder: orderHeader,
     trade: ['period','t','tp','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit'],
-    volume: ['period','volume'],
     effalloc: ['period','efficiencyOfAllocation']
 };
 
-export const logNames = ['trade','buyorder','sellorder','rejectbuyorder','rejectsellorder','profit','ohlc','volume','effalloc'];
+export const logNames = ['trade','buyorder','sellorder','rejectbuyorder','rejectsellorder','profit','ohlc','effalloc'];
 
 /**
  * single-market-robot-simulation Simulation 
@@ -416,18 +416,20 @@ export class Simulation {
         function ohlc(){
             if (sim.periodTradePrices.length>0){
                 const o = sim.periodTradePrices[0];
-                const c = sim.periodTradePrices[sim.periodTradePrices.length-1];
                 const h = Math.max(...sim.periodTradePrices);
                 const l = Math.min(...sim.periodTradePrices);
-                return [sim.period,o,h,l,c];
+		const c = sim.periodTradePrices[sim.periodTradePrices.length-1];
+		const volume = sim.periodTradePrices.length;
+		const median = stats.median(sim.periodTradePrices);
+		const mean = stats.mean(sim.periodTradePrices);
+		const sd = stats.stdev(sim.periodTradePrices);
+                return [sim.period,o,h,l,c,volume,median,mean,sd];
             }
         }
         if (sim.logs.profit)
             sim.logs.profit.write(finalMoney);
         if (sim.logs.ohlc)
             sim.logs.ohlc.write(ohlc());
-        if (sim.logs.volume)
-            sim.logs.volume.write([sim.period,sim.periodTradePrices.length]);
         if (sim.logs.effalloc){
             let finalMoneySum = 0.0;
             for(let i=0,l=finalMoney.length;i<l;++i) finalMoneySum+=finalMoney[i];
