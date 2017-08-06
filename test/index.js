@@ -36,6 +36,8 @@ const combinedOrderLogHeader = [
     'cost'
 ];
 
+const gini = require("gini-ss");    
+
 describe('logNames ', function(){
     it('should be defined', function(){
         singleMarketRobotSimulator.logNames.length.should.be.above(0);
@@ -414,9 +416,25 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
         }); 
         it('the ohlc log should have header plus one entry, with all price stats equal to single trade price', function(){
             let p = state.S.logs.trade.data[1][tradeLogHeader.indexOf("price")];
-            let correctOHLC = [state.S.period,p,p,p,p,1,p,p,0];
+            let correctOHLC = {
+                period: 1,
+                open: p,
+                high: p,
+                low: p,
+                close: p,
+                volume: 1,
+                p25: p,
+                median: p,
+                p75: p,
+                mean: p,
+                gini: gini(state.S.logs.profit.last)
+            };
             state.S.logs.ohlc.data.length.should.equal(2);
-            state.S.logs.ohlc.data[1].should.deepEqual(correctOHLC);
+            state.S.logs.ohlc.header.forEach(function(prop){
+                if (prop in correctOHLC){
+                    state.S.logs.ohlc.lastByKey(prop).should.be.approximately(correctOHLC[prop],0.000001);
+                }
+            });
         });
         it('the effalloc log should have header plus one entry, [1,100]', function(){
             state.S.logs.effalloc.data.length.should.equal(2);
@@ -512,19 +530,36 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
                 assert.equal(row[0]+row[1],999);
             });
         });
-        it('the ohlc log should have 11 entries, header + 1 trade per period, matching trade log', function(){
+        it('the ohlc log should have 11 entries, header + 1 trade per period', function(){
+            state.S.logs.ohlc.data.length.should.equal(11);
+        });
+        it('the ohlc log data should agree with the trade log data', function(){ 
             let priceCol = tradeLogHeader.indexOf('price'),periodCol = tradeLogHeader.indexOf('period');
             // use .slice(1) to copy trade log with header row omitted
             let altOHLC = state.S.logs.trade.data.slice(1).map(
-                function(row){ 
-                    let period = row[periodCol];
-                    let price  = row[priceCol];
-                    // o,h,l,c equal because it is a single unit trade scenario
-                    // o,h,l,c,volume,median,mean,sdev
-                    return [period,price,price,price,price,1,price,price,0];
+                function(row){
+                    const p = row[priceCol];
+                    let correctOHLC = {
+                        period: row[periodCol],
+                        open: p,
+                        high: p,
+                        low: p,
+                        close: p,
+                        volume: 1,
+                        p25: p,
+                        median: p,
+                        p75: p,
+                        mean: p,
+                        sd: 0,
+                        gini: gini(state.S.logs.profit.data[row[periodCol]-1])
+                    };
+                    return state.S.logs.ohlc.header.map(function(prop){ return correctOHLC[prop]; });
                 });
-            state.S.logs.ohlc.data.length.should.equal(11);
-            state.S.logs.ohlc.data.slice(1).should.deepEqual(altOHLC);          
+            state.S.logs.ohlc.header.forEach(function(prop,i){
+                for(let j=1,l=11;j<l;++j){
+                    state.S.logs.ohlc.data[j][i].should.be.approximately(altOHLC[j-1][i],0.000001,"row "+j+" "+prop);
+                }
+            });
         });
         it('the effalloc log should have 11 entries, header + 1 per period, showing eff=100 percent', function(){
             state.S.logs.effalloc.data.length.should.equal(11);

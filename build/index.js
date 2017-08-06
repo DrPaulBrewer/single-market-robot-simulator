@@ -40,6 +40,10 @@ var _statsLite = require('stats-lite');
 
 var stats = _interopRequireWildcard(_statsLite);
 
+var _giniSs = require('gini-ss');
+
+var _giniSs2 = _interopRequireDefault(_giniSs);
+
 var _positiveNumberArray = require('positive-number-array');
 
 var _positiveNumberArray2 = _interopRequireDefault(_positiveNumberArray);
@@ -90,7 +94,7 @@ agentRegister(MarketAgents); // a bit overbroad but gets all of them
 var orderHeader = ['period', 't', 'tp', 'id', 'x', 'buyLimitPrice', 'value', 'sellLimitPrice', 'cost'];
 
 var logHeaders = exports.logHeaders = {
-    ohlc: ['period', 'open', 'high', 'low', 'close', 'volume', 'median', 'mean', 'sd'],
+    ohlc: ['period', 'open', 'high', 'low', 'close', 'volume', 'p25', 'median', 'p75', 'mean', 'sd', 'gini'],
     buyorder: orderHeader,
     sellorder: orderHeader,
     rejectbuyorder: orderHeader,
@@ -462,19 +466,25 @@ var Simulation = exports.Simulation = function () {
             });
             function ohlc() {
                 if (sim.periodTradePrices.length > 0) {
-                    var o = sim.periodTradePrices[0];
-                    var h = Math.max.apply(Math, _toConsumableArray(sim.periodTradePrices));
-                    var l = Math.min.apply(Math, _toConsumableArray(sim.periodTradePrices));
-                    var c = sim.periodTradePrices[sim.periodTradePrices.length - 1];
-                    var volume = sim.periodTradePrices.length;
-                    var median = stats.median(sim.periodTradePrices);
-                    var mean = stats.mean(sim.periodTradePrices);
-                    var sd = stats.stdev(sim.periodTradePrices);
-                    return [sim.period, o, h, l, c, volume, median, mean, sd];
+                    var result = {
+                        period: sim.period,
+                        open: sim.periodTradePrices[0],
+                        high: Math.max.apply(Math, _toConsumableArray(sim.periodTradePrices)),
+                        low: Math.min.apply(Math, _toConsumableArray(sim.periodTradePrices)),
+                        close: sim.periodTradePrices[sim.periodTradePrices.length - 1],
+                        volume: sim.periodTradePrices.length,
+                        median: stats.median(sim.periodTradePrices),
+                        mean: stats.mean(sim.periodTradePrices),
+                        sd: stats.stdev(sim.periodTradePrices),
+                        p25: stats.percentile(sim.periodTradePrices, 0.25),
+                        p75: stats.percentile(sim.periodTradePrices, 0.75),
+                        gini: (0, _giniSs2.default)(finalMoney)
+                    };
+                    sim.logs.ohlc.submit(result, '');
                 }
             }
             if (sim.logs.profit) sim.logs.profit.write(finalMoney);
-            if (sim.logs.ohlc) sim.logs.ohlc.write(ohlc());
+            if (sim.logs.ohlc) ohlc();
             if (sim.logs.effalloc) {
                 var finalMoneySum = 0.0;
                 for (var i = 0, l = finalMoney.length; i < l; ++i) {
@@ -499,11 +509,28 @@ var Simulation = exports.Simulation = function () {
             var agent = sim.pool.agentsById[order.id];
             var buyLog = prefix + 'buyorder';
             var sellLog = prefix + 'sellorder';
+            var loggedProperties = { period: sim.period };
+            if (agent.inventory && order) {
+                Object.assign(loggedProperties, {
+                    t: order.t,
+                    tp: order.t - sim.period * sim.periodDuration,
+                    id: order.id,
+                    x: agent.inventory.X
+                });
+            }
             if (agent && order.buyPrice && sim.logs[buyLog]) {
-                sim.logs[buyLog].write([sim.period, order.t, order.t - sim.period * sim.periodDuration, order.id, agent.inventory.X, order.buyPrice, agent.unitValueFunction('X', agent.inventory), '', '']);
+                Object.assign(loggedProperties, {
+                    buyLimitPrice: order.buyPrice,
+                    value: agent.unitValueFunction('X', agent.inventory)
+                });
+                sim.logs[buyLog].submit(loggedProperties, '');
             }
             if (agent && order.sellPrice && sim.logs[sellLog]) {
-                sim.logs[sellLog].write([sim.period, order.t, order.t - sim.period * sim.periodDuration, order.id, agent.inventory.X, '', '', order.sellPrice, agent.unitCostFunction('X', agent.inventory)]);
+                Object.assign(loggedProperties, {
+                    sellLimitPrice: order.sellPrice,
+                    cost: agent.unitCostFunction('X', agent.inventory)
+                });
+                sim.logs[sellLog].submit(loggedProperties, '');
             }
         }
 

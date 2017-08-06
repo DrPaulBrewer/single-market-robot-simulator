@@ -10,6 +10,7 @@ import Log from 'simple-isomorphic-logger';
 import * as MEC from 'market-example-contingent';
 import * as MarketAgents from 'market-agents';
 import * as stats from 'stats-lite';
+import gini from 'gini-ss';
 import positiveNumberArray from 'positive-number-array';
 
 /* 
@@ -51,7 +52,7 @@ agentRegister(MarketAgents); // a bit overbroad but gets all of them
 const orderHeader = ['period','t','tp','id','x', 'buyLimitPrice','value','sellLimitPrice','cost'];
 
 export const logHeaders = {
-    ohlc:  ['period','open','high','low','close','volume','median','mean','sd'],
+    ohlc: ['period','open','high','low','close','volume','p25','median','p75','mean','sd','gini'], 
     buyorder:  orderHeader,
     sellorder: orderHeader,
     rejectbuyorder: orderHeader,
@@ -308,6 +309,7 @@ export class Simulation {
                     return sim.logs.ohlc.lastByKey('low');
             };
         }
+
     }
 
     /**
@@ -415,21 +417,27 @@ export class Simulation {
         const finalMoney = sim.pool.agents.map(function(A){ return A.inventory.money; });
         function ohlc(){
             if (sim.periodTradePrices.length>0){
-                const o = sim.periodTradePrices[0];
-                const h = Math.max(...sim.periodTradePrices);
-                const l = Math.min(...sim.periodTradePrices);
-		const c = sim.periodTradePrices[sim.periodTradePrices.length-1];
-		const volume = sim.periodTradePrices.length;
-		const median = stats.median(sim.periodTradePrices);
-		const mean = stats.mean(sim.periodTradePrices);
-		const sd = stats.stdev(sim.periodTradePrices);
-                return [sim.period,o,h,l,c,volume,median,mean,sd];
+                const result = {
+                    period: sim.period,
+                    open: sim.periodTradePrices[0],
+                    high: Math.max(...sim.periodTradePrices),
+                    low:  Math.min(...sim.periodTradePrices),
+                    close: sim.periodTradePrices[sim.periodTradePrices.length-1],
+                    volume:  sim.periodTradePrices.length,
+                    median: stats.median(sim.periodTradePrices),
+                    mean: stats.mean(sim.periodTradePrices),
+                    sd:  stats.stdev(sim.periodTradePrices),
+                    p25: stats.percentile(sim.periodTradePrices,0.25),
+                    p75: stats.percentile(sim.periodTradePrices,0.75),
+                    gini: gini(finalMoney)
+                };
+                sim.logs.ohlc.submit(result,'');
             }
         }
         if (sim.logs.profit)
             sim.logs.profit.write(finalMoney);
         if (sim.logs.ohlc)
-            sim.logs.ohlc.write(ohlc());
+            ohlc();
         if (sim.logs.effalloc){
             let finalMoneySum = 0.0;
             for(let i=0,l=finalMoney.length;i<l;++i) finalMoneySum+=finalMoney[i];
@@ -451,33 +459,29 @@ export class Simulation {
         const order = MEC.ao(orderArray);
         const agent = sim.pool.agentsById[order.id];
         const buyLog = prefix+'buyorder';
-        const sellLog = prefix+'sellorder'; 
+        const sellLog = prefix+'sellorder';
+        let loggedProperties = { period: sim.period };
+        if ((agent.inventory) && (order)){
+            Object.assign(loggedProperties, {
+                t:  order.t,
+                tp: order.t-(sim.period*sim.periodDuration),
+                id: order.id,
+                x: agent.inventory.X
+            });
+        }
         if ((agent) && (order.buyPrice) && (sim.logs[buyLog])){
-            sim.logs[buyLog].write([
-                sim.period,
-                order.t,
-                order.t-(sim.period*sim.periodDuration),
-                order.id,
-                agent.inventory.X,
-                order.buyPrice, 
-                agent.unitValueFunction('X',agent.inventory), 
-                '',
-                ''
-            ]);
-            
+            Object.assign(loggedProperties, {
+                buyLimitPrice: order.buyPrice,
+                value: agent.unitValueFunction('X',agent.inventory) 
+            });
+            sim.logs[buyLog].submit(loggedProperties, '');
         }
         if ((agent) && (order.sellPrice) && (sim.logs[sellLog])){
-            sim.logs[sellLog].write([
-                sim.period, 
-                order.t,
-                order.t-(sim.period*sim.periodDuration),
-                order.id, 
-                agent.inventory.X,
-                '',
-                '',
-                order.sellPrice,
-                agent.unitCostFunction('X',agent.inventory)
-            ]);     
+            Object.assign(loggedProperties, {
+                sellLimitPrice: order.sellPrice,
+                cost: agent.unitCostFunction('X',agent.inventory)
+            });
+            sim.logs[sellLog].submit(loggedProperties, '');
         }
     }
 
@@ -545,8 +549,8 @@ export class Simulation {
      */
 
     run(options){
-	const defaults = {sync:false, update:((s)=>(s)), delay: 20, deadline:0};
-	const { sync, update, delay, deadline } = Object.assign({}, defaults, options);
+        const defaults = {sync:false, update:((s)=>(s)), delay: 20, deadline:0};
+        const { sync, update, delay, deadline } = Object.assign({}, defaults, options);
         const sim = this;
         const config = this.config;
         if (typeof(update)!=='function')

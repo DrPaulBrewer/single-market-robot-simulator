@@ -27,6 +27,7 @@
   "author": "drpaulbrewer@eaftc.com",
   "license": "MIT",
   "dependencies": {
+    "gini-ss": "^0.1.1",
     "market-agents": "^1.0.0",
     "market-example-contingent": "^1.0.0",
     "positive-number-array": "^1.2.0",
