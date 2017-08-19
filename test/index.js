@@ -777,15 +777,15 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
     });
 });
 
-describe('simulation with 100 buyers, 100 sellers, values 899...800, costs 100...199, various agent types, 10 periods', function(){
+describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100...697, various agent types, 10 periods', function(){
     const agents = ["ZIAgent","UnitAgent","OneupmanshipAgent","MidpointAgent","TruthfulAgent","KaplanSniperAgent","MedianSniperAgent"];
     const config100Bx100Sx10Periods = {
         L:1,
         H:1000,
-        numberOfBuyers:100,
-        numberOfSelles:100,
-        buyerValues: new Array(100).fill(0).map((v,j)=>(900-j)),
-        sellerCosts: new Array(100).fill(0).map((v,j)=>(100+j)),
+        numberOfBuyers:200,
+        numberOfSelles:200,
+        buyerValues: new Array(200).fill(0).map((v,j)=>(900-3*j)),
+        sellerCosts: new Array(200).fill(0).map((v,j)=>(100+3*j)),
         buyerAgentType: agents.slice(0),
         sellerAgentType: agents.slice(0),
         periods: 10,
@@ -798,16 +798,16 @@ describe('simulation with 100 buyers, 100 sellers, values 899...800, costs 100..
     it('should complete 10 periods', function(){
         S.period.should.equal(10);
     });
-    it('should have 200 ids', function(){
-        ids.length.should.equal(200);
+    it('should have 400 ids', function(){
+        ids.length.should.equal(400);
     });
-    it('should have 100 buyers', function(){
-        S.numberOfBuyers.should.equal(100);
-        S.buyersPool.agents.length.should.equal(100);
+    it('should have 200 buyers', function(){
+        S.numberOfBuyers.should.equal(200);
+        S.buyersPool.agents.length.should.equal(200);
     });
-    it('should have 100 sellers', function(){
-        S.numberOfSellers.should.equal(100);
-        S.sellersPool.agents.length.should.equal(100);
+    it('should have 200 sellers', function(){
+        S.numberOfSellers.should.equal(200);
+        S.sellersPool.agents.length.should.equal(200);
     });
     it('the agent types match the round robin type specification', function(){
         const al = agents.length;
@@ -820,7 +820,7 @@ describe('simulation with 100 buyers, 100 sellers, values 899...800, costs 100..
                 testsCompleted++;
             });
         });
-        testsCompleted.should.equal(200);
+        testsCompleted.should.equal(400);
     });
 
     it("all agents bid <= value in order log", function(){
@@ -861,8 +861,8 @@ describe('simulation with 100 buyers, 100 sellers, values 899...800, costs 100..
                 const sellerSlot = trade[sellerAgentIdCol]-sAdj;
                 trade[priceCol].should.be.belowOrEqual(trade[buyerValueCol]);
                 trade[priceCol].should.be.aboveOrEqual(trade[sellerCostCol]);
-                trade[buyerValueCol].should.equal(900-buyerSlot);
-                trade[sellerCostCol].should.equal(100+sellerSlot);
+                trade[buyerValueCol].should.equal(900-3*buyerSlot);
+                trade[sellerCostCol].should.equal(100+3*sellerSlot);
                 trade[buyerProfitCol].should.equal(trade[buyerValueCol]-trade[priceCol]);
                 trade[sellerProfitCol].should.equal(trade[priceCol]-trade[sellerCostCol]);
             }
@@ -902,19 +902,47 @@ describe('simulation with 100 buyers, 100 sellers, values 899...800, costs 100..
             so[sellLimitPriceCol].should.equal(so[costCol]);
         });
     });
+
+    it('the "MedianSniperAgent" as Buyer always bids below the previous period median price when tp<900', function(){
+        const al = agents.length;
+        const medianSniperBuyers = S.buyersPool.agents.filter((a,j)=>(agents[j%al]==="MedianSniperAgent"));
+        medianSniperBuyers.length.should.be.above(10);
+        const medianSniperBuyerIds = medianSniperBuyers.map((a)=>(a.id));
+        const ohlcMedianPriceCol = S.logs.ohlc.header.indexOf("median");
+        const [periodCol,tpCol,idCol,buyLimitPriceCol] = ['period','tp','id','buyLimitPrice'].map((s)=>(S.logs.buyorder.header.indexOf(s)));
+        const testedOrdersByMedianSniperBuyers = S.logs.buyorder.data.filter((bo)=>((medianSniperBuyerIds.includes(bo[idCol]) && (bo[tpCol]<900))));
+        testedOrdersByMedianSniperBuyers.length.should.be.above(50);
+        testedOrdersByMedianSniperBuyers.forEach((bo)=>{
+            bo[buyLimitPriceCol].should.be.belowOrEqual(S.logs.ohlc.data[bo[periodCol]-1][ohlcMedianPriceCol]);
+        });
+    });
+
+    it('the "MedianSniperAgent" as Seller always asks above the previous period median price when tp<900', function(){
+	const al = agents.length;
+        const medianSniperSellers = S.sellersPool.agents.filter((a,j)=>(agents[j%al]==="MedianSniperAgent"));
+        medianSniperSellers.length.should.be.above(10);
+        const medianSniperSellerIds = medianSniperSellers.map((a)=>(a.id));
+        const ohlcMedianPriceCol = S.logs.ohlc.header.indexOf("median");
+        const [periodCol,tpCol,idCol,sellLimitPriceCol] = ['period','tp','id','sellLimitPrice'].map((s)=>(S.logs.sellorder.header.indexOf(s)));
+        const testedOrdersByMedianSniperSellers = S.logs.sellorder.data.filter((so)=>((medianSniperSellerIds.includes(so[idCol]) && (so[tpCol]<900))));
+        testedOrdersByMedianSniperSellers.length.should.be.above(50);
+        testedOrdersByMedianSniperSellers.forEach((so)=>{
+            so[sellLimitPriceCol].should.be.aboveOrEqual(S.logs.ohlc.data[so[periodCol]-1][ohlcMedianPriceCol]);
+        });
+    });
     
     it('the ohlc log should have 11 entries', function(){
         S.logs.ohlc.data.length.should.equal(11);
     });
-    it('the trade log should have greater than 500 entries', function(){
-        S.logs.trade.data.length.should.be.above(500);
+    it('the trade log should have greater than 1000 entries', function(){
+        S.logs.trade.data.length.should.be.above(1000);
     });
     it('the ohlc log should agree with the trade log', function(){
         S.logs.ohlc.data.should.deepEqual(tradesToOHLC(S.logs.trade.data, ids));
     });
-    it('the buy order log and sell order log should each have greater than 500 entries', function(){
-        S.logs.buyorder.data.length.should.be.above(500);
-        S.logs.sellorder.data.length.should.be.above(500);
+    it('the buy order log and sell order log should each have greater than 2000 entries', function(){
+        S.logs.buyorder.data.length.should.be.above(2000);
+        S.logs.sellorder.data.length.should.be.above(2000);
     });
     it('cloning the orders into a new simulation will produce identical results in logs', function(){
         const clone = new Simulation(config100Bx100Sx10Periods);
