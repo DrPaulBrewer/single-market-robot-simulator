@@ -7,6 +7,7 @@ import 'should';
 import * as singleMarketRobotSimulator from '../src/index.js';
 import * as MEC from 'market-example-contingent';
 import * as MarketAgents from 'market-agents';
+import * as stats from 'stats-lite';
 
 const {Simulation} = singleMarketRobotSimulator;
 const {Pool, ZIAgent} = MarketAgents;
@@ -36,7 +37,72 @@ const combinedOrderLogHeader = [
     'cost'
 ];
 
-const gini = require("gini-ss");    
+const gini = require("gini-ss");
+
+function tradesToOHLC(tradeDataReference, ids){
+    const ohlc = [];
+    const ohlcHeader = singleMarketRobotSimulator.logHeaders.ohlc;
+    const tradeData = tradeDataReference.slice(0);
+    const tradeHeader = tradeData.shift();
+    ohlc.push(ohlcHeader);
+    const periodCol = tradeHeader.indexOf('period');
+    function finalMoney(trades){
+        const money = new Array(ids.length).fill(0);
+        const [
+            buyerProfitCol,
+            sellerProfitCol,
+            buyerAgentIdCol,
+            sellerAgentIdCol
+        ] = [
+            'buyerProfit',
+            'sellerProfit',
+            'buyerAgentId',
+            'sellerAgentId'
+        ].map((s)=>(tradeHeader.indexOf(s)));
+        for(let i=0,l=trades.length;i<l;++i){
+            let buyerSlot = ids.indexOf(trades[i][buyerAgentIdCol]);
+            let sellerSlot = ids.indexOf(trades[i][sellerAgentIdCol]);
+            if (buyerSlot === -1)
+                throw new Error("tradesToOHLC: found unexpected buyerAgentId");
+            if (sellerSlot === -1)
+                throw new Error("tradesToOHLC: found unexpected sellerAgentId");
+            money[buyerSlot]  += trades[i][buyerProfitCol];
+            money[sellerSlot] += trades[i][sellerProfitCol];
+        }
+        return money;
+    }
+    function process(period, trades){
+        const priceCol = tradeHeader.indexOf('price');
+        const prices = trades.map((row)=>(row[priceCol]));
+        const result = {
+            period,
+            open: prices[0],
+            high: Math.max(...prices),
+            low:  Math.min(...prices),
+            close: prices[prices.length-1],
+            volume:  prices.length,
+            median: stats.median(prices),
+            mean: stats.mean(prices),
+            sd:  stats.stdev(prices),
+            p25: stats.percentile(prices,0.25),
+            p75: stats.percentile(prices,0.75),
+            gini: gini(finalMoney(trades))
+        };
+        return ohlcHeader.map((s)=>(result[s]));
+    }
+    let periodTradeData = [];
+    let period = 0;
+    for(let i=0,l=tradeData.length;i<l;++i){
+        if (period!==tradeData[i][periodCol]){
+            if (periodTradeData.length) ohlc.push(process(period, periodTradeData));
+            periodTradeData = [];
+            period = tradeData[i][periodCol];
+        }
+        periodTradeData.push(tradeData[i]);
+    }
+    if (periodTradeData.length) ohlc.push(process(period, periodTradeData));
+    return ohlc;
+}
 
 describe('logNames ', function(){
     it('should be defined', function(){
@@ -709,5 +775,190 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
             testsForRunSimulationSingleTradeTenPeriods(states[2]);
         });
     });
-   
 });
+
+describe('simulation with 100 buyers, 100 sellers, values 899...800, costs 100...199, various agent types, 10 periods', function(){
+    const agents = ["ZIAgent","UnitAgent","OneupmanshipAgent","MidpointAgent","TruthfulAgent","KaplanSniperAgent","MedianSniperAgent"];
+    const config100Bx100Sx10Periods = {
+        L:1,
+        H:1000,
+        numberOfBuyers:100,
+        numberOfSelles:100,
+        buyerValues: new Array(100).fill(0).map((v,j)=>(900-j)),
+        sellerCosts: new Array(100).fill(0).map((v,j)=>(100+j)),
+        buyerAgentType: agents.slice(0),
+        sellerAgentType: agents.slice(0),
+        periods: 10,
+        silent: 1,
+        logToFileSystem: false,
+        integer: true
+    };
+    const S = new Simulation(config100Bx100Sx10Periods).run({sync:true});
+    const ids = S.pool.agents.map((a)=>(a.id));
+    it('should complete 10 periods', function(){
+        S.period.should.equal(10);
+    });
+    it('should have 200 ids', function(){
+        ids.length.should.equal(200);
+    });
+    it('should have 100 buyers', function(){
+        S.numberOfBuyers.should.equal(100);
+        S.buyersPool.agents.length.should.equal(100);
+    });
+    it('should have 100 sellers', function(){
+        S.numberOfSellers.should.equal(100);
+        S.sellersPool.agents.length.should.equal(100);
+    });
+    it('the agent types match the round robin type specification', function(){
+        const al = agents.length;
+        let testsCompleted = 0;
+        [S.buyersPool.agents,S.sellersPool.agents].forEach((testAgentList)=>{
+            testAgentList.forEach((testAgent,testAgentIndex)=>{
+                const correctAgentTypeName = agents[testAgentIndex%al];
+                const thisAgentTypeName = testAgent.constructor.name;
+                thisAgentTypeName.should.equal(correctAgentTypeName);
+                testsCompleted++;
+            });
+        });
+        testsCompleted.should.equal(200);
+    });
+
+    it("all agents bid <= value in order log", function(){
+        const [buyLimitPriceCol, valueCol] = ['buyLimitPrice','value'].map((s)=>(S.logs.buyorder.header.indexOf(s)));
+        S.logs.buyorder.data.forEach((bo)=>{
+            bo[buyLimitPriceCol].should.be.belowOrEqual(bo[valueCol]);
+        });
+    });
+
+    it("all agents ask >= cost in order log", function(){
+        const [sellLimitPriceCol, costCol] = ['sellLimitPrice','cost'].map((s)=>(S.logs.sellorder.header.indexOf(s)));
+        S.logs.sellorder.data.forEach((so)=>{
+            so[sellLimitPriceCol].should.be.aboveOrEqual(so[costCol]);
+        });
+    });
+
+    it("in trade log: check bid<=value, ask>=cost, check for correct values and costs based on id, and profit correctly calculated", function(){
+        const [
+            priceCol,
+            buyerAgentIdCol,
+            buyerValueCol,
+            buyerProfitCol,
+            sellerAgentIdCol,
+            sellerCostCol,
+            sellerProfitCol] = [
+                'price',
+                'buyerAgentId',
+                'buyerValue',
+                'buyerProfit',
+                'sellerAgentId',
+                'sellerCost',
+                'sellerProfit'].map((s)=>(S.logs.trade.header.indexOf(s)));
+        const bAdj = +(S.buyersPool.agents[0].id);
+        const sAdj = +(S.sellersPool.agents[0].id);
+        S.logs.trade.data.forEach((trade,j)=>{
+            if (j>0){
+                const buyerSlot = trade[buyerAgentIdCol]-bAdj;
+                const sellerSlot = trade[sellerAgentIdCol]-sAdj;
+                trade[priceCol].should.be.belowOrEqual(trade[buyerValueCol]);
+                trade[priceCol].should.be.aboveOrEqual(trade[sellerCostCol]);
+                trade[buyerValueCol].should.equal(900-buyerSlot);
+                trade[sellerCostCol].should.equal(100+sellerSlot);
+                trade[buyerProfitCol].should.equal(trade[buyerValueCol]-trade[priceCol]);
+                trade[sellerProfitCol].should.equal(trade[priceCol]-trade[sellerCostCol]);
+            }
+        });
+    });
+
+    it('the "TruthfulAgent" always sets bid = value ', function(){
+        const al = agents.length;
+        const truthfulBuyers = S.buyersPool.agents.filter((a,j)=>(agents[j%al]==="TruthfulAgent"));
+        truthfulBuyers.length.should.be.above(10);
+        const truthfulBuyerIds = truthfulBuyers.map((a)=>(a.id));
+        const [
+            idCol,
+            buyLimitPriceCol,
+            valueCol
+        ] = ['id','buyLimitPrice','value'].map((s)=>(S.logs.buyorder.header.indexOf(s)));
+        const ordersByTruthfulBuyers = S.logs.buyorder.data.filter((bo)=>(truthfulBuyerIds.includes(bo[idCol])));
+        ordersByTruthfulBuyers.length.should.be.above(100);
+        ordersByTruthfulBuyers.forEach((bo)=>{
+            bo[buyLimitPriceCol].should.equal(bo[valueCol]);
+        });
+    });
+
+    it('the "TruthfulAgent" always sets ask = cost ', function(){
+        const al = agents.length;
+        const truthfulSellers = S.sellersPool.agents.filter((a,j)=>(agents[j%al]==="TruthfulAgent"));
+        truthfulSellers.length.should.be.above(10);
+        const truthfulSellerIds = truthfulSellers.map((a)=>(a.id));
+        const [
+            idCol,
+            sellLimitPriceCol,
+            costCol
+        ] = ['id','sellLimitPrice','cost'].map((s)=>(S.logs.sellorder.header.indexOf(s)));
+        const ordersByTruthfulSellers = S.logs.sellorder.data.filter((so)=>(truthfulSellerIds.includes(so[idCol])));
+        ordersByTruthfulSellers.length.should.be.above(100);
+        ordersByTruthfulSellers.forEach((so)=>{
+            so[sellLimitPriceCol].should.equal(so[costCol]);
+        });
+    });
+    
+    it('the ohlc log should have 11 entries', function(){
+        S.logs.ohlc.data.length.should.equal(11);
+    });
+    it('the trade log should have greater than 500 entries', function(){
+        S.logs.trade.data.length.should.be.above(500);
+    });
+    it('the ohlc log should agree with the trade log', function(){
+        S.logs.ohlc.data.should.deepEqual(tradesToOHLC(S.logs.trade.data, ids));
+    });
+    it('the buy order log and sell order log should each have greater than 500 entries', function(){
+        S.logs.buyorder.data.length.should.be.above(500);
+        S.logs.sellorder.data.length.should.be.above(500);
+    });
+    it('cloning the orders into a new simulation will produce identical results in logs', function(){
+        const clone = new Simulation(config100Bx100Sx10Periods);
+        clone.pool.agents.forEach((a,idx)=>{ a.id = S.pool.agents[idx].id; });
+        clone.pool.agentsById = {};
+        clone.pool.agents.forEach((a)=>{ clone.pool.agentsById[a.id] = a; }); 
+        const orders = [].concat(S.logs.buyorder.data.slice(1),S.logs.sellorder.data.slice(1));
+        const [orderTCol,
+               orderIDCol,
+               orderPeriodCol,
+               orderBuyLimitPriceCol,
+               orderSellLimitPriceCol
+              ] = ['t',
+                   'id',
+                   'period',
+                   'buyLimitPrice',
+                   'sellLimitPrice'
+                  ].map((s)=>S.logs.buyorder.header.indexOf(s));
+        orders.sort((a,b)=>(+a[orderTCol]-b[orderTCol]));
+        const periodOrders = new Array(10).fill(0).map(()=>([]));
+        orders.forEach((o)=>{
+            periodOrders[o[orderPeriodCol]-1].push(MEC.oa({
+                t: o[orderTCol],
+                id: o[orderIDCol],
+                cancel: 1,
+                q: 1,
+                buyPrice: o[orderBuyLimitPriceCol],
+                sellPrice: o[orderSellLimitPriceCol]
+            }));
+        });
+        periodOrders.forEach((orderList,periodMinus1)=>{
+            clone.period = 1+periodMinus1;
+            clone.pool.initPeriod(clone.period);
+            clone.xMarket.clear();
+            orderList.forEach((order)=>{
+                clone.xMarket.submit(order);
+                while(clone.xMarket.process());
+            });
+            clone.pool.endPeriod();
+            clone.logPeriod();
+        });
+        S.logs.ohlc.data.should.deepEqual(clone.logs.ohlc.data);
+        S.logs.trade.data.should.deepEqual(clone.logs.trade.data);
+    });    
+});
+
+

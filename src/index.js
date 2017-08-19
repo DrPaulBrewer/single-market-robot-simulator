@@ -164,6 +164,7 @@ export class Simulation {
             money: "money"
         };
         sim.xMarket = new Market(Object.assign({}, xDefaults, sim.config.xMarket));
+	sim.xMarket.previousPeriod = (prop)=>(sim.logs.ohlc.lastByKey(prop));
         sim.xMarket.on('trade', function(tradespec){ 
             sim.logTrade(tradespec);
             sim.pool.trade(tradespec);
@@ -298,17 +299,6 @@ export class Simulation {
         };
 
         A.markets = [sim.xMarket];
-
-        if (A instanceof MarketAgents.KaplanSniperAgent){
-            A.getJuicyBidPrice = function(){
-                if (sim.logs && sim.logs.ohlc)
-                    return sim.logs.ohlc.lastByKey('high');
-            };
-            A.getJuicyAskPrice = function(){
-                if (sim.logs && sim.logs.ohlc)
-                    return sim.logs.ohlc.lastByKey('low');
-            };
-        }
 
     }
 

@@ -27,8 +27,8 @@
   "author": "drpaulbrewer@eaftc.com",
   "license": "MIT",
   "dependencies": {
-    "gini-ss": "^0.1.1",
-    "market-agents": "^1.0.0",
+    "gini-ss": "^0.2.0",
+    "market-agents": "^2",
     "market-example-contingent": "^1.0.0",
     "positive-number-array": "^1.2.0",
     "simple-isomorphic-logger": "^1",
@@ -40,8 +40,8 @@
     "babel-core": "^6.24.1",
     "babel-preset-es2015": "^6.24.1",
     "coveralls": "^2.13.0",
-    "esdoc": "^0.5.2",
-    "eslint": "^3.19.0",
+    "esdoc": "^1.0.1",
+    "eslint": "^4.4.0",
     "istanbul": "^1.0.0-alpha.2",
     "mocha": "^3.2.0",
     "should": "^11.2.1"
