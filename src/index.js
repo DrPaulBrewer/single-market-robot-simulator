@@ -164,7 +164,7 @@ export class Simulation {
             money: "money"
         };
         sim.xMarket = new Market(Object.assign({}, xDefaults, sim.config.xMarket));
-	sim.xMarket.previousPeriod = (prop)=>(sim.logs.ohlc.lastByKey(prop));
+        sim.xMarket.previousPeriod = (prop)=>(sim.logs.ohlc.lastByKey(prop));
         sim.xMarket.on('trade', function(tradespec){ 
             sim.logTrade(tradespec);
             sim.pool.trade(tradespec);
@@ -234,7 +234,9 @@ export class Simulation {
         const lRate = sim.config.buyerRate.length;
         const a = newAgentFactory(
             sim.config.buyerAgentType[i%lType],
-            Object.assign({}, common, {rate: sim.config.buyerRate[i%lRate]})
+            Object.assign({id:1+i},
+                          common,
+                          {rate: sim.config.buyerRate[i%lRate]})
         );
         sim.teachAgent(a);
         return a;
@@ -254,7 +256,9 @@ export class Simulation {
         const lRate = sim.config.sellerRate.length;
         const a = newAgentFactory(
             sim.config.sellerAgentType[i%lType],
-            Object.assign({}, common, {rate: sim.config.sellerRate[i%lRate]})
+            Object.assign({id: i+1+sim.numberOfBuyers},
+                          common,
+                          {rate: sim.config.sellerRate[i%lRate]})
         );
         sim.teachAgent(a);
         return a;

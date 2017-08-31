@@ -286,7 +286,7 @@ var Simulation = exports.Simulation = function () {
             var sim = this;
             var lType = sim.config.buyerAgentType.length;
             var lRate = sim.config.buyerRate.length;
-            var a = newAgentFactory(sim.config.buyerAgentType[i % lType], Object.assign({}, common, { rate: sim.config.buyerRate[i % lRate] }));
+            var a = newAgentFactory(sim.config.buyerAgentType[i % lType], Object.assign({ id: 1 + i }, common, { rate: sim.config.buyerRate[i % lRate] }));
             sim.teachAgent(a);
             return a;
         }
@@ -305,7 +305,7 @@ var Simulation = exports.Simulation = function () {
             var sim = this;
             var lType = sim.config.sellerAgentType.length;
             var lRate = sim.config.sellerRate.length;
-            var a = newAgentFactory(sim.config.sellerAgentType[i % lType], Object.assign({}, common, { rate: sim.config.sellerRate[i % lRate] }));
+            var a = newAgentFactory(sim.config.sellerAgentType[i % lType], Object.assign({ id: i + 1 + sim.numberOfBuyers }, common, { rate: sim.config.sellerRate[i % lRate] }));
             sim.teachAgent(a);
             return a;
         }

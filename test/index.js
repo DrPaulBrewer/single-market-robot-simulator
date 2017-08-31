@@ -213,13 +213,22 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
                 A.should.be.an.instanceOf(ZIAgent).and.have.properties('bidPrice','askPrice');  
             });
         });
+        it('.pool agent ids should be 1,2,3,4,5', function(){
+            S.pool.agents.map((a)=>(a.id)).should.deepEqual([1,2,3,4,5]);
+        });
         it('.buyersPool should be an instance of Pool containing 3 agents', function(){
             S.buyersPool.should.be.an.instanceOf(Pool); 
             S.buyersPool.agents.length.should.equal(3);
         });
+        it('.buyersPool agent ids should be 1,2,3', function(){
+            S.buyersPool.agents.map((a)=>(a.id)).should.deepEqual([1,2,3]);
+        });
         it('.sellersPool should be an instance of Pool containing 2 agents', function(){
             S.sellersPool.should.be.an.instanceOf(Pool);
             S.sellersPool.agents.length.should.equal(2);
+        });
+        it('.sellersPool agent ids should be 4,5', function(){
+            S.sellersPool.agents.map((a)=>(a.id)).should.deepEqual([4,5]);
         });
         it('.period should be zero', function(){
             S.period.should.equal(0);
@@ -393,13 +402,22 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
                 A.should.be.an.instanceOf(ZIAgent).and.have.properties('bidPrice','askPrice'); 
             });
         });
+        it('ids of agents in .pool should be [1,2]', function(){
+            S.pool.agents.map((a)=>(a.id)).should.deepEqual([1,2]);
+        });
         it('.buyersPool should be an instance of Pool containing 1 agents', function(){
             S.buyersPool.should.be.an.instanceOf(Pool);
             S.buyersPool.agents.length.should.equal(1);
         });
+        it('.buyersPool should have an agent with id 1', function(){
+            S.buyersPool.agents.map((a)=>(a.id)).should.deepEqual([1]);
+        });
         it('.sellersPool should be an instance of Pool containing 1 agents', function(){
             S.sellersPool.should.be.an.instanceOf(Pool);
             S.sellersPool.agents.length.should.equal(1);
+        });
+        it('.sellersPool should have an agent with id 2', function(){
+            S.sellersPool.agents.map((a)=>(a.id)).should.deepEqual([2]);
         });
         it('.period should be zero', function(){
             S.period.should.equal(0);
@@ -546,6 +564,15 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
     });
     
     function testsForRunSimulationSingleTradeTenPeriods(state){
+        it('.pool agent ids should be [1,2]', function(){
+            state.S.pool.agents.map((a)=>(a.id)).should.deepEqual([1,2]);
+        });
+        it('.buyersPool agent ids should be [1]', function(){
+            state.S.buyersPool.agents.map((a)=>(a.id)).should.deepEqual([1]);
+        });
+        it('.sellersPool agent ids should be [2]', function(){
+            state.S.sellersPool.agents.map((a)=>(a.id)).should.deepEqual([2]);
+        });
         it('.period should be 10', function(){
             state.S.period.should.equal(10);
         });
@@ -798,16 +825,28 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
     it('should complete 10 periods', function(){
         S.period.should.equal(10);
     });
-    it('should have 400 ids', function(){
+    it('should have 400 ids [1,...,400]', function(){
         ids.length.should.equal(400);
+        const expected = new Array(400).fill(0).map((v,j)=>(1+j));
+        expected[0].should.equal(1);
+        expected[399].should.equal(400);
+        ids.should.deepEqual(expected);
     });
-    it('should have 200 buyers', function(){
+    it('should have 200 buyers with ids [1,2,...,200]', function(){
         S.numberOfBuyers.should.equal(200);
         S.buyersPool.agents.length.should.equal(200);
+        const expected = new Array(200).fill(0).map((v,j)=>(1+j));
+        expected[0].should.equal(1);
+        expected[199].should.equal(200);
+        S.buyersPool.agents.map((a)=>(a.id)).should.deepEqual(expected);
     });
-    it('should have 200 sellers', function(){
+    it('should have 200 sellers with ids [201,202,...,400]', function(){
         S.numberOfSellers.should.equal(200);
         S.sellersPool.agents.length.should.equal(200);
+        const expected = new Array(200).fill(0).map((v,j)=>(201+j));
+        expected[0].should.equal(201);
+        expected[199].should.equal(400);
+        S.sellersPool.agents.map((a)=>(a.id)).should.deepEqual(expected);
     });
     it('the agent types match the round robin type specification', function(){
         const al = agents.length;
@@ -918,7 +957,7 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
     });
 
     it('the "MedianSniperAgent" as Seller always asks above the previous period median price when tp<900', function(){
-	const al = agents.length;
+        const al = agents.length;
         const medianSniperSellers = S.sellersPool.agents.filter((a,j)=>(agents[j%al]==="MedianSniperAgent"));
         medianSniperSellers.length.should.be.above(10);
         const medianSniperSellerIds = medianSniperSellers.map((a)=>(a.id));
