@@ -13,6 +13,7 @@ const {Simulation} = singleMarketRobotSimulator;
 const {Pool, ZIAgent} = MarketAgents;
 
 const tradeLogHeader = [
+    'caseid',
     'period',
     't',
     'tp',
@@ -26,15 +27,16 @@ const tradeLogHeader = [
 ];
 
 const combinedOrderLogHeader = [
+    'caseid',
     'period',
     't',
     'tp',
     'id',
     'x',
     'buyLimitPrice',
-    'value',
+    'buyerValue',
     'sellLimitPrice',
-    'cost'
+    'sellerCost'
 ];
 
 const gini = require("gini-ss");
@@ -45,7 +47,9 @@ function tradesToOHLC(tradeDataReference, ids){
     const tradeData = tradeDataReference.slice(0);
     const tradeHeader = tradeData.shift();
     ohlc.push(ohlcHeader);
+    const caseidCol = tradeHeader.indexOf('caseid');
     const periodCol = tradeHeader.indexOf('period');
+    const caseid = tradeData[0][caseidCol];
     function finalMoney(trades){
         const money = new Array(ids.length).fill(0);
         const [
@@ -75,17 +79,18 @@ function tradesToOHLC(tradeDataReference, ids){
         const priceCol = tradeHeader.indexOf('price');
         const prices = trades.map((row)=>(row[priceCol]));
         const result = {
+            caseid,
             period,
-            open: prices[0],
-            high: Math.max(...prices),
-            low:  Math.min(...prices),
-            close: prices[prices.length-1],
+            openPrice: prices[0],
+            highPrice: Math.max(...prices),
+            lowPrice:  Math.min(...prices),
+            closePrice: prices[prices.length-1],
             volume:  prices.length,
-            median: stats.median(prices),
-            mean: stats.mean(prices),
+            medianPrice: stats.median(prices),
+            meanPrice: stats.mean(prices),
             sd:  stats.stdev(prices),
-            p25: stats.percentile(prices,0.25),
-            p75: stats.percentile(prices,0.75),
+            p25Price: stats.percentile(prices,0.25),
+            p75Price: stats.percentile(prices,0.75),
             gini: gini(finalMoney(trades))
         };
         return ohlcHeader.map((s)=>(result[s]));
@@ -161,7 +166,8 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
         sellerAgentType: ["ZIAgent"],
         buyerRate: [1.0,1.0],
         sellerRate: 1.0,
-        silent: 1
+        silent: 1,
+        caseid: 1234
     };
     describe('on new Simulation', function(){
         let S = new Simulation(configCostsExceedValues);
@@ -191,19 +197,22 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
         it('should set .numberOfAgents to 5', function(){
             S.numberOfAgents.should.equal(5);
         });
+        it('should set .caseid to 1234', function(){
+            S.caseid.should.equal(1234);
+        });
         let logsProps = ['trade','buyorder','sellorder','rejectbuyorder','rejectsellorder','profit','ohlc','effalloc'];
         it('.logs should have properties '+logsProps.join(','), function(){
             S.logs.should.have.properties(logsProps);
         });
-        it('trade, buyorder, sellorder, ohlc logs have header rows; profit log is empty', function(){
-            let withHeaderRow = ['trade','buyorder','sellorder','ohlc','effalloc'];
+        it('trade, buyorder, sellorder, ohlc, profit logs have header rows', function(){
+            let withHeaderRow = ['trade','buyorder','sellorder','ohlc','effalloc','profit'];
             withHeaderRow.forEach(function(prop){ S.logs[prop].data.length.should.equal(1); });
             S.logs.trade.data[0].should.deepEqual(tradeLogHeader);
             S.logs.buyorder.data[0].should.deepEqual(combinedOrderLogHeader);
             S.logs.sellorder.data[0].should.deepEqual(combinedOrderLogHeader);
             S.logs.rejectbuyorder.data[0].should.deepEqual(combinedOrderLogHeader);
             S.logs.rejectsellorder.data[0].should.deepEqual(combinedOrderLogHeader);
-            S.logs.profit.data.length.should.equal(0);
+            S.logs.profit.data[0].should.deepEqual(['caseid','period','y1','y2','y3','y4','y5']);
         });
 
         it('.pool should be an instance of Pool containing 5 (ZI) agents with .bidPrice and .askPrice functions',function(){
@@ -285,9 +294,9 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
             state.S.logs.trade.data.length.should.be.equal(1);
             state.S.logs.trade.data[0].should.deepEqual(tradeLogHeader);                
         }); 
-        it('the profit log should have one entry equal to [0,0,0,0,0]', function(){
-            state.S.logs.profit.data.length.should.be.equal(1);
-            state.S.logs.profit.data.should.deepEqual([[0,0,0,0,0]]);
+        it('the profit log should have one entry equal to [1234,1,0,0,0,0,0]', function(){
+            state.S.logs.profit.data.length.should.be.equal(2);
+            state.S.logs.profit.data[1].should.deepEqual([1234,1,0,0,0,0,0]);
         }); 
         it('the ohlc log should have header row', function(){
             state.S.logs.ohlc.data.length.should.equal(1);
@@ -374,7 +383,8 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
                      'buyersPool',
                      'sellersPool',
                      'period',
-                     'periodDuration'
+                     'periodDuration',
+                     'caseid'
                     ];
         it('should have properties '+props.join(","), function(){
             S.should.have.properties(props);
@@ -390,6 +400,9 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
         });
         it('should set .numberOfAgents to 2', function(){
             S.numberOfAgents.should.equal(2);
+        });
+        it('should set .caseid to 0', function(){
+            S.caseid.should.equal(0);
         });
         let logsProps = ['trade','buyorder','sellorder','profit','ohlc'];
         it('.logs should have properties '+logsProps.join(','), function(){
@@ -456,7 +469,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
             state.S.logs.trade.data[1].length.should.equal(state.S.logs.trade.data[0].length);
         }); 
         it('the tradelog should report period 1', function(){
-            state.S.logs.trade.data[1][0].should.equal(1);
+            state.S.logs.trade.lastByKey('period').should.equal(1);
         });
         it('the tradelog should report a trade price between 1 and 1000', function(){
             let priceCol = tradeLogHeader.indexOf("price");
@@ -495,12 +508,13 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
         it('the profit log should have one entry equal to [1000-p,p-1]', function(){
             let p = state.S.logs.trade.data[1][tradeLogHeader.indexOf("price")];
             let correctProfits = [1000-p,p-1];
-            state.S.logs.profit.data.length.should.be.equal(1);
-            state.S.logs.profit.data.should.deepEqual([correctProfits]);
+            state.S.logs.profit.data.length.should.be.equal(2);
+            state.S.logs.profit.data[1].should.deepEqual([0,1].concat(correctProfits));
         }); 
         it('the ohlc log should have header plus one entry, with all price stats equal to single trade price', function(){
             let p = state.S.logs.trade.data[1][tradeLogHeader.indexOf("price")];
             let correctOHLC = {
+                caseid: 0,
                 period: 1,
                 open: p,
                 high: p,
@@ -511,7 +525,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
                 median: p,
                 p75: p,
                 mean: p,
-                gini: gini(state.S.logs.profit.last)
+                gini: gini(state.S.logs.profit.last.slice(2))
             };
             state.S.logs.ohlc.data.length.should.equal(2);
             state.S.logs.ohlc.header.forEach(function(prop){
@@ -522,7 +536,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
         });
         it('the effalloc log should have header plus one entry, [1,100]', function(){
             state.S.logs.effalloc.data.length.should.equal(2);
-            state.S.logs.effalloc.data[1].should.deepEqual([1,100]);
+            state.S.logs.effalloc.data[1].should.deepEqual([0,1,100]);
         });
     }
 
@@ -614,13 +628,21 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
         it('the trade log should have 11 entries, the header row plus 10 trades, exactly 1 trade per period', function(){
             state.S.logs.trade.data.length.should.equal(11);
             state.S.logs.trade.data[0].should.deepEqual(tradeLogHeader);
-            state.S.logs.trade.data.forEach(function(row,i){ if(i>0) row[0].should.equal(i); });
+            const periodCol = tradeLogHeader.indexOf("period");
+            state.S.logs.trade.data.forEach(function(row,i){ if(i>0) row[periodCol].should.equal(i); });
         }); 
-        it('the period profit log should have 10 entries, each with two positive numbers that sum to 999', function(){
-            state.S.logs.profit.data.forEach(function(row){
-                row[0].should.be.above(0);
-                row[1].should.be.above(0);
-                assert.equal(row[0]+row[1],999);
+        it('the period profit log should have 10 entries, each with y1 and y2 that sum to 999', function(){
+            const expectedCaseid = state.S.caseid;
+            assert.ok(expectedCaseid!==undefined);
+            state.S.logs.profit.data.forEach(function(row,j){
+                if (j===0)
+                    row.should.deepEqual(['caseid','period','y1','y2']);
+                else {
+                    const [caseid, period, y1, y2] = row;
+                    assert.equal(caseid, expectedCaseid);
+                    assert.equal(period,j);
+                    assert.equal(y1+y2,999);
+                }
             });
         });
         it('the ohlc log should have 11 entries, header + 1 trade per period', function(){
@@ -633,18 +655,19 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
                 function(row){
                     const p = row[priceCol];
                     let correctOHLC = {
+                        caseid: state.S.caseid,
                         period: row[periodCol],
-                        open: p,
-                        high: p,
-                        low: p,
-                        close: p,
+                        openPrice: p,
+                        highPrice: p,
+                        lowPrice: p,
+                        closePrice: p,
                         volume: 1,
-                        p25: p,
-                        median: p,
-                        p75: p,
-                        mean: p,
+                        p25Price: p,
+                        medianPrice: p,
+                        p75Price: p,
+                        meanPrice: p,
                         sd: 0,
-                        gini: gini(state.S.logs.profit.data[row[periodCol]-1])
+                        gini: gini(state.S.logs.profit.data[row[periodCol]].slice(2))
                     };
                     return state.S.logs.ohlc.header.map(function(prop){ return correctOHLC[prop]; });
                 });
@@ -655,8 +678,9 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
             });
         });
         it('the effalloc log should have 11 entries, header + 1 per period, showing eff=100 percent', function(){
+            const cid = state.S.caseid;
             state.S.logs.effalloc.data.length.should.equal(11);
-            state.S.logs.effalloc.data.slice(1).should.deepEqual([[1,100],[2,100],[3,100],[4,100],[5,100],[6,100],[7,100],[8,100],[9,100],[10,100]]);
+            state.S.logs.effalloc.data.slice(1).should.deepEqual([[cid,1,100],[cid,2,100],[cid,3,100],[cid,4,100],[cid,5,100],[cid,6,100],[cid,7,100],[cid,8,100],[cid,9,100],[cid,10,100]]);
         });
     }
 
@@ -862,17 +886,61 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
         testsCompleted.should.equal(400);
     });
 
+    it("buyerValue is always defined and positive in buy order log", function(){
+        const valueCol = S.logs.buyorder.header.indexOf('buyerValue');
+        const idCol = S.logs.buyorder.header.indexOf('id');
+        valueCol.should.be.above(0);
+        idCol.should.be.above(0);
+        S.logs.buyorder.data.forEach((bo,j)=>{
+            if (j===0) bo[valueCol].should.equal('buyerValue');
+            else {
+                if (typeof(bo[valueCol])!=='number'){
+                    console.log('buyerValue is not numeric');
+                    console.log(j);
+                    console.log(bo);
+                    const id = bo[idCol];
+                    console.log(S.buyersPool.agentsById[id]);
+                }
+                bo[valueCol].should.be.type('number');
+                bo[valueCol].should.be.above(0);
+            }
+        });
+    });
+
+    it('sellerCost is always defined and positive in sell order log', function(){
+        const costCol = S.logs.sellorder.header.indexOf('sellerCost');
+        const idCol = S.logs.sellorder.header.indexOf('id');
+        costCol.should.be.above(0);
+        idCol.should.be.above(0);
+        S.logs.sellorder.data.forEach((so,j)=>{
+            if (j===0) so[costCol].should.equal('sellerCost');
+            else {
+                if (typeof(so[costCol])!=='number'){
+                    console.log('sellerCost is not numeric');
+                    console.log(j);
+                    console.log(so);
+                    const id = so[idCol];
+                    console.log(S.sellersPool.agentsById[id]);
+                }
+                so[costCol].should.be.type('number');
+                so[costCol].should.be.above(0);
+            }
+        });
+    });
+        
     it("all agents bid <= value in order log", function(){
-        const [buyLimitPriceCol, valueCol] = ['buyLimitPrice','value'].map((s)=>(S.logs.buyorder.header.indexOf(s)));
-        S.logs.buyorder.data.forEach((bo)=>{
-            bo[buyLimitPriceCol].should.be.belowOrEqual(bo[valueCol]);
+        const [buyLimitPriceCol, valueCol] = ['buyLimitPrice','buyerValue'].map((s)=>(S.logs.buyorder.header.indexOf(s)));
+        S.logs.buyorder.data.forEach((bo,j)=>{
+            if (j>0)
+                bo[buyLimitPriceCol].should.be.belowOrEqual(bo[valueCol]);
         });
     });
 
     it("all agents ask >= cost in order log", function(){
-        const [sellLimitPriceCol, costCol] = ['sellLimitPrice','cost'].map((s)=>(S.logs.sellorder.header.indexOf(s)));
-        S.logs.sellorder.data.forEach((so)=>{
-            so[sellLimitPriceCol].should.be.aboveOrEqual(so[costCol]);
+        const [sellLimitPriceCol, costCol] = ['sellLimitPrice','sellerCost'].map((s)=>(S.logs.sellorder.header.indexOf(s)));
+        S.logs.sellorder.data.forEach((so,j)=>{
+            if (j>0)
+                so[sellLimitPriceCol].should.be.aboveOrEqual(so[costCol]);
         });
     });
 
@@ -917,7 +985,7 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
             idCol,
             buyLimitPriceCol,
             valueCol
-        ] = ['id','buyLimitPrice','value'].map((s)=>(S.logs.buyorder.header.indexOf(s)));
+        ] = ['id','buyLimitPrice','buyerValue'].map((s)=>(S.logs.buyorder.header.indexOf(s)));
         const ordersByTruthfulBuyers = S.logs.buyorder.data.filter((bo)=>(truthfulBuyerIds.includes(bo[idCol])));
         ordersByTruthfulBuyers.length.should.be.above(100);
         ordersByTruthfulBuyers.forEach((bo)=>{
@@ -934,7 +1002,7 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
             idCol,
             sellLimitPriceCol,
             costCol
-        ] = ['id','sellLimitPrice','cost'].map((s)=>(S.logs.sellorder.header.indexOf(s)));
+        ] = ['id','sellLimitPrice','sellerCost'].map((s)=>(S.logs.sellorder.header.indexOf(s)));
         const ordersByTruthfulSellers = S.logs.sellorder.data.filter((so)=>(truthfulSellerIds.includes(so[idCol])));
         ordersByTruthfulSellers.length.should.be.above(100);
         ordersByTruthfulSellers.forEach((so)=>{
@@ -947,7 +1015,7 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
         const medianSniperBuyers = S.buyersPool.agents.filter((a,j)=>(agents[j%al]==="MedianSniperAgent"));
         medianSniperBuyers.length.should.be.above(10);
         const medianSniperBuyerIds = medianSniperBuyers.map((a)=>(a.id));
-        const ohlcMedianPriceCol = S.logs.ohlc.header.indexOf("median");
+        const ohlcMedianPriceCol = S.logs.ohlc.header.indexOf("medianPrice");
         const [periodCol,tpCol,idCol,buyLimitPriceCol] = ['period','tp','id','buyLimitPrice'].map((s)=>(S.logs.buyorder.header.indexOf(s)));
         const testedOrdersByMedianSniperBuyers = S.logs.buyorder.data.filter((bo)=>((medianSniperBuyerIds.includes(bo[idCol]) && (bo[tpCol]<900))));
         testedOrdersByMedianSniperBuyers.length.should.be.above(50);
@@ -961,7 +1029,7 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
         const medianSniperSellers = S.sellersPool.agents.filter((a,j)=>(agents[j%al]==="MedianSniperAgent"));
         medianSniperSellers.length.should.be.above(10);
         const medianSniperSellerIds = medianSniperSellers.map((a)=>(a.id));
-        const ohlcMedianPriceCol = S.logs.ohlc.header.indexOf("median");
+        const ohlcMedianPriceCol = S.logs.ohlc.header.indexOf("medianPrice");
         const [periodCol,tpCol,idCol,sellLimitPriceCol] = ['period','tp','id','sellLimitPrice'].map((s)=>(S.logs.sellorder.header.indexOf(s)));
         const testedOrdersByMedianSniperSellers = S.logs.sellorder.data.filter((so)=>((medianSniperSellerIds.includes(so[idCol]) && (so[tpCol]<900))));
         testedOrdersByMedianSniperSellers.length.should.be.above(50);
@@ -1025,6 +1093,7 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
         });
         S.logs.ohlc.data.should.deepEqual(clone.logs.ohlc.data);
         S.logs.trade.data.should.deepEqual(clone.logs.trade.data);
+	S.logs.profit.data.should.deepEqual(clone.logs.profit.data);
     });    
 });
 

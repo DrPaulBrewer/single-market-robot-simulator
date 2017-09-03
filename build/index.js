@@ -91,16 +91,16 @@ function agentRegister(obj) {
 
 agentRegister(MarketAgents); // a bit overbroad but gets all of them
 
-var orderHeader = ['period', 't', 'tp', 'id', 'x', 'buyLimitPrice', 'value', 'sellLimitPrice', 'cost'];
+var orderHeader = ['caseid', 'period', 't', 'tp', 'id', 'x', 'buyLimitPrice', 'buyerValue', 'sellLimitPrice', 'sellerCost'];
 
 var logHeaders = exports.logHeaders = {
-    ohlc: ['period', 'open', 'high', 'low', 'close', 'volume', 'p25', 'median', 'p75', 'mean', 'sd', 'gini'],
+    ohlc: ['caseid', 'period', 'openPrice', 'highPrice', 'lowPrice', 'closePrice', 'volume', 'p25Price', 'medianPrice', 'p75Price', 'meanPrice', 'sd', 'gini'],
     buyorder: orderHeader,
     sellorder: orderHeader,
     rejectbuyorder: orderHeader,
     rejectsellorder: orderHeader,
-    trade: ['period', 't', 'tp', 'price', 'buyerAgentId', 'buyerValue', 'buyerProfit', 'sellerAgentId', 'sellerCost', 'sellerProfit'],
-    effalloc: ['period', 'efficiencyOfAllocation']
+    trade: ['caseid', 'period', 't', 'tp', 'price', 'buyerAgentId', 'buyerValue', 'buyerProfit', 'sellerAgentId', 'sellerCost', 'sellerProfit'],
+    effalloc: ['caseid', 'period', 'efficiencyOfAllocation']
 };
 
 var logNames = exports.logNames = ['trade', 'buyorder', 'sellorder', 'rejectbuyorder', 'rejectsellorder', 'profit', 'ohlc', 'effalloc'];
@@ -147,6 +147,14 @@ var Simulation = exports.Simulation = function () {
         this.initLogs();
         this.initMarket();
         this.initAgents();
+        this.initProfitLogHeader();
+
+        /**
+         * caseid to report as first column of each log
+         * @type {number} this.caseid
+         */
+
+        this.caseid = config.caseid || 0;
 
         /**
          * current period number when running simulation
@@ -196,6 +204,17 @@ var Simulation = exports.Simulation = function () {
             actualLogs.forEach(function (name) {
                 sim.logs[name] = new _simpleIsomorphicLogger2.default(logDir + "/" + name + ".csv", logToFS).setHeader(logHeaders[name]);
             });
+        }
+    }, {
+        key: 'initProfitLogHeader',
+        value: function initProfitLogHeader() {
+            var sim = this;
+            var preamble = ['caseid', 'period'];
+            var profits = sim.pool.agents.map(function (a) {
+                return 'y' + a.id;
+            });
+            var header = preamble.concat(profits);
+            if (sim.logs.profit) sim.logs.profit.setHeader(header);
         }
 
         /** 
@@ -461,30 +480,31 @@ var Simulation = exports.Simulation = function () {
             function ohlc() {
                 if (sim.periodTradePrices.length > 0) {
                     var result = {
+                        caseid: sim.caseid,
                         period: sim.period,
-                        open: sim.periodTradePrices[0],
-                        high: Math.max.apply(Math, _toConsumableArray(sim.periodTradePrices)),
-                        low: Math.min.apply(Math, _toConsumableArray(sim.periodTradePrices)),
-                        close: sim.periodTradePrices[sim.periodTradePrices.length - 1],
+                        openPrice: sim.periodTradePrices[0],
+                        highPrice: Math.max.apply(Math, _toConsumableArray(sim.periodTradePrices)),
+                        lowPrice: Math.min.apply(Math, _toConsumableArray(sim.periodTradePrices)),
+                        closePrice: sim.periodTradePrices[sim.periodTradePrices.length - 1],
                         volume: sim.periodTradePrices.length,
-                        median: stats.median(sim.periodTradePrices),
-                        mean: stats.mean(sim.periodTradePrices),
+                        medianPrice: stats.median(sim.periodTradePrices),
+                        meanPrice: stats.mean(sim.periodTradePrices),
                         sd: stats.stdev(sim.periodTradePrices),
-                        p25: stats.percentile(sim.periodTradePrices, 0.25),
-                        p75: stats.percentile(sim.periodTradePrices, 0.75),
+                        p25Price: stats.percentile(sim.periodTradePrices, 0.25),
+                        p75Price: stats.percentile(sim.periodTradePrices, 0.75),
                         gini: (0, _giniSs2.default)(finalMoney)
                     };
                     sim.logs.ohlc.submit(result, '');
                 }
             }
-            if (sim.logs.profit) sim.logs.profit.write(finalMoney);
+            if (sim.logs.profit) sim.logs.profit.write([sim.caseid, sim.period].concat(finalMoney));
             if (sim.logs.ohlc) ohlc();
             if (sim.logs.effalloc) {
                 var finalMoneySum = 0.0;
                 for (var i = 0, l = finalMoney.length; i < l; ++i) {
                     finalMoneySum += finalMoney[i];
                 }var maxPossible = sim.getMaximumPossibleGainsFromTrade();
-                if (maxPossible > 0) sim.logs.effalloc.write([sim.period, 100 * (finalMoneySum / maxPossible)]);
+                if (maxPossible > 0) sim.logs.effalloc.write([sim.caseid, sim.period, 100 * (finalMoneySum / maxPossible)]);
             }
             sim.periodTradePrices = [];
         }
@@ -515,14 +535,14 @@ var Simulation = exports.Simulation = function () {
             if (agent && order.buyPrice && sim.logs[buyLog]) {
                 Object.assign(loggedProperties, {
                     buyLimitPrice: order.buyPrice,
-                    value: agent.unitValueFunction('X', agent.inventory)
+                    buyerValue: agent.unitValueFunction('X', agent.inventory)
                 });
                 sim.logs[buyLog].submit(loggedProperties, '');
             }
             if (agent && order.sellPrice && sim.logs[sellLog]) {
                 Object.assign(loggedProperties, {
                     sellLimitPrice: order.sellPrice,
-                    cost: agent.unitCostFunction('X', agent.inventory)
+                    sellerCost: agent.unitCostFunction('X', agent.inventory)
                 });
                 sim.logs[sellLog].submit(loggedProperties, '');
             }
@@ -560,7 +580,7 @@ var Simulation = exports.Simulation = function () {
             var tradeBuyerProfit = tradeBuyerValue - tradePrice;
             var tradeSellerCost = sim.pool.agentsById[sellerid].unitCostFunction('X', sim.pool.agentsById[sellerid].inventory);
             var tradeSellerProfit = tradePrice - tradeSellerCost;
-            var tradeOutput = [sim.period, tradespec.t, tradespec.t - sim.period * sim.periodDuration, tradePrice, buyerid, tradeBuyerValue, tradeBuyerProfit, sellerid, tradeSellerCost, tradeSellerProfit];
+            var tradeOutput = [sim.caseid, sim.period, tradespec.t, tradespec.t - sim.period * sim.periodDuration, tradePrice, buyerid, tradeBuyerValue, tradeBuyerProfit, sellerid, tradeSellerCost, tradeSellerProfit];
             sim.periodTradePrices.push(tradePrice);
             if (sim.logs.trade) sim.logs.trade.write(tradeOutput);
         }
