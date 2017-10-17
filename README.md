@@ -1,5 +1,7 @@
 single-market-robot-simulator
 ========
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/DrPaulBrewer/single-market-robot-simulator.svg)](https://greenkeeper.io/)
 [![Build Status](https://travis-ci.org/DrPaulBrewer/single-market-robot-simulator.svg?branch=master)](https://travis-ci.org/DrPaulBrewer/single-market-robot-simulator)
 [![Coverage Status](https://coveralls.io/repos/github/DrPaulBrewer/single-market-robot-simulator/badge.svg?branch=master)](https://coveralls.io/github/DrPaulBrewer/single-market-robot-simulator?branch=master)
 
