@@ -1144,15 +1144,21 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
         });
     });
     
-    it('the sniper agents never trade with each other', function(){
+    it('the sniper agents trade but never trade with each other', function(){
         const batCol = tradeLogHeader.indexOf("buyerAgentType");
         const satCol = tradeLogHeader.indexOf("sellerAgentType");
+        assert.ok(batCol>0);
+        assert.ok(satCol>0);
+        const volumeByNumberOfSnipers = [0,0,0];
         S.logs.trade.data.forEach((row,j)=>{
           if (j>0){
             const snipers = ( (row[batCol].includes("Sniper"))? 1 : 0) + ( (row[satCol].includes("Sniper"))?1:0);
+            volumeByNumberOfSnipers[snipers] += 1;
             assert.ok(snipers!==2, "detected sniper trading with another sniper");            
           }
         });
+        assert.ok(volumeByNumberOfSnipers[0]>0, "some trades without snipers should occur");
+        assert.ok(volumeByNumberOfSnipers[1]>0, "some trades with 1 sniper should occur");
     });
 
     it('the ohlc log should have 11 entries', function(){
