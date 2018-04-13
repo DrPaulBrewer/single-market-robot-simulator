@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-// Copyright 2016- Paul Brewer, Economic and Financial Technology Consulting LLC                             
-// This is open source software. The MIT License applies to this software.                                  
+// Copyright 2016- Paul Brewer, Economic and Financial Technology Consulting LLC
+// This is open source software. The MIT License applies to this software.
 // see https://opensource.org/licenses/MIT or included License.md file
 
 /* eslint no-console: "off", no-sync:"off", consistent-this:"off" */
@@ -13,7 +13,7 @@ import * as stats from 'stats-lite';
 import gini from 'gini-ss';
 import positiveNumberArray from 'positive-number-array';
 
-/* 
+/*
  *  on the browser, the jspm package manager can be programmed to set the
  *  fs module to @empty with jspm install single-market-robot-simulator -o override.json
  *  where override.json looks like {"map": {"fs": "@empty" }}
@@ -34,41 +34,41 @@ const AgentFactoryWarehouse = {};
  * @private
  */
 
-function newAgentFactory(name, options){ 
-    return new AgentFactoryWarehouse[name](options); 
+function newAgentFactory(name, options){
+    return new AgentFactoryWarehouse[name](options);
 }
 
 /**
  * register new types of (customized) agents in AgentFactoryWarehouse for use in simulations
- * @param {Object} obj An object with agent type names for keys and constructor(options) functions for values 
+ * @param {Object} obj An object with agent type names for keys and constructor(options) functions for values
  */
 
-export function agentRegister(obj){ 
-    Object.assign(AgentFactoryWarehouse, obj); 
+export function agentRegister(obj){
+    Object.assign(AgentFactoryWarehouse, obj);
 }
 
 agentRegister(MarketAgents); // a bit overbroad but gets all of them
 
-const orderHeader = ['caseid','period','t','tp','id','x', 'buyLimitPrice','buyerValue','sellLimitPrice','sellerCost'];
+const orderHeader = ['caseid','period','t','tp','id','x', 'buyLimitPrice','buyerValue','buyerAgentType','sellLimitPrice','sellerCost','sellerAgentType'];
 
 export const logHeaders = {
-    ohlc: ['caseid','period','openPrice','highPrice','lowPrice','closePrice','volume','p25Price','medianPrice','p75Price','meanPrice','sd','gini'], 
+    ohlc: ['caseid','period','openPrice','highPrice','lowPrice','closePrice','volume','p25Price','medianPrice','p75Price','meanPrice','sd','gini'],
     buyorder:  orderHeader,
     sellorder: orderHeader,
     rejectbuyorder: orderHeader,
     rejectsellorder: orderHeader,
-    trade: ['caseid','period','t','tp','price','buyerAgentId','buyerValue','buyerProfit','sellerAgentId','sellerCost','sellerProfit'],
+    trade: ['caseid','period','t','tp','price','buyerAgentId','buyerAgentType','buyerValue','buyerProfit','sellerAgentId','sellerAgentType','sellerCost','sellerProfit'],
     effalloc: ['caseid','period','efficiencyOfAllocation']
 };
 
 export const logNames = ['trade','buyorder','sellorder','rejectbuyorder','rejectsellorder','profit','ohlc','effalloc'];
 
 /**
- * single-market-robot-simulation Simulation 
+ * single-market-robot-simulation Simulation
  */
 
 export class Simulation {
-    
+
     /**
      * Create Simulation with given configuration
      * @param {Object} config
@@ -93,7 +93,7 @@ export class Simulation {
      */
 
     constructor(config){
-        
+
         /**
          * copy of config as passed to constructor
          * @type {Object} this.config
@@ -117,15 +117,15 @@ export class Simulation {
          * current period number when running simulation
          * @type {number} this.period
          */
-        
+
         this.period = 0;
 
         /**
          * trade prices for current period
          * @type {number[]} this.periodTradePrices
          */
-        
-        this.periodTradePrices = [];    
+
+        this.periodTradePrices = [];
 
         /* istanbul ignore if */
 
@@ -142,11 +142,11 @@ export class Simulation {
     }
 
     /**
-     * initialize simulation data logging. 
+     * initialize simulation data logging.
      * called automatically by constructor
      * @private
      */
-    
+
     initLogs(){
         const sim = this;
         sim.logs = {};
@@ -168,7 +168,7 @@ export class Simulation {
             sim.logs.profit.setHeader(header);
     }
 
-    /** 
+    /**
      * Initalize single market for trading X in Simulation
      * called by constructor
      * @private
@@ -182,7 +182,7 @@ export class Simulation {
         };
         sim.xMarket = new Market(Object.assign({}, xDefaults, sim.config.xMarket));
         sim.xMarket.previousPeriod = (prop)=>(sim.logs.ohlc.lastByKey(prop));
-        sim.xMarket.on('trade', function(tradespec){ 
+        sim.xMarket.on('trade', function(tradespec){
             sim.logTrade(tradespec);
             sim.pool.trade(tradespec);
         });
@@ -195,7 +195,7 @@ export class Simulation {
             });
         }
     }
-    
+
     /**
      * Initialize agents in simulation
      * called by constructor
@@ -211,7 +211,7 @@ export class Simulation {
         sim.numberOfBuyers  = config.numberOfBuyers  || config.buyerValues.length;
         sim.numberOfSellers = config.numberOfSellers || config.sellerCosts.length;
         config.buyerRate  = positiveNumberArray(config.buyerRate) || [1];
-        config.sellerRate = positiveNumberArray(config.sellerRate) || [1];  
+        config.sellerRate = positiveNumberArray(config.sellerRate) || [1];
         if ( (!sim.numberOfBuyers) || (!sim.numberOfSellers) )
             throw new Error("single-market-robot-simulation: can not determine numberOfBuyers and/or numberOfSellers ");
         sim.numberOfAgents = sim.numberOfBuyers+sim.numberOfSellers;
@@ -287,9 +287,9 @@ export class Simulation {
      * @param {Object} A a new agent that needs to learn the task methods
      * @private
      */
-     
 
-    teachAgent(A) { 
+
+    teachAgent(A) {
         const sim = this;
         A.bid = function(market, price){
             const order = MEC.oa({
@@ -342,10 +342,10 @@ export class Simulation {
 
         if (!sim.config.silent)
             console.log("period: "+sim.period);
-        
+
         sim.pool.initPeriod(sim.period);
         sim.xMarket.clear();
-        
+
         if (sync){
             sim.pool.syncRun(sim.pool.endTime());
             return (atEndOfPeriod());
@@ -356,7 +356,7 @@ export class Simulation {
                     .runAsPromise(sim.pool.endTime(),10)
                     .then(atEndOfPeriod)
                    );
-        }           
+        }
         return new Promise(function(resolve,reject){
             function onRealtimeWake(endTime){
                 if (!endTime)
@@ -368,32 +368,32 @@ export class Simulation {
                         delete sim.realtimeIntervalId;
                         sim.pool.syncRun(endTime);
                         return resolve(atEndOfPeriod());
-                    } 
+                    }
                     sim.pool.syncRun(now);
                 };
             }
-            
+
             if (sim.realtimeIntervalId){
                 clearInterval(sim.realtimeIntervalId);
                 return reject("sim has unexpected realtimeIntervalId");
             }
 
             /* adjust realtime offset */
-            
+
             sim.realtime = (Date.now()/1000.0)-(sim.pool.agents[0].period.startTime);
-            
+
             /* run asynchronously, and in realtime, endTime() is called immediately and onRealtimeWake(...) returns actual handler function */
-            
+
             sim.realtimeIntervalId = setInterval(onRealtimeWake(sim.pool.endTime()), 40);
-                    
-        });     
+
+        });
     }
 
-    /** 
+    /**
      * Calculate simple maxGainsFromTrade() from simulation configuration buyerValues and sellerCosts
      * by sorting buyers' units high value first, and sellers' costs low value first, and adding profitable pairs
-     * Slice and sort first to be robust against values/costs being unsorted. 
-     * This is currently used only for logging purposes.  No market or agent behavior should typically depend on this function. 
+     * Slice and sort first to be robust against values/costs being unsorted.
+     * This is currently used only for logging purposes.  No market or agent behavior should typically depend on this function.
      * @private
      */
 
@@ -414,15 +414,15 @@ export class Simulation {
         sim.maximumPossibleGainsFromTrade = result;
         return result;
     }
-                
+
 
     /**
      * Perform end-of-period simulation logging of profits, open/high/low/close trade prices, etc.
      * called automatically
      * @private
      */
-   
-    
+
+
     logPeriod(){
         const sim = this;
         const finalMoney = sim.pool.agents.map(function(A){ return A.inventory.money; });
@@ -472,7 +472,7 @@ export class Simulation {
         const agent = sim.pool.agentsById[order.id];
         const buyLog = prefix+'buyorder';
         const sellLog = prefix+'sellorder';
-        let loggedProperties = { period: sim.period };
+        let loggedProperties = { caseid: sim.caseid, period: sim.period };
         if ((agent.inventory) && (order)){
             Object.assign(loggedProperties, {
                 t:  order.t,
@@ -484,14 +484,16 @@ export class Simulation {
         if ((agent) && (order.buyPrice) && (sim.logs[buyLog])){
             Object.assign(loggedProperties, {
                 buyLimitPrice: order.buyPrice,
-                buyerValue: agent.unitValueFunction('X',agent.inventory) 
+                buyerValue: agent.unitValueFunction('X',agent.inventory),
+                buyerAgentType: agent.constructor.name
             });
             sim.logs[buyLog].submit(loggedProperties, '');
         }
         if ((agent) && (order.sellPrice) && (sim.logs[sellLog])){
             Object.assign(loggedProperties, {
                 sellLimitPrice: order.sellPrice,
-                sellerCost: agent.unitCostFunction('X',agent.inventory)
+                sellerCost: agent.unitCostFunction('X',agent.inventory),
+                sellerAgentType: agent.constructor.name
             });
             sim.logs[sellLog].submit(loggedProperties, '');
         }
@@ -529,9 +531,13 @@ export class Simulation {
             throw new Error("Simulation.prototype.logTrade: sellerid is undefined, tradespec="+JSON.stringify(tradespec));
         const tradePrice = tradespec.prices[0];
         if (!tradePrice) throw new Error("Simulation.prototype.logTrade: undefined price in trade ");
-        const tradeBuyerValue = sim.pool.agentsById[buyerid].unitValueFunction('X', sim.pool.agentsById[buyerid].inventory);
+        const buyerAgent = sim.pool.agentsById[buyerid];
+        const buyerAgentType = buyerAgent.constructor.name;
+        const sellerAgent = sim.pool.agentsById[sellerid];
+        const sellerAgentType = sellerAgent.constructor.name;
+        const tradeBuyerValue = buyerAgent.unitValueFunction('X', buyerAgent.inventory);
         const tradeBuyerProfit = tradeBuyerValue-tradePrice;
-        const tradeSellerCost = sim.pool.agentsById[sellerid].unitCostFunction('X', sim.pool.agentsById[sellerid].inventory);
+        const tradeSellerCost = sellerAgent.unitCostFunction('X', sellerAgent.inventory);
         const tradeSellerProfit = tradePrice-tradeSellerCost;
         const tradeOutput = [
             sim.caseid,
@@ -540,9 +546,11 @@ export class Simulation {
             tradespec.t-(sim.period*sim.periodDuration),
             tradePrice,
             buyerid,
+            buyerAgentType,
             tradeBuyerValue,
             tradeBuyerProfit,
             sellerid,
+            sellerAgentType,
             tradeSellerCost,
             tradeSellerProfit
         ];
@@ -554,7 +562,7 @@ export class Simulation {
     /**
      * run simulation
      * @param {Object} [options]
-     * @param {boolean} [options.sync=false] true to run synchronously, returns simulation object (not a Promise) 
+     * @param {boolean} [options.sync=false] true to run synchronously, returns simulation object (not a Promise)
      * @param {function(sim:Object)} [options.update]  update Optional end of period function
      * @param {number} [options.delay=20] delay timeout between periods in ms. Only effective in asynchronous mode.
      * @param {number} [options.deadline=0] deadline to compare with Date.now() -- If over deadline, return available data.  0 disables.
@@ -573,12 +581,12 @@ export class Simulation {
             config.periodsRequested = config.periods;
             config.periods = sim.period;
         }
-        
+
         /* istanbul ignore if */
-        
+
         if (!config.silent)
             console.log("Periods = "+config.periods);
-        
+
         if (sync){
             while(sim.period<config.periods){
                 sim.runPeriod(true);  // pass true to .runPeriod to run synchronously
@@ -590,7 +598,7 @@ export class Simulation {
 
             if (!config.silent)
                 console.log("done");
-            
+
             return sim;
         }
 
@@ -612,7 +620,7 @@ export class Simulation {
         });
     }
 }
-    
+
 /* the next comment tells the coverage tester that the main() function is not tested by the test suite */
 /* istanbul ignore next */
 
@@ -621,7 +629,7 @@ function main(){
     /**
      * in stand-alone mode, read simulation config from ./config.json and run simulation synchronously, outputting log files in .csv format
      */
-    
+
     /* suggested by Krumia's http://stackoverflow.com/users/1461424/krumia */
     /* posting at http://stackoverflow.com/a/25710749/103081 */
 
@@ -647,5 +655,3 @@ if (typeof(module)==='object'){
     if (require && (require.main===module))
         main();
 }
-
-
