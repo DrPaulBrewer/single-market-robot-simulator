@@ -29,18 +29,21 @@ const tradeLogHeader = [
 ];
 
 const combinedOrderLogHeader = [
-    'caseid',
-    'period',
-    't',
-    'tp',
-    'id',
-    'x',
-    'buyLimitPrice',
-    'buyerValue',
-    'buyerAgentType',
-    'sellLimitPrice',
-    'sellerCost',
-    'sellerAgentType'
+  'caseid',
+  'period',
+  't',
+  'tp',
+  'preBidPrice',
+  'preAskPrice',
+  'preTradePrice',
+  'id',
+  'x',
+  'buyLimitPrice',
+  'buyerValue',
+  'buyerAgentType',
+  'sellLimitPrice',
+  'sellerCost',
+  'sellerAgentType'
 ];
 
 const gini = require("gini-ss");
@@ -171,7 +174,11 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
         buyerRate: [1.0,1.0],
         sellerRate: 1.0,
         silent: 1,
-        caseid: 1234
+        caseid: 1234,
+        xMarket: {
+          buyImprove: 1,
+          sellImprove: 1
+        }
     };
     describe('on new Simulation', function(){
         let S = new Simulation(configCostsExceedValues);
@@ -218,7 +225,6 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
             S.logs.rejectsellorder.data[0].should.deepEqual(combinedOrderLogHeader);
             S.logs.profit.data[0].should.deepEqual(['caseid','period','y1','y2','y3','y4','y5']);
         });
-
         it('.pool should be an instance of Pool containing 5 (ZI) agents with .bidPrice and .askPrice functions',function(){
             S.pool.should.be.an.instanceOf(Pool);
             S.pool.agents.length.should.equal(5);
@@ -263,13 +269,17 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
             state.S.should.have.property('xMarket');
             state.S.xMarket.should.be.instanceOf(MEC.Market);
         });
-        it('the buyorder log should have the header row and between ~2750 and ~3250 orders (5 sigma, poisson 3*1000)', function(){
+        it('the buyorder logs, including rejects, should have the header row and between ~2750 and ~3250 orders (5 sigma, poisson 3*1000)', function(){
             state.S.logs.buyorder.data[0].should.deepEqual(combinedOrderLogHeader);
-            state.S.logs.buyorder.data.length.should.be.within(2750,3250);
+            state.S.logs.rejectbuyorder.data[0].should.deepEqual(combinedOrderLogHeader);
+            const total = state.S.logs.buyorder.data.length+state.S.logs.rejectbuyorder.data.length;
+            total.should.be.within(2750,3250);
         });
-        it('the sellorder log should have the header row and between ~1750 and ~2250 orders (5 sigma, poisson 2*1000)', function(){
+        it('the sellorder logs, including rejects, should have the header row and between ~1750 and ~2250 orders (5 sigma, poisson 2*1000)', function(){
             state.S.logs.sellorder.data[0].should.deepEqual(combinedOrderLogHeader);
-            state.S.logs.sellorder.data.length.should.be.within(1750,2250);
+            state.S.logs.rejectsellorder.data[0].should.deepEqual(combinedOrderLogHeader);
+            const total = state.S.logs.sellorder.data.length+state.S.logs.rejectsellorder.data.length;
+            total.should.be.within(1750,2250);
         });
 
         /*
@@ -277,11 +287,12 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
          *
          */
 
-        it('buy order log defines all non-sell fields on every row', function(){
+        it('buy order log defines all non-market, non-sell fields on every row', function(){
             state.S.logs.buyorder.data.forEach((row,j)=>{
               if (j>0){
                 row.length.should.equal(combinedOrderLogHeader.length);
                 combinedOrderLogHeader.forEach((headerItem, idx)=>{
+                    if (headerItem.startsWith("pre")) return;
                     const v = row[idx];
                     const t = typeof(v);
                     if (headerItem.includes("sell")){
@@ -294,12 +305,12 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
               }
             });
         });
-
-        it('sell order log defines all fields on every row', function(){
+        it('sell order log defines all non-market, non-buy fields on every row', function(){
             state.S.logs.sellorder.data.forEach((row,j)=>{
               if (j>0){
                 row.length.should.equal(combinedOrderLogHeader.length);
                 combinedOrderLogHeader.forEach((headerItem, idx)=>{
+                    if (headerItem.startsWith("pre")) return;
                     const v = row[idx];
                     const t = typeof(v);
                     if (headerItem.includes("buy")){
@@ -312,6 +323,122 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function(){
               }
             });
         });
+        it('buyorderlog has caseid 1234', function(){
+            const caseidCol = combinedOrderLogHeader.indexOf('caseid');
+            assert.ok(caseidCol>=0);
+            state.S.logs.buyorder.data.forEach((row,j)=>{
+              if (j>0){
+                row[caseidCol].should.equal(1234);
+              }
+            });
+        });
+        it('sellorderlog has caseid 1234', function(){
+          const caseidCol = combinedOrderLogHeader.indexOf('caseid');
+          assert.ok(caseidCol>=0);
+          state.S.logs.sellorder.data.forEach((row,j)=>{
+            if (j>0){
+              row[caseidCol].should.equal(1234);
+            }
+          });
+        });
+        it('buyorderlog has buyerAgentType ZIAgent', function(){
+          const batCol = combinedOrderLogHeader.indexOf('buyerAgentType');
+          assert.ok(batCol>=0);
+          state.S.logs.buyorder.data.forEach((row,j)=>{
+            if (j>0){
+              row[batCol].should.equal('ZIAgent');
+            }
+          });
+        });
+        it('sellorderlog has sellerAgentType ZIAgent', function(){
+          const satCol = combinedOrderLogHeader.indexOf('sellerAgentType');
+          assert.ok(satCol>=0);
+          state.S.logs.sellorder.data.forEach((row,j)=>{
+            if (j>0){
+              row[satCol].should.equal('ZIAgent');
+            }
+          });
+        });
+        it('buyorderlog has correct buyerValue for id and buyLimitPrice <= buyerValue', function(){
+          const idCol = combinedOrderLogHeader.indexOf('id');
+          const bvCol = combinedOrderLogHeader.indexOf('buyerValue');
+          const blpCol = combinedOrderLogHeader.indexOf('buyLimitPrice');
+          state.S.logs.buyorder.data.forEach((row,j)=>{
+            if (j>0){
+              row[bvCol].should.equal(11-row[idCol]);
+              row[blpCol].should.be.above(0);
+              row[blpCol].should.be.belowOrEqual(row[bvCol]);
+            }
+          });
+        });
+        it('sellorderlog has correct sellerCost for id and sellLimitPrice >= sellerCost', function(){
+          const idCol = combinedOrderLogHeader.indexOf('id');
+          const scCol = combinedOrderLogHeader.indexOf('sellerCost');
+          const slpCol = combinedOrderLogHeader.indexOf('sellLimitPrice');
+          const costs = [0,0,0,0,20,40];
+          state.S.logs.sellorder.data.forEach((row,j)=>{
+            if (j>0){
+              row[idCol].should.be.above(3);
+              row[idCol].should.be.below(6);
+              row[scCol].should.equal(costs[+row[idCol]]);
+              row[slpCol].should.be.above(0);
+              row[slpCol].should.be.aboveOrEqual(row[scCol]);
+            }
+          });
+        });
+        it('buyorderlog,sellorderlog have weakly ascending t,tp,preBidPrice', function(){
+          ['buyorder','sellorder'].forEach((log)=>{
+            ['t','tp','preBidPrice'].forEach((prop)=>{
+              const col = combinedOrderLogHeader.indexOf(prop);
+              assert.ok(col>=0);
+              for(let i=2,l=state.S.logs[log].data.length;i<l;++i){
+                let current = state.S.logs[log].data[i][col];
+                let prev  = state.S.logs[log].data[i-1][col];
+                assert.ok(current>=prev, `${log} ${prop} decreased from ${prev} to ${current} at ${i}`);
+              }
+            });
+          });
+        });
+        it('buyorderlog,sellorderlog have weakly descending preAskPrice', function(){
+          const col = combinedOrderLogHeader.indexOf('preAskPrice');
+          assert.ok(col>=0);
+          ['buyorder','sellorder'].forEach((log)=>{
+            for(let i=2,l=state.S.logs[log].data.length;i<l;++i){
+              let current = state.S.logs[log].data[i][col];
+              let prev  = state.S.logs[log].data[i-1][col];
+              if ((typeof(prev)==='number') && (!Number.isNaN(prev))){
+                assert.ok(current<=prev, `${log} preAskPrice increased from ${prev} to ${current} at ${i}`);
+              }
+            }
+          });
+        });
+        it('buyorderlog shows preBidPrice reacting to previous buyLimitPrice', function(){
+          const pbpCol = combinedOrderLogHeader.indexOf('preBidPrice');
+          const blpCol = combinedOrderLogHeader.indexOf('buyLimitPrice');
+          assert.ok(pbpCol>=0);
+          assert.ok(blpCol>=0);
+          for(let i=2,l=state.S.logs.buyorder.data.length;i<l;++i){
+            let prev = state.S.logs.buyorder.data[i-1];
+            let predicted = Math.max(prev[pbpCol],prev[blpCol]);
+            assert.ok(typeof(predicted)==='number', typeof(predicted));
+            assert.ok(!Number.isNaN(predicted));
+            state.S.logs.buyorder.data[i][pbpCol].should.equal(predicted);
+          }
+        });
+        it('sellorderlog shows preAskPrice reacting to previous sellLimitPrice', function(){
+          const papCol = combinedOrderLogHeader.indexOf('preAskPrice');
+          const slpCol = combinedOrderLogHeader.indexOf('sellLimitPrice');
+          assert.ok(papCol>=0);
+          assert.ok(slpCol>=0);
+          for(let i=2,l=state.S.logs.sellorder.data.length;i<l;++i){
+            let prev = state.S.logs.sellorder.data[i-1];
+            let predicted = Math.min(+prev[papCol] || +Infinity,+prev[slpCol] || +Infinity);
+            assert.ok(typeof(predicted)==='number', typeof(predicted));
+            assert.ok(!Number.isNaN(predicted));
+            state.S.logs.sellorder.data[i][papCol].should.equal(predicted);
+          }
+        });
+
         it('the trade log should have one entry, the header row', function(){
             state.S.logs.trade.data.length.should.be.equal(1);
             state.S.logs.trade.data[0].should.deepEqual(tradeLogHeader);
@@ -504,7 +631,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
               assert.equal(row[satCol], "sellerAgentType");
             } else {
               assert.equal(row[batCol], "ZIAgent");
-              assert.equal(row[satCol], '');              
+              assert.equal(row[satCol], '');
             }
           });
         });
@@ -519,7 +646,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
               assert.equal(row[satCol], "sellerAgentType");
             } else {
               assert.equal(row[batCol], "");
-              assert.equal(row[satCol], 'ZIAgent');              
+              assert.equal(row[satCol], 'ZIAgent');
             }
           });
         });
@@ -579,6 +706,36 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
             let sellerProfitCol = tradeLogHeader.indexOf("sellerProfit");
             let priceCol = tradeLogHeader.indexOf("price");
             state.S.logs.trade.data[1][sellerProfitCol].should.equal(state.S.logs.trade.data[1][priceCol]-1);
+        });
+        it('the buyorderlog,sellorderlog should report blank preTradePrice before the event', function(){
+          // note that there are no are more orders once the single trade has occurred
+          // because each agent has only one value or cost
+          const tradeTime = state.S.logs.trade.lastByKey("t");
+          const tCol = combinedOrderLogHeader.indexOf('t');
+          const ptpCol = combinedOrderLogHeader.indexOf('preTradePrice');
+          assert.ok(tradeTime>0);
+          assert.ok(tCol>=0);
+          assert.ok(ptpCol>=0);
+          ['buyorder','sellorder'].forEach((log)=>{
+            let before=0;
+            let after=0;
+            state.S.logs[log].data.forEach((row,j)=>{
+              if (j>0){
+                  const t = row[tCol];
+                  assert.ok(typeof(t)==='number');
+                  assert.ok(!Number.isNaN(t));
+                  const preTradePrice = row[ptpCol];
+                  if (t<=tradeTime){
+                    before++;
+                    preTradePrice.should.equal('');
+                  } else {
+                    after++;
+                  }
+              }
+            });
+            before.should.be.above(0);
+            after.should.equal(0);
+          });
         });
         it('the profit log should have one entry equal to [1000-p,p-1]', function(){
             let p = state.S.logs.trade.data[1][tradeLogHeader.indexOf("price")];
@@ -1018,7 +1175,7 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
                 so[sellLimitPriceCol].should.be.aboveOrEqual(so[costCol]);
         });
     });
-    
+
     it("all agents have correct agent type in buy order log", function(){
       const al = agents.length;
       const bAdj = +(S.buyersPool.agents[0].id);
@@ -1030,14 +1187,14 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
         }
       });
     });
-    
+
     it("all agents have correct agent type in sell order log", function(){
       const al = agents.length;
       const sAdj = +(S.sellersPool.agents[0].id);
       const [sellerAgentIdCol, typeCol] = ["id","sellerAgentType"].map((s)=>(combinedOrderLogHeader.indexOf(s)));
       S.logs.sellorder.data.forEach((so,j)=>{
         if (j>0){
-          assert.ok(typeof(so[typeCol])==="string", "expected agent type to be string");  
+          assert.ok(typeof(so[typeCol])==="string", "expected agent type to be string");
           so[typeCol].should.equal(agents[(so[sellerAgentIdCol]-sAdj)%al]);
         }
       });
@@ -1143,7 +1300,7 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
             so[sellLimitPriceCol].should.be.aboveOrEqual(S.logs.ohlc.data[so[periodCol]-1][ohlcMedianPriceCol]);
         });
     });
-    
+
     it('the sniper agents trade but never trade with each other', function(){
         const batCol = tradeLogHeader.indexOf("buyerAgentType");
         const satCol = tradeLogHeader.indexOf("sellerAgentType");
@@ -1154,7 +1311,7 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
           if (j>0){
             const snipers = ( (row[batCol].includes("Sniper"))? 1 : 0) + ( (row[satCol].includes("Sniper"))?1:0);
             volumeByNumberOfSnipers[snipers] += 1;
-            assert.ok(snipers!==2, "detected sniper trading with another sniper");            
+            assert.ok(snipers!==2, "detected sniper trading with another sniper");
           }
         });
         assert.ok(volumeByNumberOfSnipers[0]>0, "some trades without snipers should occur");

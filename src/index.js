@@ -49,7 +49,23 @@ export function agentRegister(obj){
 
 agentRegister(MarketAgents); // a bit overbroad but gets all of them
 
-const orderHeader = ['caseid','period','t','tp','id','x', 'buyLimitPrice','buyerValue','buyerAgentType','sellLimitPrice','sellerCost','sellerAgentType'];
+const orderHeader = [
+  'caseid',
+  'period',
+  't',
+  'tp',
+  'preBidPrice',
+  'preAskPrice',
+  'preTradePrice',
+  'id',
+  'x',
+  'buyLimitPrice',
+  'buyerValue',
+  'buyerAgentType',
+  'sellLimitPrice',
+  'sellerCost',
+  'sellerAgentType'
+];
 
 export const logHeaders = {
     ohlc: ['caseid','period','openPrice','highPrice','lowPrice','closePrice','volume','p25Price','medianPrice','p75Price','meanPrice','sd','gini'],
@@ -472,7 +488,22 @@ export class Simulation {
         const agent = sim.pool.agentsById[order.id];
         const buyLog = prefix+'buyorder';
         const sellLog = prefix+'sellorder';
-        let loggedProperties = { caseid: sim.caseid, period: sim.period };
+        let loggedProperties = {
+          caseid: sim.caseid,
+          period: sim.period
+        };
+        const marketProps = {
+          preBidPrice: 'currentBidPrice',
+          preAskPrice: 'currentAskPrice',
+          preTradePrice: 'lastTradePrice'
+        };
+        Object.keys(marketProps).forEach((k)=>{
+          const k2 = marketProps[k];
+            loggedProperties[k] = (
+              (typeof(sim.xMarket[k2])==='function') &&
+              sim.xMarket[k2]()
+            );
+        });
         if ((agent.inventory) && (order)){
             Object.assign(loggedProperties, {
                 t:  order.t,
