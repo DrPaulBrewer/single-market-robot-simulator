@@ -116,6 +116,32 @@ function tradesToOHLC(tradeDataReference, ids){
     return ohlc;
 }
 
+function addAllAgentsBidLTEQValueInOrderLogTest(S){
+  it("all agents bid <= value in order log", function(){
+      const [buyLimitPriceCol, valueCol] = ['buyLimitPrice','buyerValue'].map((s)=>(S.logs.buyorder.header.indexOf(s)));
+      S.logs.buyorder.data.forEach((bo,j)=>{
+          if (j>0){
+              bo[buyLimitPriceCol].should.be.above(0);
+              bo[valueCol].should.be.above(0);
+              bo[buyLimitPriceCol].should.be.belowOrEqual(bo[valueCol]);
+            }
+      });
+  });
+}
+
+function addAllAgentsAskGTEQCostInOrderLogTest(S){
+  it("all agents ask >= cost in order log", function(){
+      const [sellLimitPriceCol, costCol] = ['sellLimitPrice','sellerCost'].map((s)=>(S.logs.sellorder.header.indexOf(s)));
+      S.logs.sellorder.data.forEach((so,j)=>{
+          if (j>0){
+              so[sellLimitPriceCol].should.be.above(0);
+              so[costCol].should.be.above(0);
+              so[sellLimitPriceCol].should.be.aboveOrEqual(so[costCol]);
+            }
+      });
+  });
+}
+
 describe('logNames ', function(){
     it('should be defined', function(){
         singleMarketRobotSimulator.logNames.length.should.be.above(0);
@@ -1160,21 +1186,8 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
         });
     });
 
-    it("all agents bid <= value in order log", function(){
-        const [buyLimitPriceCol, valueCol] = ['buyLimitPrice','buyerValue'].map((s)=>(S.logs.buyorder.header.indexOf(s)));
-        S.logs.buyorder.data.forEach((bo,j)=>{
-            if (j>0)
-                bo[buyLimitPriceCol].should.be.belowOrEqual(bo[valueCol]);
-        });
-    });
-
-    it("all agents ask >= cost in order log", function(){
-        const [sellLimitPriceCol, costCol] = ['sellLimitPrice','sellerCost'].map((s)=>(S.logs.sellorder.header.indexOf(s)));
-        S.logs.sellorder.data.forEach((so,j)=>{
-            if (j>0)
-                so[sellLimitPriceCol].should.be.aboveOrEqual(so[costCol]);
-        });
-    });
+    addAllAgentsBidLTEQValueInOrderLogTest(S);
+    addAllAgentsAskGTEQCostInOrderLogTest(S);
 
     it("all agents have correct agent type in buy order log", function(){
       const al = agents.length;
@@ -1374,5 +1387,167 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
         S.logs.ohlc.data.should.deepEqual(clone.logs.ohlc.data);
         S.logs.trade.data.should.deepEqual(clone.logs.trade.data);
         S.logs.profit.data.should.deepEqual(clone.logs.profit.data);
+    });
+});
+
+describe('simulation with 1 seller and ZI+KaplanSniperAgent buyers',function(){
+      const config = {
+        L:1,
+        H:1000,
+        numberOfBuyers:2,
+        numberOfSellers:1,
+        buyerValues:[900,900],
+        sellerCosts:[100],
+        buyerAgentType:['ZIAgent','KaplanSniperAgent'],
+        sellerAgentType:['ZIAgent'],
+        periods:100,
+        silent:1,
+        logToFileSystem: false,
+        integer: true
+      };
+      const S = new Simulation(config).run({sync:true});
+      it('should complete 100 periods', function(){
+        S.period.should.equal(100);
+      });
+      it('should have 3 ids [1,2,3]', function(){
+        S.pool.agents.map((a)=>(a.id)).should.deepEqual([1,2,3]);
+      });
+      it('should have agents ZI,Sniper,ZI ',function(){
+        S.pool.agents.map((a)=>(a.constructor.name)).should.deepEqual([
+          'ZIAgent',
+          'KaplanSniperAgent',
+          'ZIAgent'
+        ]);
+      });
+      addAllAgentsBidLTEQValueInOrderLogTest(S);
+      addAllAgentsAskGTEQCostInOrderLogTest(S);
+      describe('KaplanSniperAgent bids as expected: ', function(){
+        const OHLCperiodCol = S.logs.ohlc.header.indexOf('period');
+        const OHLClowPriceCol = S.logs.ohlc.header.indexOf('lowPrice');
+        assert.ok(OHLCperiodCol>=0);
+        assert.ok(OHLClowPriceCol>=0);
+        function getPeriodLowPrice(p){
+          const row = S.logs.ohlc.data[p];
+          const period = row[OHLCperiodCol];
+          assert.ok(period===p, `period mismatch ${period} ${p}`);
+          return row[OHLClowPriceCol];
+        }
+        function ziporder(o){
+          const order = {};
+          o.forEach((v,j)=>{
+            order[combinedOrderLogHeader[j]]=v;
+          });
+          return order;
+        }
+        const buyorders = S.logs.buyorder.data.filter((v,j)=>(j>0)).map(ziporder);
+        const sniperorders = buyorders.filter((order)=>(order.id===2));
+        const earlysniperorders = sniperorders.filter((order)=>(order.tp<990));
+        it('sniper bids at least 10 times when tp<990', function(){
+          earlysniperorders.length.should.be.above(10);
+        });
+        it('when sniper bids, buyLimitPrice===preAskPrice', function(){
+            sniperorders.filter((order)=>(order.buyLimitPrice!==order.preAskPrice)).length.should.equal(0);
+        });
+        it('when sniper bids, and tp<990, at least one low price snipe occurs', function(){
+          earlysniperorders.filter((order)=>(
+            (order.period)>1 &&
+            ((!order.preBidPrice) || ((order.preAskPrice-order.preBidPrice)>10)) &&
+            (order.preAskPrice<=getPeriodLowPrice(order.period-1))
+          )).length.should.be.above(1);
+        });
+        it('when sniper bids, and tp<990, either preAskPrice<=previous-period-low or preAskPrice-preBidPrice<=10', function(){
+          const unusual = (
+            earlysniperorders
+            .filter((order)=>(
+              (order.preAskPrice>0) &&
+              (order.preBidPrice>0) &&
+              ((order.preAskPrice-order.preBidPrice)>10) &&
+              (order.period===1 || (order.preAskPrice>getPeriodLowPrice(order.period-1)))
+            )
+          )
+          );
+          unusual.length.should.equal(0);
+        });
+    });
+});
+
+describe('simulation with 1 buyer and ZI+KaplanSniperAgent sellers',function(){
+      const config = {
+        L:1,
+        H:1000,
+        numberOfBuyers:1,
+        numberOfSellers:2,
+        buyerValues:[900],
+        sellerCosts:[100,100],
+        buyerAgentType:['ZIAgent'],
+        sellerAgentType:['ZIAgent','KaplanSniperAgent'],
+        periods:100,
+        silent:1,
+        logToFileSystem: false,
+        integer: true
+      };
+      const S = new Simulation(config).run({sync:true});
+      it('should complete 100 periods', function(){
+        S.period.should.equal(100);
+      });
+      it('should have 3 ids [1,2,3]', function(){
+        S.pool.agents.map((a)=>(a.id)).should.deepEqual([1,2,3]);
+      });
+      it('should have agents ZI,ZI,Sniper ',function(){
+        S.pool.agents.map((a)=>(a.constructor.name)).should.deepEqual([
+          'ZIAgent',
+          'ZIAgent',
+          'KaplanSniperAgent'
+        ]);
+      });
+      addAllAgentsBidLTEQValueInOrderLogTest(S);
+      addAllAgentsAskGTEQCostInOrderLogTest(S);
+      describe('KaplanSniperAgent asks as expected: ', function(){
+        const OHLCperiodCol = S.logs.ohlc.header.indexOf('period');
+        const OHLChighPriceCol = S.logs.ohlc.header.indexOf('highPrice');
+        assert.ok(OHLCperiodCol>=0);
+        assert.ok(OHLChighPriceCol>=0);
+        function getPeriodHighPrice(p){
+          const row = S.logs.ohlc.data[p];
+          const period = row[OHLCperiodCol];
+          assert.ok(period===p, `period mismatch ${period} ${p}`);
+          return row[OHLChighPriceCol];
+        }
+        function ziporder(o){
+          const order = {};
+          o.forEach((v,j)=>{
+            order[combinedOrderLogHeader[j]]=v;
+          });
+          return order;
+        }
+        const sellorders = S.logs.sellorder.data.filter((v,j)=>(j>0)).map(ziporder);
+        const sniperorders = sellorders.filter((order)=>(order.id===3));
+        const earlysniperorders = sniperorders.filter((order)=>(order.tp<990));
+        it('sniper asks at least 10 times when tp<990', function(){
+          earlysniperorders.length.should.be.above(10);
+        });
+        it('when sniper asks, sellLimitPrice===preBidPrice', function(){
+            sniperorders.filter((order)=>(order.sellLimitPrice!==order.preBidPrice)).length.should.equal(0);
+        });
+        it('when sniper asks, and tp<990, at least one high price snipe occurs', function(){
+          earlysniperorders.filter((order)=>(
+            (order.period)>1 &&
+            ((!order.preAskPrice) || ((order.preAskPrice-order.preBidPrice)>10)) &&
+            (order.preBidPrice>=getPeriodHighPrice(order.period-1))
+          )).length.should.be.above(1);
+        });
+        it('when sniper asks, and tp<990, either preBidPrice>=previous-period-high or preAskPrice-preBidPrice<=10', function(){
+          const unusual = (
+            earlysniperorders
+            .filter((order)=>(
+              (order.preAskPrice>0) &&
+              (order.preBidPrice>0) &&
+              ((order.preAskPrice-order.preBidPrice)>10) &&
+              (order.period===1 || (order.preBidPrice<getPeriodHighPrice(order.period-1)))
+            )
+          )
+          );
+          unusual.length.should.equal(0);
+        });
     });
 });
