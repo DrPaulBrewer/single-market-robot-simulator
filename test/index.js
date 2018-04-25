@@ -1087,7 +1087,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function(
 });
 
 describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100...697, various agent types, 10 periods', function(){
-    const agents = ["ZIAgent","UnitAgent","OneupmanshipAgent","MidpointAgent","TruthfulAgent","KaplanSniperAgent","MedianSniperAgent"];
+    const agents = ["ZIAgent","UnitAgent","OneupmanshipAgent","MidpointAgent","TruthfulAgent","KaplanSniperAgent","MedianSniperAgent","DoNothingAgent"];
     const config100Bx100Sx10Periods = {
         L:1,
         H:1000,
@@ -1329,6 +1329,76 @@ describe('simulation with 200 buyers, 200 sellers, values 900...303, costs 100..
         });
         assert.ok(volumeByNumberOfSnipers[0]>0, "some trades without snipers should occur");
         assert.ok(volumeByNumberOfSnipers[1]>0, "some trades with 1 sniper should occur");
+    });
+
+    it("all agent types appear in the buy order log except the DoNothingAgents", function(){
+        const atypeCol = combinedOrderLogHeader.indexOf("buyerAgentType");
+        assert.ok(atypeCol>=0);
+        const countAgents = {};
+        let count = 0;
+        S.logs.buyorder.data.forEach((bo,j)=>{
+            if (j>0){
+                const atype = bo[atypeCol];
+		assert.ok(atype.length>0);
+                countAgents[atype] = (countAgents[atype] || 0) + 1;
+            }
+        });
+        agents.forEach((atype)=>{
+            if (atype!=="DoNothingAgent"){
+                assert.ok(countAgents[atype]>0);
+                count++;
+            }
+        });
+        count.should.equal(agents.length-1);
+        assert.ok(countAgents.DoNothingAgent===undefined);      
+    });
+
+    it("all agent types appear in the sell order log except the DoNothingAgents", function(){
+        const atypeCol = combinedOrderLogHeader.indexOf("sellerAgentType");
+        assert.ok(atypeCol>=0);
+        const countAgents = {};
+        let count = 0;
+        S.logs.sellorder.data.forEach((so,j)=>{
+            if (j>0){
+                const atype = so[atypeCol];
+		assert.ok(atype.length>0);
+                countAgents[atype] = (countAgents[atype] || 0) + 1;
+            }
+        });
+        agents.forEach((atype)=>{
+            if (atype!=="DoNothingAgent"){
+                assert.ok(countAgents[atype]>0);
+                count++;
+            }
+        });
+        count.should.equal(agents.length-1);
+        assert.ok(countAgents.DoNothingAgent===undefined);      
+    });
+
+    it("all agent types appear in the trade log except the DoNothingAgents", function(){
+        const atypeCol1 = tradeLogHeader.indexOf("sellerAgentType");
+        const atypeCol2 = tradeLogHeader.indexOf("buyerAgentType");
+        assert.ok(atypeCol1>=0);
+        assert.ok(atypeCol2>=0);
+        const countAgents = {};
+        let count = 0;
+        S.logs.trade.data.forEach((trade,j)=>{
+            if (j>0){
+                const atype1 = trade[atypeCol1];
+                const atype2 = trade[atypeCol2];
+		assert.ok((atype1.length>0) && (atype2.length>0));
+                countAgents[atype1] = (countAgents[atype1] || 0) + 1;
+                countAgents[atype2] = (countAgents[atype2] || 0) + 1;
+            }
+        });
+        agents.forEach((atype)=>{
+            if (atype!=="DoNothingAgent"){
+                assert.ok(countAgents[atype]>0);
+                count++;
+            }
+        });
+        count.should.equal(agents.length-1);
+        assert.ok(countAgents.DoNothingAgent===undefined);      
     });
 
     it('the ohlc log should have 11 entries', function(){

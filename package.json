@@ -28,10 +28,10 @@
   "license": "MIT",
   "dependencies": {
     "gini-ss": "^0.2.1",
-    "market-agents": "^3.0.5",
+    "market-agents": "^3.1.1",
     "market-example-contingent": "^1.0.2",
     "positive-number-array": "^1.2.2",
-    "simple-isomorphic-logger": "^2.0.0",
+    "simple-isomorphic-logger": "^2.0.1",
     "stats-lite": "^2.1.0"
   },
   "devDependencies": {
