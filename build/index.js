@@ -395,21 +395,21 @@ var Simulation = exports.Simulation = function () {
             }
             var endTime = sim.pool.endTime(),
                 altTime = 0;
-            var reason = 'periodDuration';
+            var reason = 0; // endPeriod because periodDuration expired
             if (+sim.config.orderClock > 0) {
                 altTime = ['buyorder', 'sellorder'].reduce(function (acc, log) {
                     return Math.max(acc, +sim.config.orderClock + lastT(log));
                 }, 0);
                 if (altTime < endTime) {
                     endTime = altTime;
-                    reason = 'orderClock';
+                    reason = 2; // endPeriod because orderClock expired
                 }
             }
             if (+sim.config.tradeClock > 0) {
                 altTime = +sim.config.tradeClock + lastT('trade');
                 if (altTime < endTime) {
                     endTime = altTime;
-                    reason = 'tradeClock';
+                    reason = 1; // endPeriod because tradeClock expired
                 }
             }
             return { endTime: endTime, reason: reason };

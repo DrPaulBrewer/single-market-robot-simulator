@@ -510,7 +510,7 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function () 
         1,
         1000,
         1500,
-        'tradeClock',
+        1,
         '',
         '',
         '',
@@ -1469,7 +1469,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
     it('endReason in ohlc log is as expected', function () {
       const endReasonCol = singleMarketRobotSimulator.logHeaders.ohlc.indexOf('endReason');
       S.logs.ohlc.data.filter((v, j) => (j > 0)).map((row) => (row[endReasonCol])).forEach((v) => {
-        v.should.equal('periodDuration');
+        v.should.equal(0);
       });
     });
     it('the trade log should have greater than 1000 entries', function () {
