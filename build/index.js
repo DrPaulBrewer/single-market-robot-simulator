@@ -48,6 +48,10 @@ var _positiveNumberArray = require('positive-number-array');
 
 var _positiveNumberArray2 = _interopRequireDefault(_positiveNumberArray);
 
+var _pWhilst = require('p-whilst');
+
+var _pWhilst2 = _interopRequireDefault(_pWhilst);
+
 var _fs = require('fs');
 
 var fs = _interopRequireWildcard(_fs);
@@ -94,7 +98,7 @@ agentRegister(MarketAgents); // a bit overbroad but gets all of them
 var orderHeader = ['caseid', 'period', 't', 'tp', 'preBidPrice', 'preAskPrice', 'preTradePrice', 'id', 'x', 'buyLimitPrice', 'buyerValue', 'buyerAgentType', 'sellLimitPrice', 'sellerCost', 'sellerAgentType'];
 
 var logHeaders = exports.logHeaders = {
-    ohlc: ['caseid', 'period', 'openPrice', 'highPrice', 'lowPrice', 'closePrice', 'volume', 'p25Price', 'medianPrice', 'p75Price', 'meanPrice', 'sd', 'gini'],
+    ohlc: ['caseid', 'period', 'beginTime', 'endTime', 'endReason', 'openPrice', 'highPrice', 'lowPrice', 'closePrice', 'volume', 'p25Price', 'medianPrice', 'p75Price', 'meanPrice', 'sd', 'gini'],
     buyorder: orderHeader,
     sellorder: orderHeader,
     rejectbuyorder: orderHeader,
@@ -116,6 +120,8 @@ var Simulation = exports.Simulation = function () {
      * @param {Object} config
      * @param {number} config.periods number of periods in this simulation
      * @param {number} config.periodDuration duration of each period
+     * @param {number} [config.tradeClock] trade clock duration: end period early if a trade does not occur in this time interval
+     * @param {number} [config.orderClock] order clock duration: end period early if a valid (not rejected) buy or sell order does not occur in this time interval
      * @param {string[]} config.buyerAgentType string array (choose from "ZIAgent","UnitAgent","OneupmanshipAgent","KaplanSniperAgent" or types registered with agentRegister()) giving a rotation of types of agents to use when creating the buyer agents.
      * @param {string[]} config.sellerAgentType string array (choose from "ZIAgent","UnitAgent","OneupmanshipAgent","KaplanSniperAgent" or types registered with agentRegister()) giving a rotation of types of agents to use when creating the seller agents.
      * @param {number[]} [config.buyerRate=1.0] poisson arrival rate in wakes/sec for each buyer agent, defaults to 1.0 for all agents
@@ -372,6 +378,44 @@ var Simulation = exports.Simulation = function () {
         }
 
         /**
+         * calculate potentialEndOfPeriod and reason
+         * @return {Object} {endTime,reason}  endTime(number) and reason(string) for end of period
+         */
+
+    }, {
+        key: 'potentialEndOfPeriod',
+        value: function potentialEndOfPeriod() {
+            var sim = this;
+            function lastT(log) {
+                var period = sim.logs[log].lastByKey('period');
+                if (period !== sim.period) {
+                    return sim.periodDuration * sim.period;
+                }
+                return +sim.logs[log].lastByKey('t');
+            }
+            var endTime = sim.pool.endTime(),
+                altTime = 0;
+            var reason = 'periodDuration';
+            if (+sim.config.orderClock > 0) {
+                altTime = ['buyorder', 'sellorder'].reduce(function (acc, log) {
+                    return Math.max(acc, +sim.config.orderClock + lastT(log));
+                }, 0);
+                if (altTime < endTime) {
+                    endTime = altTime;
+                    reason = 'orderClock';
+                }
+            }
+            if (+sim.config.tradeClock > 0) {
+                altTime = +sim.config.tradeClock + lastT('trade');
+                if (altTime < endTime) {
+                    endTime = altTime;
+                    reason = 'tradeClock';
+                }
+            }
+            return { endTime: endTime, reason: reason };
+        }
+
+        /**
          * runs a periods of the simulation
          * @param {boolean} sync true indicates call is synchronous, return value will be simulation object; false indicates async, return value is Promise
          * @return {Promise<Object,Error>} Resolves to simulation object when one period of simulation is complete.
@@ -395,12 +439,32 @@ var Simulation = exports.Simulation = function () {
             sim.pool.initPeriod(sim.period);
             sim.xMarket.clear();
 
+            var oldEnd = { endTime: 0 };
+            var mayEnd = sim.potentialEndOfPeriod();
+
+            function cont() {
+                return oldEnd.endTime < mayEnd.endTime;
+            }
+
+            function step() {
+                oldEnd = mayEnd;
+                mayEnd = sim.potentialEndOfPeriod();
+            }
+
             if (sync) {
-                sim.pool.syncRun(sim.pool.endTime());
+                while (cont()) {
+                    sim.pool.syncRun(mayEnd.endTime);
+                    step();
+                }
                 return atEndOfPeriod();
             }
             if (!sim.config.realtime) {
-                return sim.pool.runAsPromise(sim.pool.endTime(), 10).then(atEndOfPeriod);
+                return (0, _pWhilst2.default)(cont, function () {
+                    return sim.pool.runAsPromise(mayEnd.endTime, 10).then(step);
+                }).then(atEndOfPeriod);
+            }
+            if (+sim.config.orderClock || +sim.config.tradeClock) {
+                return Promise.reject("orderClock/tradeClock not yet supported with real time sim");
             }
             return new Promise(function (resolve, reject) {
                 function onRealtimeWake(endTime) {
@@ -478,24 +542,29 @@ var Simulation = exports.Simulation = function () {
                 return A.inventory.money;
             });
             function ohlc() {
+                var result = {
+                    caseid: sim.caseid,
+                    period: sim.period,
+                    beginTime: sim.period * sim.periodDuration,
+                    endTime: sim.potentialEndOfPeriod().endTime,
+                    endReason: sim.potentialEndOfPeriod().reason,
+                    volume: sim.periodTradePrices.length,
+                    gini: (0, _giniSs2.default)(finalMoney)
+                };
                 if (sim.periodTradePrices.length > 0) {
-                    var result = {
-                        caseid: sim.caseid,
-                        period: sim.period,
+                    Object.assign(result, {
                         openPrice: sim.periodTradePrices[0],
                         highPrice: Math.max.apply(Math, _toConsumableArray(sim.periodTradePrices)),
                         lowPrice: Math.min.apply(Math, _toConsumableArray(sim.periodTradePrices)),
                         closePrice: sim.periodTradePrices[sim.periodTradePrices.length - 1],
-                        volume: sim.periodTradePrices.length,
                         medianPrice: stats.median(sim.periodTradePrices),
                         meanPrice: stats.mean(sim.periodTradePrices),
                         sd: stats.stdev(sim.periodTradePrices),
                         p25Price: stats.percentile(sim.periodTradePrices, 0.25),
-                        p75Price: stats.percentile(sim.periodTradePrices, 0.75),
-                        gini: (0, _giniSs2.default)(finalMoney)
-                    };
-                    sim.logs.ohlc.submit(result, '');
+                        p75Price: stats.percentile(sim.periodTradePrices, 0.75)
+                    });
                 }
+                sim.logs.ohlc.submit(result, '');
             }
             if (sim.logs.profit) sim.logs.profit.write([sim.caseid, sim.period].concat(finalMoney));
             if (sim.logs.ohlc) ohlc();

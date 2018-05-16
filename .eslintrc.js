@@ -7,7 +7,7 @@ module.exports = {
     },
     "extends": "eslint:recommended",
     "parserOptions": {
-       "ecmaVersion": 6,
+       "ecmaVersion": 2017,
        "sourceType": "module"
     },
     "rules": {
@@ -86,7 +86,7 @@ module.exports = {
         "no-bitwise": "error",
         "no-caller": "error",
         "no-catch-shadow": "error",
-        "no-confusing-arrow": "error",
+        "no-confusing-arrow": ["error", {"allowParens": true}],
         "no-continue": "error",
         "no-div-regex": "error",
         "no-duplicate-imports": "error",
