@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Copyright 2016- Paul Brewer, Economic and Financial Technology Consulting LLC
 // This is open source software. The MIT License applies to this software.
 // see https://opensource.org/licenses/MIT or included License.md file
