@@ -11,7 +11,7 @@
     "lint": "node_modules/.bin/eslint src/index.js",
     "lint-test": "node_modules/.bin/eslint test/index.js",
     "test": "node_modules/.bin/mocha --require babel-core/register --reporter spec --slow 50 --timeout 300000",
-    "cover": "node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- -u exports --compilers js:babel-register --timeout 300000",
+    "cover": "node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- -u exports --require babel-core/register --timeout 300000",
     "go": "npm run clean && npm run lint && npm run lint-test && npm run test && npm run build"
   },
   "repository": {
