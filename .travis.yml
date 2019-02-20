@@ -9,10 +9,11 @@ install:
 script:
   - npm run lint
   - npm run lint-test
-  - npm run cover
+  - npm run test
 
-after_script: 
-  - "cat coverage/lcov.info | node_modules/coveralls/bin/coveralls.js"
+after_script:
+  - npm run coverage
+
 
 
 

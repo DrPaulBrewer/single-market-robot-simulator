@@ -2,6 +2,7 @@
 
 /* eslint no-console: "off", newline-per-chained-call: "off" */
 
+import '@babel/polyfill';
 import assert from 'assert';
 import 'should';
 import * as singleMarketRobotSimulator from '../src/index.js';

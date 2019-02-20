@@ -5,3 +5,5 @@ example*.csv
 example*.js
 *~
 package-lock.json
+.nyc_output
+*lcov
