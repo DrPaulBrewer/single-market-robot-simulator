@@ -28,7 +28,7 @@
   "license": "MIT",
   "dependencies": {
     "gini-ss": "^0.2.1",
-    "market-agents": "^3.2.2",
+    "market-agents": "^3.3.0",
     "market-example-contingent": "^1.2.0",
     "p-whilst": "^2.1.0",
     "positive-number-array": "^1.2.2",
@@ -37,9 +37,9 @@
   },
   "devDependencies": {
     "@babel/cli": "^7.4.4",
-    "@babel/core": "^7.4.4",
+    "@babel/core": "^7.4.5",
     "@babel/polyfill": "^7.4.4",
-    "@babel/preset-env": "^7.4.4",
+    "@babel/preset-env": "^7.4.5",
     "@babel/register": "^7.4.4",
     "coveralls": "^3.0.3",
     "esdoc": "^1.1.0",
