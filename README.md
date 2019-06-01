@@ -1,5 +1,4 @@
-single-market-robot-simulator
-========
+# single-market-robot-simulator
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/DrPaulBrewer/single-market-robot-simulator.svg)](https://greenkeeper.io/)
 [![Build Status](https://travis-ci.org/DrPaulBrewer/single-market-robot-simulator.svg?branch=master)](https://travis-ci.org/DrPaulBrewer/single-market-robot-simulator)
@@ -8,6 +7,11 @@ single-market-robot-simulator
 
 A stand alone nodejs app and software module for creating numerical experiments with a single market.
 The induced supply and demand is configurable, as are the types of trading robots populating the market.
+
+## Warning: Large portions of the documentation are due for a rewrite
+
+As I have been focussed on doing some research and developing out a cloud-connected site for using this software, the
+documentation reported here has not had much priority.  Large sections are due for a rewrite.
 
 ## Programmer's Documentation on ESDoc
 
