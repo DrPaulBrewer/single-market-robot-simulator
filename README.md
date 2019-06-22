@@ -219,11 +219,13 @@ But I do not have  time to answer every question.  Nor can I answer every questi
 Technology can be frustrating, and
 having a conversation about frustration that also involves lacking useful notes and being ill-prepared, is often mutually frustrating and tends to be a waste of time.  If that seems arrogant, imagine I am talking about myself.  
 
-I lack useful notes on what happens if the software is run on unsuitable machines.  And I'm ill-prepared to answer questions for free when I spent years producing the free software for free and co-wrote the first peer-reviewed research article for free (that the journal publisher will hide behind a paywall in lieu of a few thousand dollars, while in tech we thankfully can release free software for free). Like most people, I need to make some money.
+I lack useful notes on what happens if the software is run on unsuitable machines.  
 
-Keep in mind that you might also lack useful notes or be ill-prepared (i.e. it doesn't work but you don't know why and you didn't write anything down about the error messages or exactly what you did; or your question is about how to construct a
-simulation without reading the documentation or studying other
-examples).  
+And I'm ill-prepared to answer questions for free when I spent years producing the free software for free and co-wrote the first peer-reviewed research article for free (that the publisher will hide behind a paywall in lieu of a few thousand dollars, while in tech we thankfully can release free software for free). No external funding sources have sponsored the development of this software.  If this simulation software helps with the goals of your organization -- and is saving money by providing a head-start on research or teaching projects -- then your organization should become a financial sponsor.  In such a case, please contact me. 
+
+I wrote above that I might lack notes or be ill-prepared. 
+
+Keep in mind that you might also lack useful notes or be ill-prepared (i.e. it doesn't work but you don't know why and you didn't write anything down about the error messages or exactly what you did; or your question is about how to construct a simulation without reading the documentation or studying other examples).  
 
 But on a happier note...
 
@@ -244,7 +246,7 @@ Before asking me a question, please try these things first:
   and if you need to do a Google or Skype Hangout for me to see it, an emailed bill for my time should be expected.
   - perhaps upgrading your computer. More cores, 8 GB or more ram, and an SSD are all a plus. Typically a full-sized desktop has more heat dissipation and can be higher performance than a laptop or mini cube.
   - optionally spending less than $100 on the paid version of this software when available at https://econ1.net --  which will be used over the web (no installation), be compatible with the free Docker usage method above, has a web-based editor, can run in the cloud, and stores the results in your Google Drive
-  - optionally renting a more power computer on the cloud.  
+  - optionally renting a more powerful computer on the cloud for an hour or two (e.g., you have a power-saving "green" laptop that is ok for most things but too slow or lacks RAM for running simulations)  
 * be sure you really have a short, solvable question
  - open-ended discussions are not short, solvable questions
  - constructive criticism is ok but I'll be the judge of its constructive-ness. Keep it civil and remember that you haven't paid anything for this software, it was not a custom project for you, and my goals may have nothing to do with your specific needs.
