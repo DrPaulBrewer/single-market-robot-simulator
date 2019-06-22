@@ -111,9 +111,9 @@ for `config.json` only the filename is changed.
 The most recent Docker container is for version 5.6.0.  To
 run that, use this docker command:
 
-   docker run -it \
-          -v /path/to/your/work/directory:/work \
-          drpaulbrewer/single-market-robot-simulator:5.6.0
+    docker run -it \
+           -v /path/to/your/work/directory:/work \
+           drpaulbrewer/single-market-robot-simulator:5.6.0
 
 To run the simulator code as it existed for the research project [2] (version 4.3.0),  use this Docker command:
 
@@ -122,9 +122,15 @@ To run the simulator code as it existed for the research project [2] (version 4.
            drpaulbrewer/single-market-robot-simulator:4.3.0
 
 #### when installed from GitHub
- If installed from github onto a suitable system (preferably Linux, though it may run on Windows 10 or Mac -- and with nodejs and npm previously installed) it can be used as a stand alone nodejs app,
+ If installed from github onto a suitable system (preferably Linux, though it may run on Windows 10 or Mac -- and with nodejs and npm previously installed) it can be used as a stand alone nodejs app.
 
  `node build/index.js` from the installation directory will run the simulation, reading the `config.json` file and outputting various log files.
+ 
+ You can name a file like `/my-files/research/project123/sim.json` but the simulator will then fetch that file but continue to run and output market data files into the current directory, and not necessarily in the directory where that `sim.json` file is located.  Instead, consider copying the `sim.json` file to a new directory, `cd` to that new directory, and run
+ 
+ `node /path/to/single-market-robot-simulator/build/index.js sim.json`  
+ 
+ where you should replace `/path/to/` with the actual directory path where the simulator is installed.
 
 
 #### Outputs
@@ -147,7 +153,7 @@ Depending on whether you are using ES6 or CJS modules, importing looks like this
 
     const SMRS = require("single-market-robot-simulator"); // CJS
 
-returns an object `SMRS` containing constructors for `Log`, `Simulation` and function `runSimulation`.  Functionality
+and returns an object `SMRS` containing a constructor for `Simulation` and function `runSimulation`.  Functionality
 will run either in the browser or nodejs without modification ("isomorphic javascript").  
 
 On the browser, standard browser security policies require different procedures for writing out files.  Therefore, the data logs cannot be immediately written out to .csv files
@@ -170,7 +176,11 @@ However, those are very early prototypes (v1, May 2017), are not actively update
 
     npm test
 
-will run the tests.  You can also click on the build or coverage badges to view public test reports.
+from the local git-cloned and npm-installed copy of this repository will run the tests.  
+
+You may also be interested in the tests for `market-agents`, `market-example-contingent` or other dependencies, which are available from those modules' directories.
+
+You can also click on the build or coverage badges to view public test reports.
 
 ## Copyright
 
@@ -232,17 +242,17 @@ Before asking me a question, please try these things first:
 * consider that your problem might be solved faster by
   - asking a local computer-savvy colleague to sit down with you and review what is happening. I can't see it from here
   and if you need to do a Google or Skype Hangout for me to see it, an emailed bill for my time should be expected.
-  - perhaps upgrading your computer. More cores, 8 or GB ram, and an SSD are all a plus. Typically a desktop has more heat dissipation and can be higher performance than a laptop.
-  - perhaps spending less than $100 on the paid version of this software when available at https://econ1.net --  which will be used over the web (no installation), be compatible with the free Docker usage method above, has a web-based editor, can run in the cloud, and stores the results in your Google Drive
-  - renting a more power computer on the cloud.  
+  - perhaps upgrading your computer. More cores, 8 GB or more ram, and an SSD are all a plus. Typically a full-sized desktop has more heat dissipation and can be higher performance than a laptop or mini cube.
+  - optionally spending less than $100 on the paid version of this software when available at https://econ1.net --  which will be used over the web (no installation), be compatible with the free Docker usage method above, has a web-based editor, can run in the cloud, and stores the results in your Google Drive
+  - optionally renting a more power computer on the cloud.  
 * be sure you really have a short, solvable question
  - open-ended discussions are not short, solvable questions
  - constructive criticism is ok but I'll be the judge of its constructive-ness. Keep it civil and remember that you haven't paid anything for this software, it was not a custom project for you, and my goals may have nothing to do with your specific needs.
- - anything that would take several pages to ask or answer (like this rant and advice) is too broad
- - explain the question out loud to an unfamiliar (possibly fictional) person.  Also known as [Rubber duck debugging](https://en.wikipedia.org/wiki/Rubber_duck_debugging)
- - if you suspect a bug, have a list of steps to reproduce it
- - Be prepared to answer: **"What have you tried?"**
- - Don't be be a [help vampire](https://en.wiktionary.org/wiki/help_vampire). While it is only natural to ask preliminary questions instead of "wasting time" reading, learning, or trying things yourself -- the strategy of pushing your prep work off on others is generally seen as counterproductive.
+ - anything taking several pages to ask or answer (like this rant and advice) is too broad
+ - explaining the question out loud to an unfamiliar (possibly fictional) person can help you solve your own problem.  Also known as [Rubber duck debugging](https://en.wikipedia.org/wiki/Rubber_duck_debugging)
+ - if suspecting a bug, prepare and test a list of steps to reproduce it
+ - be prepared to answer: **"What have you tried?"**
+ - don't be be a [help vampire](https://en.wiktionary.org/wiki/help_vampire). While it seems natural to ask preliminary questions instead of "wasting time" reading, learning, or trying things yourself -- the strategy of pushing your preparatory work (reading, learning, trying things yourself) off on others is generally seen as counterproductive.
 * post a public question to a relevant forum (the sites mentioned below are popular and include peer-review of questions and answers):
  - for Docker questions or general software usage questions, try https://superuser.com
  - for JavaScript programming questions, try https://stackoverflow.com
