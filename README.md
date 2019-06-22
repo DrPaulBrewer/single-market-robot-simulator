@@ -248,16 +248,16 @@ Before asking me a question, please try these things first:
   - optionally spending less than $100 on the paid version of this software when available at https://econ1.net --  which will be used over the web (no installation), be compatible with the free Docker usage method above, has a web-based editor, can run in the cloud, and stores the results in your Google Drive
   - optionally renting a more powerful computer on the cloud for an hour or two (e.g., you have a power-saving "green" laptop that is ok for most things but too slow or lacks RAM for running simulations)  
 * be sure you really have a short, solvable question
- - open-ended discussions are not short, solvable questions
- - constructive criticism is ok but I'll be the judge of its constructive-ness. Keep it civil and remember that you haven't paid anything for this software, it was not a custom project for you, and my goals may have nothing to do with your specific needs.
- - anything taking several pages to ask or answer (like this rant and advice) is too broad
- - explaining the question out loud to an unfamiliar (possibly fictional) person can help you solve your own problem.  Also known as [Rubber duck debugging](https://en.wikipedia.org/wiki/Rubber_duck_debugging)
- - if suspecting a bug, prepare and test a list of steps to reproduce it
- - be prepared to answer: **"What have you tried?"**
- - don't be be a [help vampire](https://en.wiktionary.org/wiki/help_vampire). While it seems natural to ask preliminary questions instead of "wasting time" reading, learning, or trying things yourself -- the strategy of pushing your preparatory work (reading, learning, trying things yourself) off on others is generally seen as counterproductive.
+  - open-ended discussions are not short, solvable questions
+  - constructive criticism is ok but I'll be the judge of its constructive-ness. Keep it civil and remember that you haven't paid anything for this software, it was not a custom project for you, and my goals may have nothing to do with your specific needs.
+  - anything taking several pages to ask or answer (like this rant and advice) is too broad
+  - explaining the question out loud to an unfamiliar (possibly fictional) person can help you solve your own problem.  Also known as [Rubber duck debugging](https://en.wikipedia.org/wiki/Rubber_duck_debugging)
+  - if suspecting a bug, prepare and test a list of steps to reproduce it
+  - be prepared to answer: **"What have you tried?"**
+  - don't be be a [help vampire](https://en.wiktionary.org/wiki/help_vampire). While it seems natural to ask preliminary questions instead of "wasting time" reading, learning, or trying things yourself -- the strategy of pushing your preparatory work (reading, learning, trying things yourself) off on others is generally seen as counterproductive.
 * post a public question to a relevant forum (the sites mentioned below are popular and include peer-review of questions and answers):
- - for Docker questions or general software usage questions, try https://superuser.com
- - for JavaScript programming questions, try https://stackoverflow.com
- - for Economics questions, try https://economics.stackexchange.com
+  - for Docker questions or general software usage questions, try https://superuser.com
+  - for JavaScript programming questions, try https://stackoverflow.com
+  - for Economics questions, try https://economics.stackexchange.com
 
 # Thanks for Visiting and Good Luck with your Simulations!
