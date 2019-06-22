@@ -18,7 +18,7 @@ The [ESDoc site for single-market-robot-simulator](https://doc.esdoc.org/github.
 
 ## Use of Modern JavaScript -- Babel compiler
 
-Note that the source code uses modern JavaScipt syntax and must be compiled with the Facebook-sponsored open source Babel compiler. The source code is in ./src and the Babel-compiled version in ./build.  The babel tools are linked as package.json devDependencies.  This is primarily a concern for other programmers and does not affect stand-alone usage.
+Note that the source code uses modern JavaScript syntax and must be compiled with the Facebook-sponsored open source Babel compiler. The source code is in ./src and the Babel-compiled version in ./build.  The babel tools are linked as package.json devDependencies.  This is primarily a concern for other programmers and does not affect stand-alone usage.
 
 ## Installation
 
