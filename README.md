@@ -18,7 +18,7 @@ The [ESDoc site for single-market-robot-simulator](https://doc.esdoc.org/github.
 
 ## Use of Modern JavaScript -- Babel compiler
 
-Note that the source code uses modern JavaScript syntax and must be compiled with the Facebook-sponsored open source Babel compiler. The source code is in ./src and the Babel-compiled version in ./build.  The babel tools are linked as package.json devDependencies.  This is primarily a concern for other programmers and does not affect stand-alone usage.
+The source code uses ES6 JavaScript syntax and may need to be compiled with the Facebook-sponsored open source Babel compiler to be compatible with JavaScript implementations in browsers or nodejs. The source code is in ./src and the Babel-compiled version in ./build.  The babel tools are linked as package.json devDependencies.  This is primarily a concern for other programmers and does not affect stand-alone usage.
 
 ## Installation
 
@@ -59,11 +59,15 @@ An afforable [paid web app](https://econ1.net) is in development that is much ni
 
 ## Configuration
 
+Configuration is a matter of preparing a `sim.json` file BEFORE usage.
+
 Configuration in the stand alone app occurs in a .json file called `config.json` or `sim.json`.  `config.json` is currently read by `main()` by default in stand-alone app mode but this may change to `sim.json` in v6.0.0 to better agree with other contexts ([2], and the Docker stand-alones) where the file `sim.json` is used,  
 
-When used as a software module, the configuration object is passed to the function `runSimulation()` or the constructor `new Simulation()`.
+When used as a software module, the configuration object `config` read from the configuration file or other location is passed to the constructor `new Simulation(config)`.
 
-A partial (but still valid) format for `config.json` is given in `configSchema.json` as a JSON Schema.
+A partial (but still valid) machine and human readable format for `config.json` is given in `configSchema.json` as a JSON Schema.
+
+A more human-readable version for most of the allowed fields can be found in the programmer's documentation for the [public constructor config params for `Simulation`](https://doc.esdoc.org/github.com/DrPaulBrewer/single-market-robot-simulator/class/src/index.js~Simulation.html).
 
 ### Configurable supply and demand
 
@@ -96,6 +100,7 @@ Among the choices are:
 * a "oneupmanship" algorithm that increases the bid or decreases the ask by 1 unit if profitable to do so
 * others, and a base class for writing your own algorithm
 
+
 ## Usage
 
 ### Stand Alone App
@@ -125,11 +130,11 @@ To run the simulator code as it existed for the research project [2] (version 4.
  If installed from github onto a suitable system (preferably Linux, though it may run on Windows 10 or Mac -- and with nodejs and npm previously installed) it can be used as a stand alone nodejs app.
 
  `node build/index.js` from the installation directory will run the simulation, reading the `config.json` file and outputting various log files.
- 
+
  You can name a file like `/my-files/research/project123/sim.json` but the simulator will then fetch that file but continue to run and output market data files into the current directory, and not necessarily in the directory where that `sim.json` file is located.  Instead, consider copying the `sim.json` file to a new directory, `cd` to that new directory, and run
- 
+
  `node /path/to/single-market-robot-simulator/build/index.js sim.json`  
- 
+
  where you should replace `/path/to/` with the actual directory path where the simulator is installed.
 
 
@@ -153,11 +158,10 @@ Depending on whether you are using ES6 or CJS modules, importing looks like this
 
     const SMRS = require("single-market-robot-simulator"); // CJS
 
-and returns an object `SMRS` containing a constructor for `Simulation` and function `runSimulation`.  Functionality
-will run either in the browser or nodejs without modification ("isomorphic javascript").  
+and returns an object `SMRS` containing a constructor for the JavaScript class `Simulation` and a few other miscellaneous items.  Ideally, this code
+will run either in the browser or on the server via nodejs without being modified for the specific environment ("isomorphic javascript").  
 
-On the browser, standard browser security policies require different procedures for writing out files.  Therefore, the data logs cannot be immediately written out to .csv files
-(as with the stand alone app) but are maintained in memory for use with other systems, such as browser-based plotting software.  It is the responsibility of other software (e.g. `single-market-robot-simulator-savezip`) to write the logs to browser-side `.csv` files or elsewhere and/or to provide for visualizations.
+On the browser, standard browser security policies require different procedures for writing out files.  Therefore, the data logs cannot be immediately written out to .csv files (as with the stand alone app) but are maintained in memory for use with other systems, such as browser-based plotting software.  It is the responsibility of other software (e.g. `single-market-robot-simulator-savezip`) to write the logs to browser-side `.csv` files or elsewhere and/or to provide for visualizations.
 
 Simulations can be run in either synchronous or asynchronous mode.  Asynchronous mode is useful for running on the browser
 so that the event loop and user interface do not freeze while waiting for simulation results.
@@ -171,6 +175,7 @@ and the resulting simulator web app is at
 http://drpaulbrewer.github.io/robot-trading-webapp/
 
 However, those are very early prototypes (v1, May 2017), are not actively updated, and should not be relied upon for new research.  I have a [paid version of this market simulator](https://econ1.net) in development.  You should also prefer the docker and stand-alone versions to the early web prototype.  
+
 
 ## Tests
 
@@ -221,9 +226,9 @@ having a conversation about frustration that also involves lacking useful notes 
 
 I lack useful notes on what happens if the software is run on unsuitable machines.  
 
-And I'm ill-prepared to answer questions for free when I spent years producing the free software for free and co-wrote the first peer-reviewed research article for free (that the publisher will hide behind a paywall in lieu of a few thousand dollars, while in tech we thankfully can release free software for free). No external funding sources have sponsored the development of this software.  If this simulation software helps with the goals of your organization -- and is saving money by providing a head-start on research or teaching projects -- then your organization should become a financial sponsor.  In such a case, please contact me. 
+And I'm ill-prepared to answer questions for free when I spent years producing the free software for free and co-wrote the first peer-reviewed research article for free (that the publisher will hide behind a paywall in lieu of a few thousand dollars, while in tech we thankfully can release free software for free). No external funding sources have sponsored the development of this software.  If this simulation software helps with the goals of your organization -- and is saving money by providing a head-start on research or teaching projects -- then your organization should become a financial sponsor.  In such a case, please contact me.
 
-I wrote above that I might lack notes or be ill-prepared. 
+I wrote above that I might lack notes or be ill-prepared.
 
 Keep in mind that you might also lack useful notes or be ill-prepared (i.e. it doesn't work but you don't know why and you didn't write anything down about the error messages or exactly what you did; or your question is about how to construct a simulation without reading the documentation or studying other examples).  
 
