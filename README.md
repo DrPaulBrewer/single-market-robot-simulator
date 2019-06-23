@@ -215,15 +215,18 @@ Paul Brewer and Anmol Ratan (2019), "Profitability, Efficiency, and Inequality i
 ## Before asking the author for help
 
 #### I hope you enjoy the free software
-**and the thrill of solving your own problems**
+**and the thrill of researching and solving problems**
 
 I will appreciate a social "hello" from researchers, students, and others attempting to use the free version of this software.
 
 But I also reserve the right to ignore email. Don't take it
-personally, or as a snub.  Free support is simply not included
-with this free software, or any free software for that matter.
+personally, or as a snub.  24-hr on call unlimited free support 
+is not included with this free software, or any free software
+for that matter
 
 I have written this section to help with that issue.
+
+First, if you are a student, I wouldn't dream of taking your homework problem or class project problem away from you -- even if, in a moment of weakness or desperation the day before the deadline you were having trouble completing it at the last minute.  You can do it! I believe in you! And, it is a learning experience.
 
 Technology can be frustrating, and
 having a conversation about frustration that also involves lacking useful notes and being ill-prepared, is often mutually frustrating and tends to be a waste of time.  If that seems arrogant, imagine I am talking about myself.  
