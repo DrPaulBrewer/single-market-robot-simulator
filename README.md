@@ -214,53 +214,45 @@ Paul Brewer and Anmol Ratan (2019), "Profitability, Efficiency, and Inequality i
 
 ## Before asking the author for help
 
-#### Foreword
-This portion is written for a relatively non-technical audience, including researchers in Economics and/or beginning programmers, who might be interested in getting set up to use the software to run market simulations.
+#### I hope you enjoy the free software
+**and the thrill of solving your own problems**
 
 I will appreciate a social "hello" from researchers, students, and others attempting to use the free version of this software.
 
-But I do not have  time to answer every question.  Nor can I answer every question -- for free -- in a way that will be satisfying or timely to everyone.  I have written this section to help with that issue.
+But I also reserve the right to ignore email. Don't take it
+personally, or as a snub.  Free support is simply not included
+with this free software, or any free software for that matter.
+
+I have written this section to help with that issue.
 
 Technology can be frustrating, and
 having a conversation about frustration that also involves lacking useful notes and being ill-prepared, is often mutually frustrating and tends to be a waste of time.  If that seems arrogant, imagine I am talking about myself.  
 
-I lack useful notes on what happens if the software is run on unsuitable machines.  
+I lack useful notes on what happens if the software is run on unsuitable machines. Or what happens when problems of unclear
+documentation or insufficient prior experience combine with other issues between the keyboard and the chair.  
 
-And I'm ill-prepared to answer questions for free when I spent years producing the free software for free and co-wrote the first peer-reviewed research article for free (that the publisher will hide behind a paywall in lieu of a few thousand dollars, while in tech we thankfully can release free software for free). No external funding sources have sponsored the development of this software.  If this simulation software helps with the goals of your organization -- and is saving money by providing a head-start on research or teaching projects -- then your organization should become a financial sponsor.  In such a case, please contact me.
+And I am ill-prepared to continue working for free on things I actually care about, and much less enthusiastic about becoming someone's private arbitrage gain. If this simulation software helps with your group's goals and is saving money by providing a head-start on research or teaching projects -- please consider becoming a financial sponsor.
 
 I wrote above that I might lack notes or be ill-prepared.
 
-Keep in mind that you might also lack useful notes or be ill-prepared (i.e. it doesn't work but you don't know why and you didn't write anything down about the error messages or exactly what you did; or your question is about how to construct a simulation without reading the documentation or studying other examples).  
-
-But on a happier note...
-
-#### Availability for Engagements
-
-If you would like to buy consulting time for either occasional assistance with a project or full-service creation and execution of a project -- you may find more availability.  I am located in the USA and charge USA prices.
-
-The experience from **years** spent developing this software can not be quickly communicated to someone who has never written a single page JavaScript app. But the technical knowledge can be "self-taught" from available online and print sources (O'Reilley Press) and obtained without a CS or software engineering degree. Before this project, I assisted with technology for the California Institute of Technology, Laboratory for Experimental Economics and Political Science. So, I've been at this a while.  
-
-If you are at a university and want me to speak with or advise a student developer team, there should be something
-easily forseeable in it for the future development of this project (e.g. open source and related and building on what existed before, without conflicting with any other related activities), and funding and support equivalent to a tenured or pro-staff position at US rates. Without funding, I can't solve your new problem for free simply for the science or another co-authored publication for my CV or even for the contribution to free software. At zero price there is tons of demand for this sort of thing, or for almost anything really.  
+Keep in mind that you might also lack useful notes or be ill-prepared (i.e. it doesn't work but you don't know why and you didn't write anything down about the error messages or exactly what you did; or your question is about how to construct a simulation without reading the documentation or studying any examples).  
 
 #### Questions
 
 Before asking me a question, please try these things first:
 * consider that your problem might be solved faster by
-  - asking a local computer-savvy colleague to sit down with you and review what is happening. I can't see it from here
-  and if you need to do a Google or Skype Hangout for me to see it, an emailed bill for my time should be expected.
-  - perhaps upgrading your computer. More cores, 8 GB or more ram, and an SSD are all a plus. Typically a full-sized desktop has more heat dissipation and can be higher performance than a laptop or mini cube.
-  - optionally spending less than $100 on the paid version of this software when available at https://econ1.net --  which will be used over the web (no installation), be compatible with the free Docker usage method above, has a web-based editor, can run in the cloud, and stores the results in your Google Drive
-  - optionally renting a more powerful computer on the cloud for an hour or two (e.g., you have a power-saving "green" laptop that is ok for most things but too slow or lacks RAM for running simulations)  
+  - asking a local computer-savvy colleague to sit down with you and review what is happening.
+  - explaining the question out loud to an unfamiliar (or even a fictional) person can help you solve your own problem.  Also known as [Rubber duck debugging](https://en.wikipedia.org/wiki/Rubber_duck_debugging).
+  - upgrading your computer or using a better or different computer. More cores, 8 GB or more ram, and an SSD are all a plus. The simulator software is single-threaded. But Docker on Windows or Mac installs its own Linux -- so on Docker you'll benefit from at least 2 cores.  Typically a full-sized desktop has more heat dissipation and can be higher performance than a laptop or mini cube.
+  - optionally spending less than $50 on the paid version of this software when available at https://econ1.net --  which will be used over the web (no installation), be compatible with the free Docker usage method above, has a web-based editor, can run in the cloud, and stores the results in your Google Drive.
 * be sure you really have a short, solvable question
-  - open-ended discussions are not short, solvable questions
+  - open-ended discussions are not short, solvable
+  - not short if it takes several pages to ask or answer
   - constructive criticism is ok but I'll be the judge of its constructive-ness. Keep it civil and remember that you haven't paid anything for this software, it was not a custom project for you, and my goals may have nothing to do with your specific needs.
-  - anything taking several pages to ask or answer (like this rant and advice) is too broad
-  - explaining the question out loud to an unfamiliar (possibly fictional) person can help you solve your own problem.  Also known as [Rubber duck debugging](https://en.wikipedia.org/wiki/Rubber_duck_debugging)
-  - if suspecting a bug, prepare and test a list of steps to reproduce it
   - be prepared to answer: **"What have you tried?"**
+  - if suspecting a bug, prepare and test a short, complete, verifiable list of steps to reproduce it and include that with your question
   - don't be be a [help vampire](https://en.wiktionary.org/wiki/help_vampire). While it seems natural to ask preliminary questions instead of "wasting time" reading, learning, or trying things yourself -- the strategy of pushing your preparatory work (reading, learning, trying things yourself) off on others is generally seen as counterproductive.
-* post a public question to a relevant forum (the sites mentioned below are popular and include peer-review of questions and answers):
+* others can often answer your general computer or programming question faster and better than I can. Post a public question to a popular, relevant forum. The sites below are popular and include peer-review of questions and answers.  The same rules apply -- do your homework before asking:
   - for Docker questions or general software usage questions, try https://superuser.com
   - for JavaScript programming questions, try https://stackoverflow.com
   - for Economics questions, try https://economics.stackexchange.com
