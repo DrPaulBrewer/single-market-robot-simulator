@@ -55,7 +55,7 @@ special settings are required.
 
 ### Paid App Under Development
 
-An afforable [paid web app](https://econ1.net) is in development that is much nicer, includes visualization and an editor, has time-saving features, and integrates with Google Cloud and Google Drive,
+An afforable [paid web app](https://econ1.net) is in development that is much nicer, includes visualization and an editor, has time-saving features, and integrates with Google Cloud and Google Drive.
 
 ## Configuration
 
