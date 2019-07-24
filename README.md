@@ -229,6 +229,23 @@ Columns in `ohlc.csv` include:
 15. `sd` the standard deviation of trading prices in this period
 16. `gini` the single-period Gini Coefficient of trading profits achieved within this period
 
+##### `profit.csv` column format
+
+Each row in this file reports the profits of all agents for a period of trading.
+
+Only the profits in a specific period are reported. Profits are not accumulated from one period to another.
+
+Columns in `profit.csv` include:
+
+1. `caseid` identifies a simulation in a set of simulations
+2. `period` period number
+3. `y1` the profit of agent 1
+4. `y2` the profit of agent 2
+5. `y3` the profit of agent 3
+...
+
+The file will have as many `y*` columns as there are agents.  
+
 ##### `effalloc.csv` column format
 
 Each row in this file reports the Efficiency of Allocation for a period of trading.
