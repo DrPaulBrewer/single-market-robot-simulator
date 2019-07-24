@@ -242,9 +242,14 @@ Columns in `profit.csv` include:
 3. `y1` the profit of agent 1
 4. `y2` the profit of agent 2
 5. `y3` the profit of agent 3
+
 ...
 
-The file will have as many `y*` columns as there are agents.  
+The file will have as many `y*` columns as there are agents.  For example, if there are 500 agents, columns 3 through 502 will 
+consist of the profits of each of the 500 agents for a single period.  This is possible because there is no maximum line length
+or maximum number of columns in the specification for a `.csv` file.  (See: [RFC4180](https://tools.ietf.org/html/rfc4180)).  
+Your favorite spreadsheet or other tools may have limitations, and in such a case you'll need to find something else to complete your
+analysis or find a way to break the big or wide file into smaller files. 
 
 ##### `effalloc.csv` column format
 
