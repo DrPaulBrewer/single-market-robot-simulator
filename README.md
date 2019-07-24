@@ -67,7 +67,7 @@ When used as a software module, the configuration object `config` read from the 
 
 A partial (but still valid) machine and human readable format for `config.json` is given in `configSchema.json` as a JSON Schema.
 
-A more human-readable version for most of the allowed fields can be found in the programmer's documentation for the [public constructor config params for `Simulation`](https://doc.esdoc.org/github.com/DrPaulBrewer/single-market-robot-simulator/class/src/index.js~Simulation.html).
+A more human-readable version for most of the allowed fields can be found in the programmer's documentation for the [public constructor config params for `Simulation`](https://doc.esdoc.org/github.com/DrPaulBrewer/single-market-robot-simulator/class/src/index.js~Simulation.html#instance-constructor-constructor).
 
 ### Configurable supply and demand
 
