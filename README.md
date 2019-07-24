@@ -229,6 +229,15 @@ Columns in `ohlc.csv` include:
 15. `sd` the standard deviation of trading prices in this period
 16. `gini` the single-period Gini Coefficient of trading profits achieved within this period
 
+##### `effalloc.csv` column format
+
+Each row in this file reports the Efficiency of Allocation for a period of trading.
+
+Columns in `effalloc.csv` include: 
+
+1. `caseid` identifies a simulation in a set of simulations
+2. `period` period number
+3. `efficiencyOfAllocation` 100*(Sum of All Agents Profit for this period) / (Max Possible) 
 
 #### Progress Messages
 
