@@ -325,7 +325,8 @@ Dhananjay K. Gode and Shyam Sunder, Journal of Political Economy, Vol. 101, No. 
 
 [2] This sniper robot was used for an academic research project and its history detailed in Appendix 1 of the resulting publication:
 
-Paul Brewer and Anmol Ratan (2019), "Profitability, Efficiency, and Inequality in Double Auction Markets with Snipers."  Accepted at Journal of Economic Behavior and Organization, forthcoming.
+Paul Brewer and Anmol Ratan (2019), "Profitability, efficiency, and inequality in double auction markets with snipers."  Journal of Economic Behavior & Organization, vol. 164, 486-499.
+https://doi.org/10.1016/j.jebo.2019.06.017  (Elsevier/Science Direct paywall)
 
 ## Before asking the author for help
 
