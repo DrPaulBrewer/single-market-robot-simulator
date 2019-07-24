@@ -144,9 +144,93 @@ A number of .csv comma-separated-value files are produced containing the market 
 
 Output files include:
 
-`buyorders.csv`, `sellorders.csv`, `ohlc.csv`, `trades.csv`, `profits.csv`, and `effalloc.csv`.
+`buyorder.csv`, `sellorder.csv`, `ohlc.csv`, `trade.csv`, `profit.csv`, and `effalloc.csv`.
 
-These logs have header rows and are  compatible with Excel and other spreadsheets and most analysis software.
+These files have header rows and are compatible with Excel and other spreadsheets and most analysis software.
+
+##### `buyorder.csv` and `sellorder.csv` column format
+Each row in these files contains an order from a buyer or seller to buy/sell a single unit at a desired price.  
+
+These files share a common format that can be combined.  Irrelevant fields are blank.  
+
+Columns include: 
+
+1. `caseid` identifies a simulation in a set of simulations
+2. `period` period number
+3. `t` unique time of order within simulation
+4. `tp` time of order from beginning of current period
+5. `preBidPrice` highest bid price available immediately before this order
+6. `preAskPrice` lowest ask price available immediately before this order
+7. `preTradePrice` previous trade price 
+8. `id` id number of agent placing this order
+9.  `x` agent's inventory of "x" before this order
+10. `buyLimitPrice` agent's submitted bid price for this order, if this is a buy order
+11. `buyerValue` agent's unit value for this unit, if a buyer
+12. `buyerAgentType` agent's class (algorithm) from npm: market-agents, if a buyer
+13. `sellLimitPrice` agetn's submitted ask price for this order, if this is a sell order
+14. `sellerCost` agent's unit cost for this unit, if a seller
+15. `sellerAgentType` agent's class (algorithm) from npm: market-agents, if a seller
+
+##### `trade.csv` column format
+
+Each row in this file reports a trade.  
+
+In a double auction market, trades are caused by a match between an existing order and an incoming order. 
+
+Each trade is for a single unit of a good called `x`.   
+
+For example, an incoming order to buy 1 unit at price 55 will match a pre-existing sell order to sell 1 unit at price 50. The
+trade price in a double auction is always the price of the pre-existing order, in this case 50.   The time of the trade matches
+the time of the incoming order exactly.  
+
+In this file, all columns should contain data.
+
+Columns in `trade.csv` include: 
+
+1. `caseid` identifies a simulation in a set of simulations
+2. `period` period number
+3. `t` unique time of order within simulation
+4. `tp` time of order from beginning of current period
+5. `price` price for this trade
+6. `buyerAgentId` the id number of the Buyer
+7. `buyerAgentType` Buyer's class (algorithm) from npm: market-agents
+8. `buyerValue` Buyer's unit value for this unit
+9. `buyerProfit` Buyer's profit for this trade = `buyerValue` - `price`
+10. `sellerAgentId`  the id number of the Seller
+11. `sellerAgentType` Seller's class (algorithm) from npm: market-agents
+12. `sellerCost` Seller's unit cost for this unit
+13. `sellerProfit` Seller's profit for this trade = `price` - `sellerCost`
+
+##### `ohlc.csv` column format
+
+Each row in this file reports a period of trading.
+
+Originally, the file reported the opening, high, low, and close (final) trade prices.  
+Various additional columns have been added.  
+
+All columns should normally contain data
+
+Columns in `ohlc.csv` include: 
+
+1. `caseid` identifies a simulation in a set of simulations
+2. `period` period number
+3. `beginTime` simulation time at beginning of period
+4. `endTime` simulation time at end of trading period
+5. `endReason` 0 for normal ending.  Other numbers for various optional order/trade countdown clocks.  
+6. `openPrice` price of the first trade in this period
+7. `highPrice` highest trade price in this period
+8. `lowPrice` lowest trade price in this period
+9. `closePrice` price of the last trade in this period
+10. `volume` the number of units traded in this period
+11. `p25Price` the 25% percentile level of the trading price distribution in this period
+12. `medianPrice` the 50% percentile level of the trading price distribution in this period
+13. `p75Price` the 75% percentile level of the trading price distribution in this period
+14. `meanPrice` the mean of the trading prices in this period
+15. `sd` the standard deviation of trading prices in this period
+16. `gini` the single-period Gini Coefficient of trading profits achieved within this period
+
+
+#### Progress Messages
 
 There are no output progress messages unless `quiet: false` is in the `sim.json` properties.  There is a file called `period` that can be used as a progress indicator.  It contains only a single number -- the current period number.  
 
