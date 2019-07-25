@@ -61,19 +61,98 @@ An afforable [paid web app](https://econ1.net) is in development that is much ni
 
 Configuration is a matter of preparing a `sim.json` file BEFORE usage.
 
-Configuration in the stand alone app occurs in a .json file called `config.json` or `sim.json`.  `config.json` is currently read by `main()` by default in stand-alone app mode but this may change to `sim.json` in v6.0.0 to better agree with other contexts ([2], and the Docker stand-alones) where the file `sim.json` is used,  
+Here is an example configuration file, found in `config1.json`:
 
-When used as a software module, the configuration object `config` read from the configuration file or other location is passed to the constructor `new Simulation(config)`.
+```
+{
+  "buyerValues": [
+    100,
+    95,
+    90,
+    85,
+    80,
+    75,
+    70,
+    60,
+    50,
+    40,
+    30,
+    20,
+    10
+  ],
+  "sellerCosts": [
+    10,
+    20,
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90,
+    100
+  ],
+  "L": 1,
+  "H": 200,
+  "numberOfBuyers": 10,
+  "numberOfSellers": 10,
+  "buyerAgentType": [
+    "ZIAgent"
+  ],
+  "sellerAgentType": [
+    "ZIAgent"
+  ],
+  "periods": 20,
+  "periodDuration": 1000,
+  "buyerRate": 0.2,
+  "sellerRate": 0.2,
+  "integer": false,
+  "keepPreviousOrders": false,
+  "ignoreBudgetConstraint": false,
+  "xMarket": {
+    "buySellBookLimit": 0,
+    "resetAfterEachTrade": true
+  }
+}
+
+```
+
+The above configuration achieves the following:
+* `buyerValues` sets the unit values to be distributed each period to buyers, each buyer obtaining a single unit value round robin until exhaustion. Therefore this also sets the aggregate demand curve.
+* `sellerCosts` sets the unit costs to be distributed each period to sellers, each seller obtaining a single unit cost round robin until exhaustion. Therefore this also sets the aggregate supply curve.
+* `L` sets the lowest allowable price, here 1
+* `H` sets the highest allowable price, here 200
+* `numberOfBuyers` sets the number of buyers (here 10), who receive id numbers 1,2,3,...,`numberOfBuyers`
+* `numberOfSellers` sets the number of sellers, (here 10) who receive id numbers `numberOfBuyers`+1,`numberOfBuyers`+2,...,`numberOfBuyers`+`numberOfSellers`
+(here 11,12,13,14,15,16,17,18,19,20)
+* `buyerAgentType` sets the type of buyer (here, my implementation of Gode/Sunder's ZI Agents) to use from [market-agents](https://github.com/DrPaulBrewer/market-agents)
+* `sellerAgentType` sets the type of seller (here, my implementation of Gode/Sunder's ZI Agents) to use from [market-agents](https://github.com/DrPaulBrewer/market-agents)
+* `periods` is the desired number of periods, or repetitions of a "trading day". Here we are asking for 20 periods.
+* `periodDuration` is the length of a period in virtual seconds (here, 1000)
+* `buyerRate` is the Poisson-arrival rate of an individual buyer (here, 0.2, or each buyer submits an order approximately once every 5 seconds)
+* `sellerRate` is the Poisson-arrival rate of an individual seller (here, 0.2, or each seller submits an order approximately once every 5 seconds)
+* `integer` determines whether prices must be integers or can be floating point because floating point can not represent fractions exactly unless they have denominators equal to a power of 2.  `integer:true` is a best practice.
+* `keepPreviousOrders` determines if new orders always cancel old orders.  In most cases `keepPreviousOrders:false` is appropriate.
+* `ignoreBudgetConstraint` determines if agents should use their unit values and costs.  `ignoreBudgetConstraint:false` is the appropriate setting for most cases.
+* `xMarket` settings occur in their own object.   
+
+Most of the allowed fields, except for the `xMarket` fields, can be found in the programmer's documentation for the [public constructor config params for `Simulation`](https://doc.esdoc.org/github.com/DrPaulBrewer/single-market-robot-simulator/class/src/index.js~Simulation.html#instance-constructor-constructor).
+
+The `xMarket` fields are documented in the programmer's documentation for the
+[public constructor config params for `Market`](https://doc.esdoc.org/github.com/DrPaulBrewer/market-example-contingent/class/src/index.js~Market.html#instance-constructor-constructor)
+
+Configuration in the stand alone app occurs in a .json file called `config.json` or `sim.json`.  `config.json` is currently read by `main()` by default in stand-alone app mode but this may change to `sim.json` in v6.0.0 to better agree with other contexts ([2], and the Docker stand-alones) where the file `sim.json` is used.   
+
+When used as a software module, the configuration object `config` read from the configuration file or other location should be passed to the constructor `new Simulation(config)`.
 
 A partial (but still valid) machine and human readable format for `config.json` is given in `configSchema.json` as a JSON Schema.
 
-A more human-readable version for most of the allowed fields can be found in the programmer's documentation for the [public constructor config params for `Simulation`](https://doc.esdoc.org/github.com/DrPaulBrewer/single-market-robot-simulator/class/src/index.js~Simulation.html#instance-constructor-constructor).
 
 ### Configurable supply and demand
 
 The values and costs to be distributed among the trading robots are configured in the properties `buyerValues` and `sellerCosts`, each an array that is distributed round-robin style to the buyer robots and seller robots respectively.  Each of these values and costs will be distributed exactly once at the beginning of each period of the market.
 
-To be clear, if the `numberOfBuyers` exceeds the length of `buyerValues`, then some buyers will not receive a unit value. Those buyers will exist but do nothing.   If the length of `buyerValues` exceeds the `numberOfBuyers` then some buyers will receive more than one unit value, which is OK and even expected. By "round-robin" I mean that an element `j` of `buyerValues` will be assigned to buyer `j mod numberOfBuyers` .   This form of specification is not convenient for every imaginable use, but it is convenient for setting a particular aggregate supply and demand and keeping it constant while tinkering with the number of buyers, sellers or other parameters.
+To be clear, if the `numberOfBuyers` exceeds the length of `buyerValues`, then some buyers will not receive a unit value. Those buyers will exist but do nothing.   If the length of `buyerValues` exceeds the `numberOfBuyers` then some buyers will receive more than one unit value, which is OK and even expected. By "round-robin" I mean that an element `j` of `buyerValues` will be assigned to buyer `1+(j mod numberOfBuyers)` .   This form of specification is not convenient for every imaginable use, but it is convenient for setting a particular aggregate supply and demand and keeping it constant while tinkering with the number of buyers, sellers or other parameters.
 
 The descending sorted `buyerValues` can be used to form a step function that is the aggregate demand function for the market.
 
@@ -131,7 +210,9 @@ To run the simulator code as it existed for the research project [2] (version 4.
 
  `node build/index.js` from the installation directory will run the simulation, reading the `config.json` file and outputting various log files.
 
- You can name a file like `/my-files/research/project123/sim.json` but the simulator will then fetch that file but continue to run and output market data files into the current directory, and not necessarily in the directory where that `sim.json` file is located.  Instead, consider copying the `sim.json` file to a new directory, `cd` to that new directory, and run
+ You can name a file like `/my-files/research/project123/sim.json` The simulator will then fetch that file but continue to run and output market data files into the current directory, and not in the directory where that `sim.json` file is located.  
+
+ To keep configuration and output files in the same directory, consider copying the `sim.json` file to a new directory, `cd` to that new directory, and run
 
  `node /path/to/single-market-robot-simulator/build/index.js sim.json`  
 
@@ -153,7 +234,7 @@ Each row in these files contains an order from a buyer or seller to buy/sell a s
 
 These files share a common format that can be combined.  Irrelevant fields are blank.  
 
-Columns include: 
+Columns include:
 
 1. `caseid` identifies a simulation in a set of simulations
 2. `period` period number
@@ -161,7 +242,7 @@ Columns include:
 4. `tp` time of order from beginning of current period
 5. `preBidPrice` highest bid price available immediately before this order
 6. `preAskPrice` lowest ask price available immediately before this order
-7. `preTradePrice` previous trade price 
+7. `preTradePrice` previous trade price
 8. `id` id number of agent placing this order
 9.  `x` agent's inventory of "x" before this order
 10. `buyLimitPrice` agent's submitted bid price for this order, if this is a buy order
@@ -175,7 +256,7 @@ Columns include:
 
 Each row in this file reports a trade.  
 
-In a double auction market, trades are caused by a match between an existing order and an incoming order. 
+In a double auction market, trades are caused by a match between an existing order and an incoming order.
 
 Each trade is for a single unit of a good called `x`.   
 
@@ -185,7 +266,7 @@ the time of the incoming order exactly.
 
 In this file, all columns should contain data.
 
-Columns in `trade.csv` include: 
+Columns in `trade.csv` include:
 
 1. `caseid` identifies a simulation in a set of simulations
 2. `period` period number
@@ -210,7 +291,7 @@ Various additional columns have been added.
 
 All columns should normally contain data
 
-Columns in `ohlc.csv` include: 
+Columns in `ohlc.csv` include:
 
 1. `caseid` identifies a simulation in a set of simulations
 2. `period` period number
@@ -245,21 +326,21 @@ Columns in `profit.csv` include:
 
 ...
 
-The file will have as many `y*` columns as there are agents.  For example, if there are 500 agents, columns 3 through 502 will 
+The file will have as many `y*` columns as there are agents.  For example, if there are 500 agents, columns 3 through 502 will
 consist of the profits of each of the 500 agents for a single period.  This is possible because there is no maximum line length
 or maximum number of columns in the specification for a `.csv` file.  (See: [RFC4180](https://tools.ietf.org/html/rfc4180)).  
 Your favorite spreadsheet or other tools may have limitations, and in such a case you'll need to find something else to complete your
-analysis or find a way to break the big or wide file into smaller files. 
+analysis or find a way to break the big or wide file into smaller files.
 
 ##### `effalloc.csv` column format
 
 Each row in this file reports the Efficiency of Allocation for a period of trading.
 
-Columns in `effalloc.csv` include: 
+Columns in `effalloc.csv` include:
 
 1. `caseid` identifies a simulation in a set of simulations
 2. `period` period number
-3. `efficiencyOfAllocation` 100*(Sum of All Agents Profit for this period) / (Max Possible) 
+3. `efficiencyOfAllocation` 100*(Sum of All Agents Profit for this period) / (Max Possible)
 
 #### Progress Messages
 
@@ -336,7 +417,7 @@ https://doi.org/10.1016/j.jebo.2019.06.017  (Elsevier/Science Direct paywall)
 I will appreciate a social "hello" from researchers, students, and others attempting to use the free version of this software.
 
 But I also reserve the right to ignore email. Don't take it
-personally, or as a snub.  24-hr on call unlimited free support 
+personally, or as a snub.  24-hr on call unlimited free support
 is not included with this free software, or any free software
 for that matter
 
