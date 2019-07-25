@@ -118,7 +118,8 @@ Here is an example configuration file, found in `config1.json`:
 ```
 
 The above configuration achieves the following:
-* `buyerValues` sets the unit values to be distributed each period to buyers, each buyer obtaining a single unit value round robin until exhaustion. Therefore this also sets the aggregate demand curve.
+* `buyerValues` sets the unit values to be distributed each period to buyers, each buyer obtaining a single unit value round robin until exhaustion. Therefore this also sets the aggregate demand curve. 
+![demand curve for config1.json](https://docs.google.com/spreadsheets/d/e/2PACX-1vQZuAGLTssRXbQwe8837exo1DviPR2DhX4_ltb_9GsyO5oBDEXVvsBnl9DX2JprZnNlkqkOLSYFxq0z/pubchart?oid=1917425294&format=image)
 * `sellerCosts` sets the unit costs to be distributed each period to sellers, each seller obtaining a single unit cost round robin until exhaustion. Therefore this also sets the aggregate supply curve.
 * `L` sets the lowest allowable price, here 1
 * `H` sets the highest allowable price, here 200
