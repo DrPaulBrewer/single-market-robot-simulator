@@ -43,14 +43,14 @@ If, instead, you want to use it as a library in another module to be released on
 ### as a library in a JavaScript web app
 
 To use this as part of a web site, you will probably want
-to look at something like browserify, jspm, or webpack to
-server as a wrapper and help with bundling and integration.
+to use something like browserify, jspm, or webpack to
+help with bundling and integration.
 
 To use this as a library on the browser with `jspm`, you should set an override option on install forcing dependency `fs` to `@empty`.   
 
 This was done in the [robot-trading-webapp](http://github.com/DrPaulBrewer/robot-trading-webapp) example prototype web app that uses a very early version of this code (1.0.0) from May, 2017.  The "robot-trading-webapp" prototype is no longer under active development and does not receive updates or bug fixes. You may still try it but I do not recommend it for producing new research data.
 
-It can also be used with `webpack`.  I do not recall if any
+For new web apps I would recommend `webpack`.  I do not recall if any
 special settings are required.
 
 ### Paid App Under Development
