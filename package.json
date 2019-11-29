@@ -1,6 +1,6 @@
 {
   "name": "single-market-robot-simulator",
-  "version": "5.6.14",
+  "version": "5.6.15",
   "description": "simulations using market-contingent-example populated by various types of robots, such as Gode/Sunder ZI Robots, with configurable supply/demand",
   "bin": "build/index.js",
   "main": "build/index.js",
