@@ -1489,8 +1489,8 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
      * and only works because orderClock: 200 never expires when orders arrive at 1/sec/agent
      */
 
-    it('cloning the orders into a new simulation will produce identical results in logs', function () {
-      const clone = new Simulation(config200Bx200Sx10Periods);
+    function shouldProduceIdenticalResultsWithNewConfig(newConfig){
+      const clone = new Simulation(newConfig);
       clone.pool.agents.forEach((a, idx) => { a.id = S.pool.agents[idx].id; });
       clone.pool.agentsById = {};
       clone.pool.agents.forEach((a) => { clone.pool.agentsById[a.id] = a; });
@@ -1532,6 +1532,32 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
       S.logs.ohlc.data.should.deepEqual(clone.logs.ohlc.data);
       S.logs.trade.data.should.deepEqual(clone.logs.trade.data);
       S.logs.profit.data.should.deepEqual(clone.logs.profit.data);
+      S.logs.effalloc.data.should.deepEqual(clone.logs.effalloc.data);
+    }
+
+    [
+      {},
+      {bookfixed:true, booklimit: 1},
+      {bookfixed:true, booklimit: 2},
+      {bookfixed:true, booklimit: 3},
+      {bookfixed:true, booklimit: 5},
+      {bookfixed:true, booklimit: 13},
+      {bookfixed:true, booklimit: 20},
+      {bookfixed:true, booklimit: 50},
+      {bookfixed:true, booklimit: 200},
+      {bookfixed:false, booklimit: 1},
+      {bookfixed:false, booklimit: 2},
+      {bookfixed:false, booklimit: 3},
+      {bookfixed:false, booklimit: 5},
+      {bookfixed:false, booklimit: 13},
+      {bookfixed:false, booklimit: 20},
+      {bookfixed:false, booklimit: 50},
+      {bookfixed:false, booklimit: 200}
+    ].forEach((changes)=>{
+      it(`cloning orders to a simulation with xMarket ${JSON.stringify(changes)} will produce identical results in logs`, function(){
+        const changedConfig = Object.assign({}, config200Bx200Sx10Periods, {xMarket: changes });
+        shouldProduceIdenticalResultsWithNewConfig(changedConfig);
+      });
     });
   });
 });
