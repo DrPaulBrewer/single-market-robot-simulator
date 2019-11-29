@@ -1135,7 +1135,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
 [true, false].forEach((sync) => {
   describe(`simulation with 200 buyers, 200 sellers, values 900...303, costs 100...697, various agent types, 10 periods, sync: ${sync}`, function () {
     const agents = ["ZIAgent", "UnitAgent", "OneupmanshipAgent", "MidpointAgent", "TruthfulAgent", "KaplanSniperAgent", "MedianSniperAgent", "DoNothingAgent"];
-    const config100Bx100Sx10Periods = {
+    const config200Bx200Sx10Periods = {
       L: 1,
       H: 1000,
       numberOfBuyers: 200,
@@ -1150,7 +1150,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
       logToFileSystem: false,
       integer: true
     };
-    const S = new Simulation(config100Bx100Sx10Periods);
+    const S = new Simulation(config200Bx200Sx10Periods);
     const ids = S.pool.agents.map((a) => (a.id));
     before(async ()=>(S.run({sync})));
     it('should complete 10 periods', function () {
@@ -1486,11 +1486,11 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
 
     /*
      * Cloning below does not take into account orderClock or tradeClock
-     * and only works because orderClock: 200 never expires when orders arrive at 1/sec/agent 
+     * and only works because orderClock: 200 never expires when orders arrive at 1/sec/agent
      */
 
     it('cloning the orders into a new simulation will produce identical results in logs', function () {
-      const clone = new Simulation(config100Bx100Sx10Periods);
+      const clone = new Simulation(config200Bx200Sx10Periods);
       clone.pool.agents.forEach((a, idx) => { a.id = S.pool.agents[idx].id; });
       clone.pool.agentsById = {};
       clone.pool.agents.forEach((a) => { clone.pool.agentsById[a.id] = a; });
