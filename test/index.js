@@ -61,9 +61,9 @@ function ohlcRestrict(ohlcData) {
   const colsToRedact = ['beginTime', 'endTime', 'endReason'];
   const colNumsToRedact = colsToRedact.map((col) => (ohlcHeader.indexOf(col)));
   const data = [ohlcData[0].slice()];
-  for (let i = 1, l = ohlcData.length;i<l;++i) {
+  for (let i = 1, l = ohlcData.length;i < l;++i) {
     data[i] = ohlcData[i].slice();
-    for (let j = 0, k = colNumsToRedact.length;j<k;++j) {
+    for (let j = 0, k = colNumsToRedact.length;j < k;++j) {
       data[i][colNumsToRedact[j]] = '?';
     }
   }
@@ -133,7 +133,7 @@ function tradesToPartialOHLC(tradeDataReference, ids) {
   }
   let periodTradeData = [];
   let period = 0;
-  for (let i = 0, l = tradeData.length;i<l;++i) {
+  for (let i = 0, l = tradeData.length;i < l;++i) {
     if (period !== tradeData[i][periodCol]) {
       if (periodTradeData.length) ohlc.push(process(period, periodTradeData));
       periodTradeData = [];
@@ -448,7 +448,7 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function () 
         ['t', 'tp', 'preBidPrice'].forEach((prop) => {
           const col = combinedOrderLogHeader.indexOf(prop);
           assert.ok(col >= 0);
-          for (let i = 2, l = state.S.logs[log].data.length;i<l;++i) {
+          for (let i = 2, l = state.S.logs[log].data.length;i < l;++i) {
             let current = state.S.logs[log].data[i][col];
             let prev = state.S.logs[log].data[i - 1][col];
             assert.ok(current >= prev, `${log} ${prop} decreased from ${prev} to ${current} at ${i}`);
@@ -460,7 +460,7 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function () 
       const col = combinedOrderLogHeader.indexOf('preAskPrice');
       assert.ok(col >= 0);
       ['buyorder', 'sellorder'].forEach((log) => {
-        for (let i = 2, l = state.S.logs[log].data.length;i<l;++i) {
+        for (let i = 2, l = state.S.logs[log].data.length;i < l;++i) {
           let current = state.S.logs[log].data[i][col];
           let prev = state.S.logs[log].data[i - 1][col];
           if ((typeof(prev) === 'number') && (!Number.isNaN(prev))) {
@@ -474,7 +474,7 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function () 
       const blpCol = combinedOrderLogHeader.indexOf('buyLimitPrice');
       assert.ok(pbpCol >= 0);
       assert.ok(blpCol >= 0);
-      for (let i = 2, l = state.S.logs.buyorder.data.length;i<l;++i) {
+      for (let i = 2, l = state.S.logs.buyorder.data.length;i < l;++i) {
         let prev = state.S.logs.buyorder.data[i - 1];
         let predicted = Math.max(prev[pbpCol], prev[blpCol]);
         assert.ok(typeof(predicted) === 'number', typeof(predicted));
@@ -487,7 +487,7 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function () 
       const slpCol = combinedOrderLogHeader.indexOf('sellLimitPrice');
       assert.ok(papCol >= 0);
       assert.ok(slpCol >= 0);
-      for (let i = 2, l = state.S.logs.sellorder.data.length;i<l;++i) {
+      for (let i = 2, l = state.S.logs.sellorder.data.length;i < l;++i) {
         let prev = state.S.logs.sellorder.data[i - 1];
         let predicted = Math.min(+prev[papCol] || +Infinity, +prev[slpCol] || +Infinity);
         assert.ok(typeof(predicted) === 'number', typeof(predicted));
@@ -922,7 +922,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
           let tCol = data[0].indexOf('t');
           let tpCol = data[0].indexOf('tp');
           let i, l, row;
-          for (i = 1, l = data.length;i<l;++i) {
+          for (i = 1, l = data.length;i < l;++i) {
             row = data[i];
             row[tpCol].should.be.type('number');
             row[tCol].should.be.type('number');
@@ -1152,7 +1152,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
     };
     const S = new Simulation(config200Bx200Sx10Periods);
     const ids = S.pool.agents.map((a) => (a.id));
-    before(async ()=>(S.run({sync})));
+    before(async () => (S.run({ sync })));
     it('should complete 10 periods', function () {
       S.period.should.equal(10);
     });
@@ -1484,16 +1484,11 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
       S.logs.sellorder.data.length.should.be.above(2000);
     });
 
-    /*
-     * Cloning below does not take into account orderClock or tradeClock
-     * and only works because orderClock: 200 never expires when orders arrive at 1/sec/agent
+    /**
+     * create periodOrders for replay from current status
      */
 
-    function shouldProduceIdenticalResultsWithNewConfig(newConfig){
-      const clone = new Simulation(newConfig);
-      clone.pool.agents.forEach((a, idx) => { a.id = S.pool.agents[idx].id; });
-      clone.pool.agentsById = {};
-      clone.pool.agents.forEach((a) => { clone.pool.agentsById[a.id] = a; });
+    function getPeriodOrders() {
       const orders = [].concat(S.logs.buyorder.data.slice(1), S.logs.sellorder.data.slice(1));
       const [orderTCol,
         orderIDCol,
@@ -1518,6 +1513,19 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
           sellPrice: o[orderSellLimitPriceCol]
         }));
       });
+      return periodOrders;
+    }
+
+    /*
+     * Cloning below does not take into account orderClock or tradeClock
+     * and only works because orderClock: 200 never expires when orders arrive at 1/sec/agent
+     */
+
+    function shouldProduceIdenticalResultsWithNewConfig(newConfig, periodOrders) {
+      const clone = new Simulation(newConfig);
+      clone.pool.agents.forEach((a, idx) => { a.id = S.pool.agents[idx].id; });
+      clone.pool.agentsById = {};
+      clone.pool.agents.forEach((a) => { clone.pool.agentsById[a.id] = a; });
       periodOrders.forEach((orderList, periodMinus1) => {
         clone.period = 1 + periodMinus1;
         clone.pool.initPeriod(clone.period);
@@ -1535,28 +1543,37 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
       S.logs.effalloc.data.should.deepEqual(clone.logs.effalloc.data);
     }
 
+    it('should successfully scrape, sort, collate orders to clone in next steps',function(){
+      S.periodOrders = getPeriodOrders();
+      // check that periodOrders is of length 10
+      S.periodOrders.length.should.equal(10);
+      // check that each scraped period has at least 100 orders
+      S.periodOrders.filter((p)=>(p.length<100)).length.should.equal(0);
+    });
+
+
     [
       {},
-      {bookfixed:true, booklimit: 1},
-      {bookfixed:true, booklimit: 2},
-      {bookfixed:true, booklimit: 3},
-      {bookfixed:true, booklimit: 5},
-      {bookfixed:true, booklimit: 13},
-      {bookfixed:true, booklimit: 20},
-      {bookfixed:true, booklimit: 50},
-      {bookfixed:true, booklimit: 200},
-      {bookfixed:false, booklimit: 1},
-      {bookfixed:false, booklimit: 2},
-      {bookfixed:false, booklimit: 3},
-      {bookfixed:false, booklimit: 5},
-      {bookfixed:false, booklimit: 13},
-      {bookfixed:false, booklimit: 20},
-      {bookfixed:false, booklimit: 50},
-      {bookfixed:false, booklimit: 200}
-    ].forEach((changes)=>{
-      it(`cloning orders to a simulation with xMarket ${JSON.stringify(changes)} will produce identical results in logs`, function(){
-        const changedConfig = Object.assign({}, config200Bx200Sx10Periods, {xMarket: changes });
-        shouldProduceIdenticalResultsWithNewConfig(changedConfig);
+      { bookfixed: true, booklimit: 1 },
+      { bookfixed: true, booklimit: 2 },
+      { bookfixed: true, booklimit: 3 },
+      { bookfixed: true, booklimit: 5 },
+      { bookfixed: true, booklimit: 13 },
+      { bookfixed: true, booklimit: 20 },
+      { bookfixed: true, booklimit: 50 },
+      { bookfixed: true, booklimit: 200 },
+      { bookfixed: false, booklimit: 1 },
+      { bookfixed: false, booklimit: 2 },
+      { bookfixed: false, booklimit: 3 },
+      { bookfixed: false, booklimit: 5 },
+      { bookfixed: false, booklimit: 13 },
+      { bookfixed: false, booklimit: 20 },
+      { bookfixed: false, booklimit: 50 },
+      { bookfixed: false, booklimit: 200 }
+    ].forEach((changes) => {
+      it(`cloning orders to a simulation with xMarket ${JSON.stringify(changes)} will produce identical results in logs`, function () {
+        const changedConfig = Object.assign({}, config200Bx200Sx10Periods, { xMarket: changes });
+        shouldProduceIdenticalResultsWithNewConfig(changedConfig, S.periodOrders);
       });
     });
   });
