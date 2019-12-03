@@ -660,7 +660,7 @@ export class Simulation {
      * @param {boolean} [options.sync=false] true to run synchronously, returns simulation object (not a Promise)
      * @param {function(sim:Object)} [options.update]  update Optional end of period function
      * @param {number} [options.delay=20] delay timeout between periods in ms. Only effective in asynchronous mode.
-     * @param {number} [options.deadline=0] deadline to compare with Date.now() -- If over deadline, return available data.  0 disables.
+     * @param {number} [options.deadline=0] deadline to compare with Date.now() -- If over or equal to deadline, return available data.  0 disables.
      * @return {Promise<Object,Error>} resolves to simulation object
      */
 
@@ -686,7 +686,7 @@ export class Simulation {
             while(sim.period<config.periods){
                 sim.runPeriod(true);  // pass true to .runPeriod to run synchronously
                 update(sim);
-                if ((deadline) && (Date.now()>deadline)) forceFinish();
+                if ((deadline) && (Date.now()>=deadline)) forceFinish();
             }
 
             /* istanbul ignore if */
@@ -704,7 +704,7 @@ export class Simulation {
                  .then(update)
                  .then(
                      function(s){
-                         if ((deadline) && (Date.now()>deadline)) forceFinish();
+                         if ((deadline) && (Date.now()>=deadline)) forceFinish();
                          return (s.period<config.periods)? setTimeout(loop,delay): resolve(s);
                      },
                      ((e)=>reject(e))
