@@ -1075,10 +1075,10 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
     });
   });
 
-  describe('runSimulation with three simulations of 10 periods of single unit trade scenario, asynchronous, realtime 1.5 sec period', function () {
+  describe('runSimulation with three simulations of 10 periods of single unit trade scenario, asynchronous, realtime 5 sec period', function () {
     let rt = {
       realtime: 1,
-      periodDuration: 1.5,
+      periodDuration: 5.0,
       buyerRate: 10,
       sellerRate: 10
     };
@@ -1111,9 +1111,9 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
       it('should only run the before() function in the test one time', function () {
         countBefore.should.equal(1);
       });
-      it('should finish the real time simulations in about 15 sec', function () {
+      it('should finish the real time simulations in about 50 sec', function () {
         const tInterval = (tFinal - tInit) / 1000.0;
-        tInterval.should.be.within(15, 18);
+        tInterval.should.be.within(45, 60);
       });
       it('should have distinct buyer agents for each simulation', function () {
         states[0].S.buyersPool.agents[0].should.not.equal(states[1].S.buyersPool.agents[0]);
