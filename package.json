@@ -32,7 +32,7 @@
     "market-example-contingent": "^1.2.2",
     "p-whilst": "^2.1.0",
     "positive-number-array": "^1.2.2",
-    "simple-isomorphic-logger": "^2.4.0",
+    "simple-isomorphic-logger": "^3.0.0",
     "stats-lite": "^2.2.0"
   },
   "devDependencies": {
