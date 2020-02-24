@@ -378,7 +378,7 @@ class Simulation {
       return +sim.logs[log].lastByKey('t');
     }
 
-    let endTime = sim.pool.endTime(),
+    let endTime = (1 + sim.period) * sim.periodDuration,
         altTime = 0;
     let reason = 0; // endPeriod because periodDuration expired
 
