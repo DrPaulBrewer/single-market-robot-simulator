@@ -9,7 +9,6 @@ import * as MEC from 'market-example-contingent';
 import * as MarketAgents from 'market-agents';
 import * as stats from 'stats-lite';
 import gini from 'gini-ss';
-import positiveNumberArray from 'positive-number-array';
 import pWhilst from 'p-whilst';
 
 /*
@@ -227,8 +226,14 @@ export class Simulation {
         sim.sellersPool = new Pool();
         sim.numberOfBuyers  = config.numberOfBuyers  || config.buyerValues.length;
         sim.numberOfSellers = config.numberOfSellers || config.sellerCosts.length;
-        config.buyerRate  = positiveNumberArray(config.buyerRate) || [1];
-        config.sellerRate = positiveNumberArray(config.sellerRate) || [1];
+        config.buyerRate  = config.buyerRate || [1];
+        config.sellerRate = config.sellerRate || [1];
+        if (typeof(config.buyerRate)==='number'){
+          config.buyerRate = [config.buyerRate];
+        }
+        if (typeof(config.sellerRate)==='number'){
+          config.sellerRate = [config.sellerRate];
+        }
         if ( (!sim.numberOfBuyers) || (!sim.numberOfSellers) )
             throw new Error("single-market-robot-simulation: can not determine numberOfBuyers and/or numberOfSellers ");
         sim.numberOfAgents = sim.numberOfBuyers+sim.numberOfSellers;
