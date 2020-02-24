@@ -532,6 +532,22 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function () 
       function logTwoUnitTrade() { state.S.logTrade({ totalQ: 2 }); }
       logTwoUnitTrade.should.throw();
     });
+//    testForTypicalOrderBooks(state);
+    it('xMarket is defined', function(){
+      assert.ok(state.S.xMarket!==undefined,"xMarket undefined");
+    });
+    it('the buy book should be non-empty', function(){
+      state.S.xMarket.book.buy.idx.length.should.be.above(0);
+    });
+    it('the sell book should be non-empty', function(){
+      state.S.xMarket.book.sell.idx.length.should.be.above(0);
+    });
+    it('the buyStop book should be empty', function(){
+      state.S.xMarket.book.buyStop.idx.length.should.equal(0);
+    });
+    it('the sellStop book should be empty', function(){
+      state.S.xMarket.book.sellStop.idx.length.should.equal(0);
+    });
   }
 
   describe('runPeriod({sync:true})', function () {
@@ -845,6 +861,21 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
     it('the effalloc log should have header plus one entry, [1,100]', function () {
       state.S.logs.effalloc.data.length.should.equal(2);
       state.S.logs.effalloc.data[1].should.deepEqual([7890, 1, 100]);
+    });
+    it('xMarket is defined', function(){
+      assert.ok(state.S.xMarket!==undefined,"xMarket undefined");
+    });
+    it('the buy book should be empty', function(){
+      state.S.xMarket.book.buy.idx.length.should.be.equal(0);
+    });
+    it('the sell book should be empty', function(){
+      state.S.xMarket.book.sell.idx.length.should.be.equal(0);
+    });
+    it('the buyStop book should be empty', function(){
+      state.S.xMarket.book.buyStop.idx.length.should.equal(0);
+    });
+    it('the sellStop book should be empty', function(){
+      state.S.xMarket.book.sellStop.idx.length.should.equal(0);
     });
   }
 
@@ -1192,7 +1223,21 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
       });
       testsCompleted.should.equal(400);
     });
-
+    it('xMarket is defined', function(){
+      assert.ok(S.xMarket!==undefined,"xMarket undefined");
+    });
+    it('the buy book should be non-empty', function(){
+      S.xMarket.book.buy.idx.length.should.be.above(0);
+    });
+    it('the sell book should be non-empty', function(){
+      S.xMarket.book.sell.idx.length.should.be.above(0);
+    });
+    it('the buyStop book should be empty', function(){
+      S.xMarket.book.buyStop.idx.length.should.equal(0);
+    });
+    it('the sellStop book should be empty', function(){
+      S.xMarket.book.sellStop.idx.length.should.equal(0);
+    });
     it("buyerValue is always defined and positive in buy order log", function () {
       const valueCol = S.logs.buyorder.header.indexOf('buyerValue');
       const idCol = S.logs.buyorder.header.indexOf('id');
