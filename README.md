@@ -16,19 +16,28 @@ normally be a "middle" portion of a code stack.  Visualizations and friendly use
 
 The [ESDoc site for single-market-robot-simulator](https://doc.esdoc.org/github.com/DrPaulBrewer/single-market-robot-simulator/) contains documentation prepared from source code of this module.
 
-## Use of Modern JavaScript -- Babel compiler
-
-The source code uses ES6 JavaScript syntax and may need to be compiled with the Facebook-sponsored open source Babel compiler to be compatible with JavaScript implementations in browsers or nodejs. The source code is in ./src and the Babel-compiled version in ./build.  The babel tools are linked as package.json devDependencies.  This is primarily a concern for other programmers and does not affect stand-alone usage.
-
 ## Installation
 
-### installation not necessary -- use Docker
+### no installation necessary when using Econ1.Net (paid)
 
-No installation is necessary if you have Docker (highly recommended for Windows and Mac usage). Skip to the "Usage" section.    
+An affordable paid web app at https://Econ1.net is available that is much nicer, includes visualization and an editor, has time-saving features, and integrates with Google Cloud and Google Drive.
+
+### no installation necessary when using Docker Desktop (free)
+
+Docker Desktop allows running the single-market-robot-simulator in a command line window. It
+does not include any editor or visualization.  However, the input format is documented, and the
+outputs are mostly in CSV format and are compatible with many statistical and data-science
+software (e.g. python, R, matlab/octave, and others).
+
+No installation is necessary if you have Docker Desktop (for Windows 10 Pro and Windows 10 for Education, and Mac or Linux usage). Skip to the "Usage" section.  Docker Desktop is free, and the release of this software on the Docker Hub is free.
+
+As of July 2020 Windows 10 for Home is incompatible with Docker Desktop and has to be upgraded to Windows 10 Pro. This upgrade may require a payment to Microsoft.
 
 ### as stand alone JavaScript software
 
-To run as a nodejs command-line program, clone this repository and run `npm install -D` or `npm i -D` from the cloned directory to install all of the dependencies, including the testing and development dependencies `-D`:
+Obviously, you'll need to have git, nodejs, and npm pre-installed.
+
+To run as a nodejs command-line program, clone this repository on your computer and run `npm install -D` or `npm i -D` from the cloned directory to install all of the dependencies, including the testing and development dependencies `-D`:
 
      git clone https://github.com/DrPaulBrewer/single-market-robot-simulator
      cd ./single-market-robot-simulator
@@ -52,10 +61,6 @@ This was done in the [robot-trading-webapp](http://github.com/DrPaulBrewer/robot
 
 For new web apps I would recommend `webpack`.  I do not recall if any
 special settings are required.
-
-### Paid App Under Development
-
-An afforable [paid web app](https://econ1.net) is in development that is much nicer, includes visualization and an editor, has time-saving features, and integrates with Google Cloud and Google Drive.
 
 ## Configuration
 
@@ -118,7 +123,7 @@ Here is an example configuration file, found in `config1.json`:
 ```
 
 The above configuration achieves the following:
-* `buyerValues` sets the unit values to be distributed each period to buyers, each buyer obtaining a single unit value round robin until exhaustion. Therefore this also sets the aggregate demand curve. 
+* `buyerValues` sets the unit values to be distributed each period to buyers, each buyer obtaining a single unit value round robin until exhaustion. Therefore this also sets the aggregate demand curve.
 ![demand curve for config1.json](https://docs.google.com/spreadsheets/d/e/2PACX-1vQZuAGLTssRXbQwe8837exo1DviPR2DhX4_ltb_9GsyO5oBDEXVvsBnl9DX2JprZnNlkqkOLSYFxq0z/pubchart?oid=1917425294&format=image)
 * `sellerCosts` sets the unit costs to be distributed each period to sellers, each seller obtaining a single unit cost round robin until exhaustion. Therefore this also sets the aggregate supply curve.
 ![supply curve for config1.json](https://docs.google.com/spreadsheets/d/e/2PACX-1vQZuAGLTssRXbQwe8837exo1DviPR2DhX4_ltb_9GsyO5oBDEXVvsBnl9DX2JprZnNlkqkOLSYFxq0z/pubchart?oid=371569094&format=image)
@@ -410,6 +415,12 @@ Dhananjay K. Gode and Shyam Sunder, Journal of Political Economy, Vol. 101, No. 
 
 Paul Brewer and Anmol Ratan (2019), "Profitability, efficiency, and inequality in double auction markets with snipers."  Journal of Economic Behavior & Organization, vol. 164, 486-499.
 https://doi.org/10.1016/j.jebo.2019.06.017  (Elsevier/Science Direct paywall)
+
+A replication guide, raw data and simulation configuration files are OPEN ACCESS and reported in:
+
+Paul Brewer and Anmol Ratan (2019), "Data and replication supplement for double auction markets with snipers." Data In Brief, vol. 27, 104729.  https://doi.org/10.1016/j.dib.2019.104729 (Elsevier Open Access Article)
+
+https://doi.org/10.17632/p9v66fzfhw.1  (Mendeley Open Access Dataset)
 
 ## Before asking the author for help
 
