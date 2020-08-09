@@ -10,6 +10,7 @@ import * as MarketAgents from 'market-agents';
 import * as stats from 'stats-lite';
 import gini from 'gini-ss';
 import pWhilst from 'p-whilst';
+import {scan, parse} from 'secure-json-parse';
 
 /*
  *  on the browser, the jspm package manager can be programmed to set the
@@ -18,6 +19,11 @@ import pWhilst from 'p-whilst';
  */
 
 import * as fs from 'fs'; // remember to override in jspm dep configuration to empty
+
+const secureJSONPolicy = {
+  protoAction: 'remove',
+  constructorAction: 'remove'
+};  // see https://github.com/fastify/secure-json-parse
 
 const Market = MEC.Market;
 const {Pool} = MarketAgents;
@@ -115,6 +121,7 @@ export class Simulation {
          * @type {Object} this.config
          */
 
+        scan(config, secureJSONPolicy); // secure-json-parse.scan to remove __proto__ and other mal-json
         this.config = config;
 
         this.initLogs();
@@ -727,7 +734,7 @@ export class Simulation {
 function main(){
 
     /**
-     * in stand-alone mode, read simulation config from ./config.json and run simulation synchronously, outputting log files in .csv format
+     * in stand-alone mode, read simulation config from first named .json file and run simulation synchronously, outputting log files in .csv format
      */
 
     /* suggested by Krumia's http://stackoverflow.com/users/1461424/krumia */
@@ -735,13 +742,18 @@ function main(){
 
     global.fs = fs;
 
-    const simConfigFileName = ( process.argv.find((s)=>(s.endsWith(".json"))) ) || "./config.json";
+    const simConfigFileName = process.argv.find((s)=>(s.endsWith(".json")));
+
+    if (!simConfigFileName)
+      throw new Error("no sim.json configuration file specified on command line");
 
     function mainPeriod(sim){
         fs.writeFileSync('./period', sim.period);
     }
-    const config = JSON.parse(
-        fs.readFileSync(simConfigFileName, 'utf8')
+
+    const config = parse(
+        fs.readFileSync(simConfigFileName, 'utf8'),
+        secureJSONPolicy
     );
 
     new Simulation(config).run({sync:true, update:mainPeriod });

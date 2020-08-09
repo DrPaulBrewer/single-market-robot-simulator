@@ -18,6 +18,8 @@ var _giniSs = _interopRequireDefault(require("gini-ss"));
 
 var _pWhilst = _interopRequireDefault(require("p-whilst"));
 
+var _secureJsonParse = require("secure-json-parse");
+
 var fs = _interopRequireWildcard(require("fs"));
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
@@ -38,6 +40,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  *  where override.json looks like {"map": {"fs": "@empty" }}
  */
 // remember to override in jspm dep configuration to empty
+const secureJSONPolicy = {
+  protoAction: 'remove',
+  constructorAction: 'remove'
+}; // see https://github.com/fastify/secure-json-parse
+
 const Market = MEC.Market;
 const {
   Pool
@@ -114,6 +121,8 @@ class Simulation {
      * copy of config as passed to constructor
      * @type {Object} this.config
      */
+    (0, _secureJsonParse.scan)(config, secureJSONPolicy); // secure-json-parse.scan to remove __proto__ and other mal-json
+
     this.config = config;
     this.initLogs();
     this.initMarket();
@@ -739,20 +748,21 @@ exports.Simulation = Simulation;
 
 function main() {
   /**
-   * in stand-alone mode, read simulation config from ./config.json and run simulation synchronously, outputting log files in .csv format
+   * in stand-alone mode, read simulation config from first named .json file and run simulation synchronously, outputting log files in .csv format
    */
 
   /* suggested by Krumia's http://stackoverflow.com/users/1461424/krumia */
 
   /* posting at http://stackoverflow.com/a/25710749/103081 */
   global.fs = fs;
-  const simConfigFileName = process.argv.find(s => s.endsWith(".json")) || "./config.json";
+  const simConfigFileName = process.argv.find(s => s.endsWith(".json"));
+  if (!simConfigFileName) throw new Error("no sim.json configuration file specified on command line");
 
   function mainPeriod(sim) {
     fs.writeFileSync('./period', sim.period);
   }
 
-  const config = JSON.parse(fs.readFileSync(simConfigFileName, 'utf8'));
+  const config = (0, _secureJsonParse.parse)(fs.readFileSync(simConfigFileName, 'utf8'), secureJSONPolicy);
   new Simulation(config).run({
     sync: true,
     update: mainPeriod

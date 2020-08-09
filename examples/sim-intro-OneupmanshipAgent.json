@@ -1,0 +1,78 @@
+{
+  "caseid": 0,
+  "periods": "10000",
+  "L": 1,
+  "H": 1000,
+  "buyerValues": [
+    800,
+    770,
+    740,
+    710,
+    680,
+    650,
+    620,
+    590,
+    560,
+    530,
+    500,
+    470,
+    440,
+    410,
+    380,
+    350,
+    320,
+    290,
+    260,
+    230,
+    200
+  ],
+  "sellerCosts": [
+    200,
+    230,
+    260,
+    290,
+    320,
+    350,
+    380,
+    410,
+    440,
+    470,
+    500,
+    530,
+    560,
+    590,
+    620,
+    650,
+    680,
+    710,
+    740,
+    770,
+    800
+  ],
+  "numberOfBuyers": 10,
+  "numberOfSellers": 10,
+  "buyerRate": [
+    0.2
+  ],
+  "sellerRate": [
+    0.2
+  ],
+  "periodDuration": 1000,
+  "keepPreviousOrders": false,
+  "ignoreBudgetConstraint": false,
+  "integer": true,
+  "xMarket": {
+    "buySellBookLimit": 0,
+    "resetAfterEachTrade": false
+  },
+  "silent": true,
+  "version": 2,
+  "withoutOrderLogs": true,
+  "buyerAgentType": [
+    "OneupmanshipAgent"
+  ],
+  "sellerAgentType": [
+    "OneupmanshipAgent"
+  ],
+  "logToFileSystem": true
+}
