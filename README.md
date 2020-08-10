@@ -186,7 +186,7 @@ Among the choices are:
 
 ## Additional Configuration examples
 
-The `./examples` directory contains a number of additional sim.json files.
+The [./examples](/examples) directory contains a number of additional sim.json files.
 
 ## Usage
 
@@ -201,8 +201,15 @@ Create a work directory containing the `sim.json` file with the simulation confi
 
 The commands below require the file be named `sim.json`
 
-The most recent Docker container is for version 5.6.0.  To
+The current version of the Docker container is 6.2.0.  To
 run that, use this docker command:
+
+    docker run -it \
+           -v /path/to/your/work/directory:/work \
+           drpaulbrewer/single-market-robot-simulator:6.2.0
+
+The previous version of the Docker container is 5.6.0.  To
+run 5.6.0, use this docker command:
 
     docker run -it \
            -v /path/to/your/work/directory:/work \
