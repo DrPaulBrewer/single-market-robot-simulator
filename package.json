@@ -28,7 +28,7 @@
   "license": "MIT",
   "dependencies": {
     "gini-ss": "^0.2.1",
-    "market-agents": "^4.0.4",
+    "market-agents": "^4.2.0",
     "market-example-contingent": "^2.0.0",
     "p-whilst": "^2.1.0",
     "secure-json-parse": "^2.1.0",
@@ -36,16 +36,16 @@
     "stats-lite": "^2.2.0"
   },
   "devDependencies": {
-    "@babel/cli": "^7.10.3",
-    "@babel/core": "^7.10.3",
-    "@babel/polyfill": "^7.10.1",
-    "@babel/preset-env": "^7.10.3",
-    "@babel/register": "^7.10.3",
+    "@babel/cli": "^7.10.5",
+    "@babel/core": "^7.11.1",
+    "@babel/polyfill": "^7.10.4",
+    "@babel/preset-env": "^7.11.0",
+    "@babel/register": "^7.10.5",
     "coveralls": "^3.1.0",
     "esdoc": "^1.1.0",
     "esdoc-standard-plugin": "^1.0.0",
-    "eslint": "^7.3.1",
-    "mocha": "^8.0.1",
+    "eslint": "^7.6.0",
+    "mocha": "^8.1.1",
     "nyc": "^15.1.0",
     "should": "^13.2.3"
   },

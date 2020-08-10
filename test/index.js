@@ -1164,7 +1164,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
 
 [true, false].forEach((sync) => {
   describe(`simulation with 200 buyers, 200 sellers, values 900...303, costs 100...697, various agent types, 10 periods, sync: ${sync}`, function () {
-    const agents = ["ZIAgent", "UnitAgent", "OneupmanshipAgent", "MidpointAgent", "TruthfulAgent", "KaplanSniperAgent", "MedianSniperAgent", "DoNothingAgent"];
+    const agents = ["ZIAgent", "UnitAgent", "OneupmanshipAgent", "MidpointAgent", "TruthfulAgent", "DPPAgent", "KaplanSniperAgent", "MedianSniperAgent", "DoNothingAgent"];
     const config200Bx200Sx10Periods = {
       L: 1,
       H: 1000,
