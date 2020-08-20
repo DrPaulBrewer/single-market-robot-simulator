@@ -201,6 +201,7 @@ class Simulation {
       money: "money"
     };
     sim.xMarket = new Market(Object.assign({}, xDefaults, sim.config.xMarket));
+    sim.xMarket.setMaxListeners(+Infinity); // disable eventEmitter warnings
 
     sim.xMarket.previousPeriod = prop => sim.logs.ohlc.lastByKey(prop);
 
