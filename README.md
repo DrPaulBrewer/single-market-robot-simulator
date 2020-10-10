@@ -12,9 +12,9 @@ The induced supply and demand is configurable, as are the types and speeds of tr
 This code can run either in a browser or on NodeJS and would normally be a "middle" portion of a code stack.  
 Visualizations and friendly user-interfaces are the responsibility of other code, or you, the user.
 
-## Programmer's Documentation
+## Programmer's Documentation on ESDoc
 
-Automatically generated and available on the [docs page](./docs/index.html)
+The [ESDoc site for single-market-robot-simulator](https://doc.esdoc.org/github.com/DrPaulBrewer/single-market-robot-simulator/) contains documentation prepared from source code of this module.
 
 ## Installation
 
