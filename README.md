@@ -14,7 +14,7 @@ Visualizations and friendly user-interfaces are the responsibility of other code
 
 ## Programmer's Documentation
 
-Automatically generated and available on the [docs page](https://drpaulbrewer.github.io/single-market-robot-simulator)
+Automatically generated and available on the [docs page](./docs/index.html)
 
 ## Installation
 
