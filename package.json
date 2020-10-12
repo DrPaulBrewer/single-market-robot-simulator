@@ -28,7 +28,7 @@
   "license": "MIT",
   "dependencies": {
     "gini-ss": "^0.2.1",
-    "market-agents": "^4.4.0",
+    "market-agents": "^4.5.5",
     "market-example-contingent": "^2.0.0",
     "p-whilst": "^2.1.0",
     "secure-json-parse": "^2.1.0",
