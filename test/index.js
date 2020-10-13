@@ -255,7 +255,7 @@ describe('simulations with fractional numberOfBuyers or numberOfSellers are inte
       const config = Object.assign({}, configCostsExceedValues, {numberOfSellers:raw});
       const S = new Simulation(config);
       S.numberOfSellers.should.equal(rounded);
-      S.sellersPool.agnets.length.should.equal(rounded);
+      S.sellersPool.agents.length.should.equal(rounded);
       S.numberOfBuyers.should.equal(3);
       S.buyersPool.agents.length.should.equal(3);
     });

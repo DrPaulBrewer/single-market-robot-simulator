@@ -232,8 +232,8 @@ export class Simulation {
         sim.pool = new Pool();
         sim.buyersPool = new Pool();
         sim.sellersPool = new Pool();
-        sim.numberOfBuyers  = config.numberOfBuyers  || config.buyerValues.length;
-        sim.numberOfSellers = config.numberOfSellers || config.sellerCosts.length;
+        sim.numberOfBuyers  = Math.round(config.numberOfBuyers)  || config.buyerValues.length;
+        sim.numberOfSellers = Math.round(config.numberOfSellers) || config.sellerCosts.length;
         config.buyerRate  = config.buyerRate || [1];
         config.sellerRate = config.sellerRate || [1];
         if (typeof(config.buyerRate)==='number'){
