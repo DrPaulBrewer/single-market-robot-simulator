@@ -214,28 +214,56 @@ describe('blank Simulation not allowed', function () {
   });
 });
 
+const configCostsExceedValues = {
+  L: 1,
+  H: 100,
+  buyerValues: [10, 9, 8],
+  sellerCosts: [20, 40],
+  buyerAgentType: ["ZIAgent"],
+    // setting buyerRate to [1.0,1.0] should detect if there is some problem using arrays without affecting math tests
+  sellerAgentType: ["ZIAgent"],
+  buyerRate: [1.0, 1.0],
+  sellerRate: 1.0,
+  silent: 1,
+  caseid: 1234,
+  periodDuration: 1000,
+  tradeClock: 500,
+  xMarket: {
+    buyImprove: 1,
+    sellImprove: 1
+  }
+};
+
+describe('simulations with fractional numberOfBuyers or numberOfSellers are internally rounded to integer', function(){
+  [
+    [0.99,1],
+    [1,1],
+    [1.01,1],
+    [1.51,2],
+    [1.99,2],
+    [2.01,2]
+  ].forEach(([raw,rounded])=>{
+    it(`should round ${raw} numberOfBuyers to ${rounded}`, function(){
+      const config = Object.assign({}, configCostsExceedValues, {numberOfBuyers:raw});
+      const S = new Simulation(config);
+      S.numberOfBuyers.should.equal(rounded);
+      S.buyersPool.agents.length.should.equal(rounded);
+      S.numberOfSellers.should.equal(2);
+      S.sellersPool.agents.length.should.equal(2);
+    });
+    it(`should round ${raw} numberOfSellers to ${rounded}`, function(){
+      const config = Object.assign({}, configCostsExceedValues, {numberOfSellers:raw});
+      const S = new Simulation(config);
+      S.numberOfSellers.should.equal(rounded);
+      S.sellersPool.agnets.length.should.equal(rounded);
+      S.numberOfBuyers.should.equal(3);
+      S.buyersPool.agents.length.should.equal(3);
+    });
+  });
+});
+
+
 describe('simulation with values [10,9,8] all below costs [20,40]', function () {
-
-  // setting buyerRate to [1.0,1.0] should detect if there is some problem using arrays without affecting math tests
-
-  let configCostsExceedValues = {
-    L: 1,
-    H: 100,
-    buyerValues: [10, 9, 8],
-    sellerCosts: [20, 40],
-    buyerAgentType: ["ZIAgent"],
-    sellerAgentType: ["ZIAgent"],
-    buyerRate: [1.0, 1.0],
-    sellerRate: 1.0,
-    silent: 1,
-    caseid: 1234,
-    periodDuration: 1000,
-    tradeClock: 500,
-    xMarket: {
-      buyImprove: 1,
-      sellImprove: 1
-    }
-  };
   describe('on new Simulation', function () {
     let S = new Simulation(configCostsExceedValues);
     let props = ['config',
