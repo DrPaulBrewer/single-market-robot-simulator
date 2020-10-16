@@ -1192,7 +1192,7 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
 
 [true, false].forEach((sync) => {
   describe(`simulation with 200 buyers, 200 sellers, values 900...303, costs 100...697, various agent types, 10 periods, sync: ${sync}`, function () {
-    const agents = ["ZIAgent", "UnitAgent", "OneupmanshipAgent", "MidpointAgent", "TruthfulAgent", "DPPAgent", "KaplanSniperAgent", "MedianSniperAgent", "DoNothingAgent"];
+    const agents = ["ZIAgent", "ZIJumpAgent", "UnitAgent", "OneupmanshipAgent", "MidpointAgent", "TruthfulAgent", "DPPAgent", "KaplanSniperAgent", "MedianSniperAgent", "DoNothingAgent"];
     const config200Bx200Sx10Periods = {
       L: 1,
       H: 1000,
@@ -1406,6 +1406,46 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
       ordersByTruthfulSellers.length.should.be.above(100);
       ordersByTruthfulSellers.forEach((so) => {
         so[sellLimitPriceCol].should.equal(so[costCol]);
+      });
+    });
+
+    it('the "ZIJumpAgent" as Buyer never bids below the current Bid', function(){
+      const al = agents.length;
+      const ziJumpBuyers = S.buyersPool.agents.filter((a,j)=>(agents[j%al]==="ZIJumpAgent"));
+      ziJumpBuyers.length.should.be.above(10);
+      const ziJumpBuyerIds = ziJumpBuyers.map((a)=>(a.id));
+      const [
+        idCol,
+        buyLimitPriceCol,
+        valueCol,
+        currentBidCol
+      ] = ['id', 'buyLimitPrice', 'buyerValue','preBidPrice'].map((s) => (S.logs.buyorder.header.indexOf(s)));
+      const ordersByZIJumpBuyers = S.logs.buyorder.data.filter((bo) => (ziJumpBuyerIds.includes(bo[idCol])));
+      ordersByZIJumpBuyers.length.should.be.above(100);
+      const filtered = ordersByZIJumpBuyers.filter((bo)=>(bo[currentBidCol]>0));
+      filtered.length.should.be.above(1);
+      filtered.forEach((bo) => {
+        bo[buyLimitPriceCol].should.be.within(bo[currentBidCol],bo[valueCol]);
+      });
+    });
+
+    it('the "ZIJumpAgent" as Seller never asks more than the current market ask', function(){
+      const al = agents.length;
+      const ziJumpSellers = S.sellersPool.agents.filter((a,j)=>(agents[j%al]==="ZIJumpAgent"));
+      ziJumpSellers.length.should.be.above(10);
+      const ziJumpSellerIds = ziJumpSellers.map((a)=>(a.id));
+      const [
+        idCol,
+        sellLimitPriceCol,
+        costCol,
+        currentAskCol
+      ] = ['id', 'sellLimitPrice', 'sellerCost','preAskPrice'].map((s) => (S.logs.buyorder.header.indexOf(s)));
+      const ordersByZIJumpSellers = S.logs.sellorder.data.filter((so) => (ziJumpSellerIds.includes(so[idCol])));
+      ordersByZIJumpSellers.length.should.be.above(100);
+      const filtered = ordersByZIJumpSellers.filter((so)=>(so[currentAskCol]>0));
+      filtered.length.should.be.above(1);
+      filtered.forEach((so) => {
+        so[sellLimitPriceCol].should.be.within(so[costCol],so[currentAskCol]);
       });
     });
 
