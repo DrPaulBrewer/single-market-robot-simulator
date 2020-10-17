@@ -139,7 +139,7 @@ The above configuration achieves the following:
 * `buyerRate` is the Poisson-arrival rate of an individual buyer (here, 0.2, or each buyer submits an order approximately once every 5 seconds)
 * `sellerRate` is the Poisson-arrival rate of an individual seller (here, 0.2, or each seller submits an order approximately once every 5 seconds)
 * `integer` determines whether prices must be integers or can be floating point because floating point can not represent fractions exactly unless they have denominators equal to a power of 2.  `integer:true` is a best practice.
-* `keepPreviousOrders` determines if new orders always cancel old orders.  In most cases `keepPreviousOrders:false` is appropriate.
+* `keepPreviousOrders` determines if an agent's old orders are preserved when that same agent sends new orders (`true`) or if new orders always cancel old orders (`false`).  In most cases `keepPreviousOrders:false` is appropriate.
 * `ignoreBudgetConstraint` determines if agents should ignore their unit values and costs, instead treating the value of a unit as H or the cost as L.  This terminology is borrowed from Gode and Sunder's 1993 paper.  `ignoreBudgetConstraint:false` is the appropriate setting for most cases.
 * `xMarket` settings occur in their own object.   
 
