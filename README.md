@@ -37,11 +37,11 @@ As of July 2020, Windows 10 for Home is incompatible with Docker Desktop and has
 
 Obviously, you'll need to have git, nodejs, and npm pre-installed.
 
-To run as a nodejs command-line program, clone this repository on your computer and run `npm install -D` or `npm i -D` from the cloned directory to install all of the dependencies, including the testing and development dependencies `-D`:
+To run as a nodejs command-line program, clone this repository on your computer and run `npm install`:
 
      git clone https://github.com/DrPaulBrewer/single-market-robot-simulator
      cd ./single-market-robot-simulator
-     npm install -D  
+     npm install
 
 ### as a library in another open source npm JavaScript program
 
