@@ -4,7 +4,7 @@ node_js:
   - stable
 
 install:
-  - npm install -D
+  - npm install
 
 script:
   - npm run lint
