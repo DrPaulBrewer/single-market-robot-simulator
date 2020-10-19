@@ -1,6 +1,8 @@
 FROM node:alpine
 MAINTAINER drpaulbrewer@eaftc.com
-RUN apk add git && \
+RUN apk update && \
+    apk upgrade && \
+    apk add git && \
     cd /home/node && \
     git clone https://github.com/drpaulbrewer/single-market-robot-simulator/ && \
     apk del git && \
