@@ -749,7 +749,7 @@ function main(){
       throw new Error("no sim.json configuration file specified on command line");
 
     function mainPeriod(sim){
-        fs.writeFileSync('./period', sim.period);
+        fs.writeFileSync('./period', ''+sim.period);
     }
 
     const config = parse(
