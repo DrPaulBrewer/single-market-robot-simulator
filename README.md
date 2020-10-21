@@ -278,10 +278,11 @@ run 5.6.0, use this docker command:
 One way to gain experience with the software is to replicate a portion of the Brewer and Ratan (2019) research studying markets
 populated by a combination of ZI and Sniper Agents.  
 
-Section 2.2.4 of this [replication guide](https://doi.org/10.1016/j.dib.2019.104729) addresses the 50% ZI 50% Snipers case.  By following
-the instructions, you can generate 10000 periods of market data and then calculate the Gini coefficient of total agent profits.  The replication guide
-will walk you through the steps of extracting the necessary `sim.json` configuration file from a research archive, installing Docker, running the simulator, 
-and finally running an additional tool in docker to obtain the Gini coefficient of total profits.
+Section 2.2.4 from the linked [replication guide](https://doi.org/10.1016/j.dib.2019.104729) (published in Data In Brief, 2019) addresses the 50% ZI 50% Snipers
+case.  By following the instructions, you can generate 10000 periods of market data and then calculate the Gini coefficient of total agent profits.  
+
+The replication guide will walk you through the steps of extracting the necessary `sim.json` configuration file from a research archive, installing Docker,
+running the simulator, and finally running an additional tool in docker to obtain the Gini coefficient of total profits.
 
 To run the simulator code as it existed for Brewer and Ratan's (2019) research project [2] (version 4.3.0),  use this Docker command:
 
