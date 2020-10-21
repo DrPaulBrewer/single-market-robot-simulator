@@ -1,6 +1,5 @@
 # single-market-robot-simulator
 
-
 [![Build Status](https://travis-ci.org/DrPaulBrewer/single-market-robot-simulator.svg?branch=master)](https://travis-ci.org/DrPaulBrewer/single-market-robot-simulator)
 [![Coverage Status](https://coveralls.io/repos/github/DrPaulBrewer/single-market-robot-simulator/badge.svg?branch=master)](https://coveralls.io/github/DrPaulBrewer/single-market-robot-simulator?branch=master)
 
@@ -24,12 +23,14 @@ An affordable paid web app at https://Econ1.net is available that is much nicer,
 
 ### no installation necessary when using Docker Desktop (free)
 
+No installation is necessary if you have Docker Desktop (for Windows 10 Pro and Windows 10 for Education, and Mac or Linux usage). Skip to the "Usage" section.  Docker Desktop is free, and the release of this software on the Docker Hub is free.
+
+If you want to use Docker and you do not have it,  install [Docker Desktop](https://www.docker.com/products/docker-desktop) (Windows 10 Pro, Windows 10 for Education, Mac) or [Docker community edition](https://docs.docker.com/install/) (Linux).
+
 Docker Desktop allows running the single-market-robot-simulator in a command line window. It
 does not include any editor or visualization.  However, the input format is documented, and the
 outputs are mostly in CSV format. CSV files are compatible with most statistical and data-science
 software (e.g. python, R, matlab/octave, spreadsheets, stata, others).
-
-No installation is necessary if you have Docker Desktop (for Windows 10 Pro and Windows 10 for Education, and Mac or Linux usage). Skip to the "Usage" section.  Docker Desktop is free, and the release of this software on the Docker Hub is free.
 
 As of July 2020, Windows 10 for Home is incompatible with Docker Desktop and has to be upgraded to Windows 10 Pro. This upgrade may require a payment to Microsoft.
 
@@ -256,29 +257,25 @@ The [./examples](/examples) directory contains a number of additional sim.json f
 ### Stand Alone App
 
 #### when run from Docker
-It is possible to run the software on Docker without having a Linux system (otherwise recommended), and without installing nodejs and npm (otherwise required).  Docker downloads a Linux container containing everything needed and runs it on any computer.
-
-To run on Docker, you must first install [Docker Desktop](https://www.docker.com/products/docker-desktop) (Windows 10 Pro, Windows 10 for Education, Mac) or [Docker community edition](https://docs.docker.com/install/) (Linux).
-
 Create a work directory containing the `sim.json` file with the simulation configuration.
 
 The commands below require the file be named `sim.json`
 
-The current version of the Docker container is 6.2.0.  To
+The current version of the Docker container is 6.10.0.  To
 run that, use this docker command:
 
     docker run -it \
            -v /path/to/your/work/directory:/work \
-           drpaulbrewer/single-market-robot-simulator:6.2.0
+           drpaulbrewer/single-market-robot-simulator:6.10.0
 
-The previous version of the Docker container is 5.6.0.  To
+The previous major version of the Docker container is 5.6.0.  To
 run 5.6.0, use this docker command:
 
     docker run -it \
            -v /path/to/your/work/directory:/work \
            drpaulbrewer/single-market-robot-simulator:5.6.0
 
-To run the simulator code as it existed for the research project [2] (version 4.3.0),  use this Docker command:
+To run the simulator code as it existed for Brewer and Ratan's (2019) research project [2] (version 4.3.0),  use this Docker command:
 
     docker run -it \
            -v /path/to/your/work/directory:/work \
@@ -301,6 +298,8 @@ To run the simulator code as it existed for the research project [2] (version 4.
 #### Outputs
 
 A number of .csv comma-separated-value files are produced containing the market data.  
+
+The column formats described below are for the most recent version of the simulator.  Older versions of the simulator may produce fewer columns of data.
 
 Output files include:
 
