@@ -177,12 +177,75 @@ to machine learning. Nevertheless, some of the algorithms chosen have been the t
 
 Among the choices are:
 
-* The [Zero Intelligence trader](https://en.wikipedia.org/wiki/Zero-intelligence_trader) of Gode and Sunder[1] that bids/asks randomly for non-zero profit.
-* a Sniper similar to Kaplan's Sniper algorithm but explicitly liquidity-reducing.  For now, I still call it "KaplanSniperAgent" because of its historical roots.  See [2].
-* a "truthful" or identity-function algorithm that always bids the unit value or asks the unit cost.
-* a bisection algorithm that bids or asks halfway between the current bid/current ask if profitable to do so, and initially bids/asks an extreme value when no bid/ask is present
-* a "oneupmanship" algorithm that increases the bid or decreases the ask by 1 unit if profitable to do so
-* others, and a base class for writing your own algorithm
+#### ZIAgent
+The [Zero Intelligence trader](https://en.wikipedia.org/wiki/Zero-intelligence_trader) of Gode and Sunder[1] that bids/asks randomly for non-zero profit.  Bids ~ `U[L,v]` and Asks~`U[c,H]` where `U `is a uniform distribution, `L` and `H` are market minimum/maximum allowed price, and `v` and `c` are an agent's unit value or unit cost.
+
+#### ZIJumpAgent
+
+A more aggressive random trader than ZIAgent.   Bids ~ `U[market.currentBid,V]` and asks~`U[c,market.currentAsk]`.  If there is no current bid or current ask, it reverts to ZIAgent behavior.
+
+#### ZISpreadAgent
+
+Bids or asks within the spread `U[market.currentBid,market.currentAsk]` unless these do not exist,  in which case other limits `c` `v` `L` and `H` apply.  
+
+#### TTAgent
+
+Rough optimizer that Speculates that future periods will be like past periods.  Uses stochastic optimization and opportunity-from-waiting (backwards-induction) analysis to determine bids and asks. Collates trades from each period into a list of 1st trades, 2nd trades, 3rd trades, ..., Nth trades across periods for the market.  From the time left in the market, a horizon H is determined, and the collated trade list to determine an optimal bid or ask for the H-th trade back to the current trade.
+
+#### UnitAgent
+
+Bids or asks randomly from `{ previous trade price - 1,  previous price, previous price +1 }` -- subject to no-loss constraint.
+
+#### OneupmanshipAgent
+Simple algorithm that increases the bid or decreases the ask by 1 price unit  -- subject to  no-loss constraint.
+
+#### MidpointAgent
+A bisection algorithm that bids or asks halfway between the current bid and current ask.  Initially bids `L` or asks `H` when no bid/ask is present.  Bid and asks are subject to no-loss constraint.
+
+#### DPPAgent
+
+Ignores market conditions and bids or asks the inverse log of the log convex combination of `L `and `v` or `c` and `H` where the lambda parameter of the convex combination is the percentage of time exhausted in the current period.
+
+#### Snipers, generally
+
+A sniper will sell by asking equal to an existing bid or buy by bidding equal to an existing ask, causing an immediate trade.   In this way, it always extracts liquidity from the order books and never adds liquidity. 
+
+Snipers often have a fallback strategy in case their primary strategy has failed to produce any trades as the period is ending (only ~10 actions are left in the period).  The simplest fallback strategy is to accept any existing offer from the other side of the market that satisfied the no-loss constraint.
+
+Snipers will not send bid/asks that violate the no-loss constraint.
+
+#### KaplanSniperAgent
+A Sniper similar to Kaplan's Sniper algorithm but explicitly liquidity-reducing.  For now, I still call it "KaplanSniperAgent" because of its historical roots.  See [2].  The sniping phase looks for (a) prices at or beyond the previous period low or high; or (b) low spread `(bid-ask<10)`.
+
+#### MedianSniperAgent
+
+The sniping phase looks for prices better than the previous period's median of trading prices.
+
+#### AcceptSniperAgent
+
+Accept the existing current Bid or current Ask.
+
+#### RandomAcceptSniperAgent
+
+On initialization (before the first period) this agent chooses an acceptance rate `a` ~ U[0,1],
+
+On each action thereafter, it implements this random acceptance rate by choosing `r` ~ U[0,1] and accepting the current bid or ask if `r`<`a`  (no-loss constraint still applies)
+
+#### RisingBidSniperAgent
+
+A very simple upward price-momentum sniper.  Accepts the current bid or current ask when the market's current Bid price is above the market's last trade price.
+
+#### FallingAskSniperAgent
+
+A very simple downward price-momentum sniper,  Accepts the current bid or current ask when the market's current Ask price is below the market's last trade price.
+
+#### TruthfulAgent
+A "truthful" or identity-function algorithm that always bids the unit value or asks the unit cost.
+
+#### DoNothingAgent
+
+This agent never bids or asks but does receive a unit cost or value and actions during the period (which it always passes).  It can be useful as a place holder for both tests and for establishing lower limits of efficiency or volume.  
+
 
 ## Additional Configuration examples
 
@@ -366,7 +429,7 @@ There are no output progress messages unless `quiet: false` is in the `sim.json`
 Depending on whether you are using ES6 or CJS modules, importing looks like this:
 
     import * as SMRS from 'single-market-robot-simulator'; // ES6
-
+    
     const SMRS = require("single-market-robot-simulator"); // CJS
 
 and returns an object `SMRS` containing a constructor for the JavaScript class `Simulation` and a few other miscellaneous items.  Ideally, this code
