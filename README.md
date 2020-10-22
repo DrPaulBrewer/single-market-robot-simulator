@@ -144,7 +144,7 @@ The above configuration achieves the following:
 * `ignoreBudgetConstraint` determines if agents should ignore their unit values and costs, instead treating the value of a unit as H or the cost as L.  This terminology is borrowed from Gode and Sunder's 1993 paper.  `ignoreBudgetConstraint:false` is the appropriate setting for most cases.
 * `xMarket` settings occur in their own object.   
 
-Most of the allowed fields, except for the `xMarket` fields, can be found in the programmer's documentation for the [public constructor config params for `Simulation`](https://doc.esdoc.org/github.com/DrPaulBrewer/single-market-robot-simulator/class/src/index.js~Simulation.html#instance-constructor-constructor).
+Most of the allowed fields, except for the `xMarket` fields, can be found in the programmer's documentation for the [public constructor config params for `Simulation`](https://drpaulbrewer.github.io/single-market-robot-simulator/Simulation.html).
 
 The `xMarket` fields are documented in the programmer's documentation for the
 [public constructor config params for `Market`](https://doc.esdoc.org/github.com/DrPaulBrewer/market-example-contingent/class/src/index.js~Market.html#instance-constructor-constructor)
