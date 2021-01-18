@@ -31,7 +31,7 @@
     "market-agents": "^4.8.0",
     "market-example-contingent": "^2.0.0",
     "p-whilst": "^2.1.0",
-    "secure-json-parse": "^2.1.0",
+    "secure-json-parse": "^2.2.0",
     "simple-isomorphic-logger": "^4.1.0",
     "stats-lite": "^2.2.0"
   },
