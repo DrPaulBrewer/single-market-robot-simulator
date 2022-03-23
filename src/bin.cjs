@@ -6,7 +6,7 @@ import('./index.mjs').then((SMRS)=>{
 
 function main(SMRS){
 
-    const { Simulation, scan, parse, secureJSONPolicy } = SMRS;
+    const { Simulation, parse, secureJSONPolicy } = SMRS;
 
     /**
      * in stand-alone mode, read simulation config from first named .json file and run simulation synchronously, outputting log files in .csv format
