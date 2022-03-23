@@ -15,6 +15,22 @@ Visualizations and friendly user-interfaces are the responsibility of other code
 
 The [JSDoc site for single-market-robot-simulator](https://drpaulbrewer.github.io/single-market-robot-simulator/) contains documentation prepared from source code of this module.
 
+### Breaking Changes for v7
+
+#### removing babel dependencies
+v7 is not compiled with Babel.  It is deliberately not made compatible
+with early browsers or earlier versions of node.
+
+#### Requires a modern version of nodejs
+Please use a version of node.js greater than 16.14.0
+
+#### Module changes
+v7 provides an ES module whereas versions 6.10 and earlier were commonjs.
+
+#### separate command line program
+`./src/bin.cjs` contains the command line version of the software which calls
+the ESM module.
+
 ## Installation
 
 ### no installation necessary when using Econ1.Net (paid)
@@ -209,7 +225,7 @@ Ignores market conditions and bids or asks the inverse log of the log convex com
 
 #### Snipers, generally
 
-A sniper will sell by asking equal to an existing bid or buy by bidding equal to an existing ask, causing an immediate trade.   In this way, it always extracts liquidity from the order books and never adds liquidity. 
+A sniper will sell by asking equal to an existing bid or buy by bidding equal to an existing ask, causing an immediate trade.   In this way, it always extracts liquidity from the order books and never adds liquidity.
 
 Snipers often have a fallback strategy in case their primary strategy has failed to produce any trades as the period is ending (only ~10 actions are left in the period).  The simplest fallback strategy is to accept any existing offer from the other side of the market that satisfied the no-loss constraint.
 
@@ -437,7 +453,7 @@ There are no output progress messages unless `quiet: false` is in the `sim.json`
 Depending on whether you are using ES6 or CJS modules, importing looks like this:
 
     import * as SMRS from 'single-market-robot-simulator'; // ES6
-    
+
     const SMRS = require("single-market-robot-simulator"); // CJS
 
 and returns an object `SMRS` containing a constructor for the JavaScript class `Simulation` and a few other miscellaneous items.  Ideally, this code
