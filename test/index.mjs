@@ -1,17 +1,23 @@
 /* eslint-env node, mocha */
 
 /* eslint no-console: "off", newline-per-chained-call: "off" */
+/* eslint func-style: ["error", "declaration", { "allowArrowFunctions": true }]*/
 
-import '@babel/polyfill';
+import * as singleMarketRobotSimulator from '../src/index.mjs';
 import assert from 'assert';
 import 'should';
-import * as singleMarketRobotSimulator from '../src/index.js';
 import * as MEC from 'market-example-contingent';
 import * as MarketAgents from 'market-agents';
 import * as stats from 'stats-lite';
+import gini from 'gini-ss';
+import { mkdtempSync, rmSync } from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+
+// const gini = GINI.default;
 // import * as Joi from 'joi';
 
-const { Simulation } = singleMarketRobotSimulator;
+const { Simulation, logNames } = singleMarketRobotSimulator;
 const { Pool, ZIAgent } = MarketAgents;
 
 const tradeLogHeader = [
@@ -47,8 +53,6 @@ const combinedOrderLogHeader = [
   'sellerCost',
   'sellerAgentType'
 ];
-
-const gini = require("gini-ss");
 
 /*
  * ohlcRestrict, tradesToPartialOHLC
@@ -205,7 +209,6 @@ describe('order log headers ', function () {
 
 describe('blank Simulation not allowed', function () {
 
-  delete global.fs;
   it('new Simulation({}) with empty config {} should throw error', function () {
     function simulationWithOmittedOptions() {
       let S = new Simulation({}); // eslint-disable-line no-unused-vars
@@ -233,6 +236,84 @@ const configCostsExceedValues = {
     sellImprove: 1
   }
 };
+
+describe('initialization of logs', function(){
+  // this is primary a test of these configuration properties:
+  // logDir
+  // logToFileSystem
+  // withoutOrderLogs
+
+  const testPrefix = path.join(os.tmpdir(), 'test-');
+  const testDir = mkdtempSync(testPrefix);
+
+  [undefined,testDir].forEach((logDir)=>{
+    [false,true].forEach((logToFileSystem)=>{
+      [false,true].forEach((withoutOrderLogs)=>{
+        const options = {
+          logDir,
+          logToFileSystem,
+          withoutOrderLogs
+        };
+        describe(JSON.stringify(options), function(){
+          let S, logkeys, correctLogKeys;
+          it(`correct logs for withoutOrderLogs:${withoutOrderLogs}`, function(){
+            const config = Object.assign({}, configCostsExceedValues, options);
+            S = new Simulation(config);
+            logkeys = Object.keys(S.logs);
+            logkeys.sort();
+            const filterer = (name)=>(!withoutOrderLogs || !name.includes('order'));
+            correctLogKeys = logNames.filter(filterer).sort();
+            assert.ok(logkeys.every((k,j)=>(correctLogKeys[j]===k)));
+          });
+          if (logToFileSystem){
+            it('correct names, locations, and .csv file creation', function(){
+                const ok = logkeys.every((logkey)=>{
+                  const correctprefix = logDir || ".";
+                  const correctName = correctprefix + "/" + logkey + ".csv";
+                  const fname = S.logs[logkey].fname;
+                  if (fname && fname.length>4) rmSync(fname);
+                  return (fname===correctName);
+                });
+                assert.ok(ok);
+            });
+          }
+        });
+      });
+    });
+  });
+});
+
+describe('simulations with an unknown numberOfBuyers, numberOfSellers, buyerValues, sellerCosts', function(){
+  it('all unknown - should throw an error', function(){
+      function bad(){
+        const config = Object.assign({},configCostsExceedValues);
+        delete config.buyerValues;
+        delete config.sellerCosts;
+        delete config.numberOfBuyers;
+        delete config.numberOfSellers;
+        return new Simulation(config);
+      }
+      bad.should.throw(/undefined/);  // access to length property of undefined array
+  });
+  it('undefined numberOfBuyers with buyerValues=[] should throw an error',function(){
+    function bad(){
+      const config = Object.assign({},configCostsExceedValues);
+      config.buyerValues = [];
+      delete config.numberOfBuyers;
+      return new Simulation(config);
+    }
+    bad.should.throw(/can not determine numberOfBuyers and\/or numberOfSellers/);
+  });
+  it('undefined numberOfSellers with sellerCosts=[] should throw an error',function(){
+    function bad(){
+      const config = Object.assign({},configCostsExceedValues);
+      config.sellerCosts = [];
+      delete config.numberOfSellers;
+      return new Simulation(config);
+    }
+    bad.should.throw(/can not determine numberOfBuyers and\/or numberOfSellers/);
+  });
+});
 
 describe('simulations with fractional numberOfBuyers or numberOfSellers are internally rounded to integer', function(){
   [
@@ -262,6 +343,56 @@ describe('simulations with fractional numberOfBuyers or numberOfSellers are inte
   });
 });
 
+describe('edge cases for recording trades with .logTrade', function(){
+  it('undefined sim.xMarket.o.idCol should throw error', function(){
+    const config = Object.assign({}, configCostsExceedValues);
+    const S = new Simulation(config);
+    function bad(){
+      delete S.xMarket.o.idCol;
+      S.logTrade();
+    }
+    bad.should.throw(/sim.xMarket.o.idCol is undefined/);
+  });
+  // tests proceed through monkeypatching a fake trade
+  function setupTest({buyerid,sellerid,price}){
+    const config = Object.assign({}, configCostsExceedValues);
+    const S = new Simulation(config);
+    const idCol = S.xMarket.o.idCol;
+    const fakeBuyOrder = [];
+    const fakeSellOrder = [];
+    fakeBuyOrder[idCol] = buyerid;
+    fakeSellOrder[idCol] = sellerid;
+    S.xMarket.a = [fakeBuyOrder,fakeSellOrder];
+    const tradeSpec = {
+      totalQ: 1,
+      buyA: [0],
+      sellA: [1],
+      prices: [price]
+    };
+    return {S, tradeSpec};
+  }
+  it('undefined tradeSpec buyerid should throw error', function(){
+    function bad(){
+      const {S, tradeSpec} = setupTest({sellerid:2, price:50});
+      S.logTrade(tradeSpec);
+    }
+    bad.should.throw(/buyerid is undefined/);
+  });
+  it('undefined tradeSpec sellerid should throw error', function(){
+    function bad(){
+      const {S, tradeSpec} = setupTest({buyerid:1, price:50});
+      S.logTrade(tradeSpec);
+    }
+    bad.should.throw(/sellerid is undefined/);
+  });
+  it('undefined tradeSpec prices[0] should throw error', function(){
+    function bad(){
+      const {S, tradeSpec} = setupTest({buyerid:1, sellerid: 2});
+      S.logTrade(tradeSpec);
+    }
+    bad.should.throw(/undefined price/);
+  });
+});
 
 describe('simulation with values [10,9,8] all below costs [20,40]', function () {
   describe('on new Simulation', function () {
@@ -342,6 +473,12 @@ describe('simulation with values [10,9,8] all below costs [20,40]', function () 
     it('getMaximumPossibleGainsFromTrade() should be 0, and set sim.maximumPossibleGainsFromTrade', function () {
       S.getMaximumPossibleGainsFromTrade().should.equal(0);
       S.maximumPossibleGainsFromTrade.should.equal(0);
+    });
+    it('S.run(update) throws an error if update is not a function', function(){
+      function bad(){
+        S.run({update:true});
+      }
+      bad.should.throw(/expected 'update' to be a function/);
     });
   });
 
@@ -1133,13 +1270,57 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
     });
   });
 
+  const rt = {
+    realtime: 1,
+    periodDuration: 5.0,
+    buyerRate: 10,
+    sellerRate: 10
+  };
+
+  describe('real time with unexpected environment should throw a runtume error', function(){
+    it('preexisting sim.realtimeIntervalId should throw runtime error', function(done){
+        const config = Object.assign({}, configSingleUnitTrade, {periods:1}, rt);
+        const sim = new Simulation(config);
+        sim.realtimeIntervalId = true;
+        sim
+          .run()
+          .then(
+            ()=>(done(new Error("no error thrown"))),
+            ()=>(done())
+          );
+    });
+    it('when sim.pool.endTime() returns undefined a realtime run should throw runtime error', function(done){
+      const config = Object.assign({}, configSingleUnitTrade, {periods:1}, rt);
+      const sim = new Simulation(config);
+      sim.pool.endTime = ()=>(undefined);
+      sim
+        .run()
+        .then(
+          ()=>(done(new Error("no error thrown"))),
+          ()=>(done())
+        );
+    });
+  });
+
+  describe('real time with unsupported parameters should throw a runtime error', function(){
+      const tests = [
+        {tradeClock:10},
+        {orderClock:10}
+      ];
+      tests.forEach((forbiddenParam)=>{
+        it('should throw error with '+JSON.stringify(forbiddenParam), function(done){
+          const config = Object.assign({}, forbiddenParam, configSingleUnitTrade, {periods:1}, rt);
+          new Simulation(config)
+            .run()
+            .then(
+              ()=>(done(new Error("no error thrown"))),
+              ()=>(done())
+            );
+        });
+      });
+  });
+
   describe('runSimulation with three simulations of 10 periods of single unit trade scenario, asynchronous, realtime 5 sec period', function () {
-    let rt = {
-      realtime: 1,
-      periodDuration: 5.0,
-      buyerRate: 10,
-      sellerRate: 10
-    };
     let configA = Object.assign({}, configSingleUnitTrade, { periods: 10 }, rt);
     let configB = Object.assign({}, configSingleUnitTrade, { periods: 10 }, rt);
     let configC = Object.assign({}, configSingleUnitTrade, { periods: 10 }, rt);
@@ -1203,7 +1384,8 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
       buyerAgentType: agents.slice(0),
       sellerAgentType: agents.slice(0),
       periods: 10,
-      orderClock: 200,
+      periodDuration: 100,
+      orderClock: 10,
       silent: 1,
       logToFileSystem: false,
       integer: true
@@ -1449,28 +1631,28 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
       });
     });
 
-    it('the "MedianSniperAgent" as Buyer always bids below the previous period median price when tp<900', function () {
+    it('the "MedianSniperAgent" as Buyer always bids below the previous period median price when tp/pd<90%', function () {
       const al = agents.length;
       const medianSniperBuyers = S.buyersPool.agents.filter((a, j) => (agents[j % al] === "MedianSniperAgent"));
       medianSniperBuyers.length.should.be.above(10);
       const medianSniperBuyerIds = medianSniperBuyers.map((a) => (a.id));
       const ohlcMedianPriceCol = S.logs.ohlc.header.indexOf("medianPrice");
       const [periodCol, tpCol, idCol, buyLimitPriceCol] = ['period', 'tp', 'id', 'buyLimitPrice'].map((s) => (S.logs.buyorder.header.indexOf(s)));
-      const testedOrdersByMedianSniperBuyers = S.logs.buyorder.data.filter((bo) => ((medianSniperBuyerIds.includes(bo[idCol]) && (bo[tpCol] < 900))));
+      const testedOrdersByMedianSniperBuyers = S.logs.buyorder.data.filter((bo) => ((medianSniperBuyerIds.includes(bo[idCol]) && (bo[tpCol] < (0.9*S.config.periodDuration)))));
       testedOrdersByMedianSniperBuyers.length.should.be.above(50);
       testedOrdersByMedianSniperBuyers.forEach((bo) => {
         bo[buyLimitPriceCol].should.be.belowOrEqual(S.logs.ohlc.data[bo[periodCol] - 1][ohlcMedianPriceCol]);
       });
     });
 
-    it('the "MedianSniperAgent" as Seller always asks above the previous period median price when tp<900', function () {
+    it('the "MedianSniperAgent" as Seller always asks above the previous period median price when tp<0.9*periodDuration', function () {
       const al = agents.length;
       const medianSniperSellers = S.sellersPool.agents.filter((a, j) => (agents[j % al] === "MedianSniperAgent"));
       medianSniperSellers.length.should.be.above(10);
       const medianSniperSellerIds = medianSniperSellers.map((a) => (a.id));
       const ohlcMedianPriceCol = S.logs.ohlc.header.indexOf("medianPrice");
       const [periodCol, tpCol, idCol, sellLimitPriceCol] = ['period', 'tp', 'id', 'sellLimitPrice'].map((s) => (S.logs.sellorder.header.indexOf(s)));
-      const testedOrdersByMedianSniperSellers = S.logs.sellorder.data.filter((so) => ((medianSniperSellerIds.includes(so[idCol]) && (so[tpCol] < 900))));
+      const testedOrdersByMedianSniperSellers = S.logs.sellorder.data.filter((so) => ((medianSniperSellerIds.includes(so[idCol]) && (so[tpCol] < (0.9*S.config.periodDuration)))));
       testedOrdersByMedianSniperSellers.length.should.be.above(50);
       testedOrdersByMedianSniperSellers.forEach((so) => {
         so[sellLimitPriceCol].should.be.aboveOrEqual(S.logs.ohlc.data[so[periodCol] - 1][ohlcMedianPriceCol]);
@@ -1570,13 +1752,13 @@ describe('simulation with single unit trade, value [1000], costs [1]', function 
     it('beginTime in ohlc log is as expected', function () {
       const beginTimeCol = singleMarketRobotSimulator.logHeaders.ohlc.indexOf('beginTime');
       S.logs.ohlc.data.filter((v, j) => (j > 0)).map((row) => (row[beginTimeCol])).forEach((v, j) => {
-        v.should.equal(1000 * (j + 1));
+        v.should.equal(S.config.periodDuration * (j + 1));
       });
     });
     it('endTime in ohlc log is as expected', function () {
       const endTimeCol = singleMarketRobotSimulator.logHeaders.ohlc.indexOf('endTime');
       S.logs.ohlc.data.filter((v, j) => (j > 0)).map((row) => (row[endTimeCol])).forEach((v, j) => {
-        v.should.equal(1000 * (j + 2));
+        v.should.equal(S.config.periodDuration * (j + 2));
       });
     });
     it('endReason in ohlc log is as expected', function () {

@@ -1,44 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>JSDoc: Source: index.js</title>
-
-    <script src="scripts/prettify/prettify.js"> </script>
-    <script src="scripts/prettify/lang-css.js"> </script>
-    <!--[if lt IE 9]>
-      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
-    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
-</head>
-
-<body>
-
-<div id="main">
-
-    <h1 class="page-title">Source: index.js</h1>
-
-    
-
-
-
-    
-    <section>
-        <article>
-            <pre class="prettyprint source linenums"><code>// Copyright 2016- Paul Brewer, Economic and Financial Technology Consulting LLC
+// Copyright 2016- Paul Brewer, Economic and Financial Technology Consulting LLC
 // This is open source software. The MIT License applies to this software.
 // see https://opensource.org/licenses/MIT or included License.md file
 
 /* eslint no-console: "off", no-sync:"off", consistent-this:"off" */
 
-import Log from 'simple-isomorphic-logger';
+import {Log} from 'simple-isomorphic-logger';
 import * as MEC from 'market-example-contingent';
 import * as MarketAgents from 'market-agents';
 import * as stats from 'stats-lite';
 import gini from 'gini-ss';
 import pWhilst from 'p-whilst';
-import {scan, parse} from 'secure-json-parse';
+import * as secureJsonParse from 'secure-json-parse';
 
 /*
  *  on the browser, the jspm package manager can be programmed to set the
@@ -48,10 +20,14 @@ import {scan, parse} from 'secure-json-parse';
 
 import * as fs from 'fs'; // remember to override in jspm dep configuration to empty
 
+const { scan, parse } = secureJsonParse;
+
 const secureJSONPolicy = {
-  protoAction: 'remove',
-  constructorAction: 'remove'
-};  // see https://github.com/fastify/secure-json-parse
+  "protoAction": "remove",
+  "constructorAction": "remove"
+};
+
+export {scan, parse, secureJSONPolicy};
 
 const Market = MEC.Market;
 const {Pool} = MarketAgents;
@@ -178,7 +154,7 @@ export class Simulation {
 
         this.periodTradePrices = [];
 
-        /* istanbul ignore if */
+        /* c8 ignore start */
 
         if (!this.config.silent){
             console.log("duration of each period = "+this.periodDuration);
@@ -190,6 +166,8 @@ export class Simulation {
             console.log("minPrice = "+this.config.L);
             console.log("maxPrice = "+this.config.H);
         }
+
+        /* c8 ignore stop */
     }
 
     /**
@@ -204,9 +182,9 @@ export class Simulation {
         const withoutOrderLogs = logNames.filter(function(s){ return !(s.includes('order'));});
         const actualLogs = (sim.config.withoutOrderLogs)? withoutOrderLogs: logNames;
         const logDir = sim.config.logDir || ".";
-        const logToFS = sim.config.logToFileSystem;
+        const fsModule = sim.config.logToFileSystem && fs;
         actualLogs.forEach(function(name){
-            sim.logs[name] = new Log(logDir+"/"+name+".csv", logToFS).setHeader(logHeaders[name]);
+            sim.logs[name] = new Log(logDir+"/"+name+".csv", fsModule).setHeader(logHeaders[name]);
         });
     }
 
@@ -281,12 +259,12 @@ export class Simulation {
             maxPrice: config.H
         };
         sim.periodDuration = common.period.duration;
-        for(let i=0,l=sim.numberOfBuyers;i&lt;l;++i){
+        for(let i=0,l=sim.numberOfBuyers;i<l;++i){
             const a = sim.newBuyerAgent(i, common);
             sim.buyersPool.push(a);
             sim.pool.push(a);
         }
-        for(let i=0,l=sim.numberOfSellers;i&lt;l;++i){
+        for(let i=0,l=sim.numberOfSellers;i<l;++i){
             const a = sim.newSellerAgent(i, common);
             sim.sellersPool.push(a);
             sim.pool.push(a);
@@ -359,6 +337,7 @@ export class Simulation {
             });
             if (market.goods === 'X'){
                 market.submit(order);
+                /* c8 ignore next */
                 while(market.process()){} // eslint-disable-line no-empty
             }
         };
@@ -373,6 +352,7 @@ export class Simulation {
             });
             if (market.goods === 'X'){
                 market.submit(order);
+                /* c8 ignore next */
                 while(market.process());
             }
         };
@@ -401,14 +381,14 @@ export class Simulation {
          altTime = ['buyorder','sellorder'].reduce(
            (acc,log)=>(Math.max(acc, +sim.config.orderClock+lastT(log))), 0
          );
-         if (altTime&lt;endTime){
+         if (altTime<endTime){
            endTime = altTime;
            reason = 2;  // endPeriod because orderClock expired
          }
        }
        if (+sim.config.tradeClock>0){
          altTime = +sim.config.tradeClock+lastT('trade');
-         if (altTime&lt;endTime){
+         if (altTime<endTime){
            endTime = altTime;
            reason = 1; // endPeriod because tradeClock expired
          }
@@ -419,7 +399,7 @@ export class Simulation {
     /**
      * runs a periods of the simulation
      * @param {boolean} sync true indicates call is synchronous, return value will be simulation object; false indicates async, return value is Promise
-     * @return {Promise&lt;Object,Error>} Resolves to simulation object when one period of simulation is complete.
+     * @return {Promise<Object,Error>} Resolves to simulation object when one period of simulation is complete.
      */
 
     runPeriod(sync){
@@ -431,10 +411,12 @@ export class Simulation {
         }
         sim.period++;
 
-        /* istanbul ignore if */
+        /* c8 ignore start */
 
         if (!sim.config.silent)
             console.log("period: "+sim.period);
+
+        /* c8 ignore stop */
 
         sim.pool.initPeriod(sim.period);
         sim.xMarket.clear();
@@ -443,7 +425,7 @@ export class Simulation {
         let mayEnd = sim.potentialEndOfPeriod();
 
         function cont(){
-          return oldEnd.endTime &lt; mayEnd.endTime;
+          return oldEnd.endTime < mayEnd.endTime;
         }
 
         function step(){
@@ -516,12 +498,12 @@ export class Simulation {
         const sim = this;
         if (sim.maximumPossibleGainsFromTrade) return sim.maximumPossibleGainsFromTrade;
         let result = 0;
-        if (Array.isArray(sim.config.buyerValues) &amp;&amp; Array.isArray(sim.config.sellerCosts)){
+        if (Array.isArray(sim.config.buyerValues) && Array.isArray(sim.config.sellerCosts)){
             const buyerV = sim.config.buyerValues.slice().sort(function(a,b){ return +b-a; });
             const sellerC = sim.config.sellerCosts.slice().sort(function(a,b){ return +a-b;});
             let i = 0;
             let l = Math.min(buyerV.length,sellerC.length);
-            while ((i&lt;l) &amp;&amp; (buyerV[i]>sellerC[i])){
+            while ((i<l) && (buyerV[i]>sellerC[i])){
                 result += (buyerV[i]-sellerC[i]);
                 ++i;
             }
@@ -573,7 +555,7 @@ export class Simulation {
             ohlc();
         if (sim.logs.effalloc){
             let finalMoneySum = 0.0;
-            for(let i=0,l=finalMoney.length;i&lt;l;++i) finalMoneySum+=finalMoney[i];
+            for(let i=0,l=finalMoney.length;i<l;++i) finalMoneySum+=finalMoney[i];
             let maxPossible = sim.getMaximumPossibleGainsFromTrade();
             if (maxPossible>0)
                 sim.logs.effalloc.write([sim.caseid,sim.period, 100*(finalMoneySum/maxPossible)]);
@@ -605,11 +587,11 @@ export class Simulation {
         Object.keys(marketProps).forEach((k)=>{
           const k2 = marketProps[k];
             loggedProperties[k] = (
-              (typeof(sim.xMarket[k2])==='function') &amp;&amp;
+              (typeof(sim.xMarket[k2])==='function') &&
               sim.xMarket[k2]()
             );
         });
-        if ((agent.inventory) &amp;&amp; (order)){
+        if ((agent.inventory) && (order)){
             Object.assign(loggedProperties, {
                 t:  order.t,
                 tp: order.t-(sim.period*sim.periodDuration),
@@ -617,7 +599,7 @@ export class Simulation {
                 x: agent.inventory.X
             });
         }
-        if ((agent) &amp;&amp; (order.buyPrice) &amp;&amp; (sim.logs[buyLog])){
+        if ((agent) && (order.buyPrice) && (sim.logs[buyLog])){
             Object.assign(loggedProperties, {
                 buyLimitPrice: order.buyPrice,
                 buyerValue: agent.unitValueFunction('X',agent.inventory),
@@ -625,7 +607,7 @@ export class Simulation {
             });
             sim.logs[buyLog].submit(loggedProperties, '');
         }
-        if ((agent) &amp;&amp; (order.sellPrice) &amp;&amp; (sim.logs[sellLog])){
+        if ((agent) && (order.sellPrice) && (sim.logs[sellLog])){
             Object.assign(loggedProperties, {
                 sellLimitPrice: order.sellPrice,
                 sellerCost: agent.unitCostFunction('X',agent.inventory),
@@ -644,27 +626,25 @@ export class Simulation {
         const sim = this;
         const idCol = sim.xMarket.o.idCol;
 
-        /* istanbul ignore if */
-
         if (idCol === undefined )
             throw new Error("Simulation.prototype.logTrade: sim.xMarket.o.idCol is undefined");
+
         // this is only sufficient for single unit trades
         if ( (tradespec.totalQ!==1) ||
              (tradespec.buyA.length!==1) ||
              (tradespec.sellA.length!==1) )
             throw new Error("Simulation.prototype.logTrade: single unit trades required, got: "+tradespec.totalQ);
-        const buyerid  = sim.xMarket.a[tradespec.buyA[0]][idCol];
 
-        /* istanbul ignore if */
+        const buyerid  = sim.xMarket.a[tradespec.buyA[0]][idCol];
 
         if (buyerid===undefined)
             throw new Error("Simulation.prototype.logTrade: buyerid is undefined, tradespec="+JSON.stringify(tradespec));
-        const sellerid = sim.xMarket.a[tradespec.sellA[0]][idCol];
 
-        /* istanbul ignore if */
+        const sellerid = sim.xMarket.a[tradespec.sellA[0]][idCol];
 
         if (sellerid===undefined)
             throw new Error("Simulation.prototype.logTrade: sellerid is undefined, tradespec="+JSON.stringify(tradespec));
+
         const tradePrice = tradespec.prices[0];
         if (!tradePrice) throw new Error("Simulation.prototype.logTrade: undefined price in trade ");
         const buyerAgent = sim.pool.agentsById[buyerid];
@@ -702,7 +682,7 @@ export class Simulation {
      * @param {function(sim:Object)} [options.update]  update Optional end of period function
      * @param {number} [options.delay=20] delay timeout between periods in ms. Only effective in asynchronous mode.
      * @param {number} [options.deadline=0] deadline to compare with Date.now() -- If over or equal to deadline, return available data.  0 disables.
-     * @return {Promise&lt;Object,Error>} resolves to simulation object
+     * @return {Promise<Object,Error>} resolves to simulation object
      */
 
     run(options){
@@ -718,22 +698,26 @@ export class Simulation {
             config.periods = sim.period;
         }
 
-        /* istanbul ignore if */
+        /* c8 ignore start */
 
         if (!config.silent)
             console.log("Periods = "+config.periods);
 
+        /* c8 ignore stop */
+
         if (sync){
-            while(sim.period&lt;config.periods){
+            while(sim.period<config.periods){
                 sim.runPeriod(true);  // pass true to .runPeriod to run synchronously
                 update(sim);
-                if ((deadline) &amp;&amp; (Date.now()>=deadline)) forceFinish();
+                if ((deadline) && (Date.now()>=deadline)) forceFinish();
             }
 
-            /* istanbul ignore if */
+            /* c8 ignore start */
 
             if (!config.silent)
                 console.log("done");
+
+            /* c8 ignore stop */
 
             return sim;
         }
@@ -745,8 +729,8 @@ export class Simulation {
                  .then(update)
                  .then(
                      function(s){
-                         if ((deadline) &amp;&amp; (Date.now()>=deadline)) forceFinish();
-                         return (s.period&lt;config.periods)? setTimeout(loop,delay): resolve(s);
+                         if ((deadline) && (Date.now()>=deadline)) forceFinish();
+                         return (s.period<config.periods)? setTimeout(loop,delay): resolve(s);
                      },
                      ((e)=>reject(e))
                  )
@@ -756,66 +740,3 @@ export class Simulation {
         });
     }
 }
-
-/* the next comment tells the coverage tester that the main() function is not tested by the test suite */
-/* istanbul ignore next */
-
-function main(){
-
-    /**
-     * in stand-alone mode, read simulation config from first named .json file and run simulation synchronously, outputting log files in .csv format
-     */
-
-    /* suggested by Krumia's http://stackoverflow.com/users/1461424/krumia */
-    /* posting at http://stackoverflow.com/a/25710749/103081 */
-
-    global.fs = fs;
-
-    const simConfigFileName = process.argv.find((s)=>(s.endsWith(".json")));
-
-    if (!simConfigFileName)
-      throw new Error("no sim.json configuration file specified on command line");
-
-    function mainPeriod(sim){
-        fs.writeFileSync('./period', ''+sim.period);
-    }
-
-    const config = parse(
-        fs.readFileSync(simConfigFileName, 'utf8'),
-        secureJSONPolicy
-    );
-
-    new Simulation(config).run({sync:true, update:mainPeriod });
-
-}
-
-if (typeof(module)==='object'){
-
-    /* istanbul ignore if */
-
-    if (require &amp;&amp; (require.main===module))
-        main();
-}
-</code></pre>
-        </article>
-    </section>
-
-
-
-
-</div>
-
-<nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Simulation.html">Simulation</a></li></ul><h3>Global</h3><ul><li><a href="global.html#agentRegister">agentRegister</a></li><li><a href="global.html#newAgentFactory">newAgentFactory</a></li></ul>
-</nav>
-
-<br class="clear">
-
-<footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Oct 18 2020 22:09:17 GMT-0400 (Eastern Daylight Time)
-</footer>
-
-<script> prettyPrint(); </script>
-<script src="scripts/linenumber.js"> </script>
-</body>
-</html>
