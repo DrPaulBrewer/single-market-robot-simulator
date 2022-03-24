@@ -1,7 +1,10 @@
 # single-market-robot-simulator
 
-[![Build Status](https://travis-ci.org/DrPaulBrewer/single-market-robot-simulator.svg?branch=master)](https://travis-ci.org/DrPaulBrewer/single-market-robot-simulator)
-[![Coverage Status](https://coveralls.io/repos/github/DrPaulBrewer/single-market-robot-simulator/badge.svg?branch=master)](https://coveralls.io/github/DrPaulBrewer/single-market-robot-simulator?branch=master)
+![Build Status](https://github.com/DrPaulBrewer/single-market-robot-simulator/actions/workflows/node.js.yml/badge.svg)
+[![Known Vulnerabilities](https://snyk.io/test/github/DrPaulBrewer/single-market-robot-simulator/badge.svg)](https://snyk.io/test/github/DrPaulBrewer/single-market-robot-simulator)
+[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/DrPaulBrewer/single-market-robot-simulator.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/DrPaulBrewer/single-market-robot-simulator/context:javascript)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/DrPaulBrewer/single-market-robot-simulator.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/DrPaulBrewer/single-market-robot-simulator/alerts/)
+
 
 
 A stand alone nodejs app and software module for creating numerical experiments with robots trading in a single market.
