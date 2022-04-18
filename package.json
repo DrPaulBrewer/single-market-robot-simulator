@@ -31,7 +31,7 @@
   "dependencies": {
     "gini-ss": "^0.2.1",
     "market-agents": "^5.0.0",
-    "market-example-contingent": "^3.2.0",
+    "market-example-contingent": "^3.2.1",
     "p-whilst": "^3.0.0",
     "secure-json-parse": "^2.4.0",
     "simple-isomorphic-logger": "^5.0.1",
